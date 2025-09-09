@@ -10,9 +10,10 @@ struct MainTabView: View {
             get: { selectedTab },
             set: { newValue in
                 if newValue == 0 {
-                    showSheet = false // Reset sheet if already open. resetea el sheet aunque este abierto,
+                    showSheet = false // resetea el sheet aunque este abierto,
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // espera 0.1 segundos para que el swiftui tenga para procesar el cambio de tab
                         showSheet = true
+                        
                     }
                 }
                 selectedTab = newValue

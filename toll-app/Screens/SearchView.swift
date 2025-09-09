@@ -13,11 +13,7 @@ struct SearchView: View {
             Marker("Carolina Home", coordinate: myLocation)
                 .tint(.black)
         }
-        //.sheet(isPresented: $showSheet){
-          //  CalculatorView()
-            //    .presentationDetents([.fraction(0.2),.fraction(0.5),.fraction(0.9)])
-              //  .presentationDragIndicator(.visible)
-        //}
+       
         
     }
         
