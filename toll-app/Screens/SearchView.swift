@@ -1,24 +1,58 @@
-// Pagina princial
-
 import SwiftUI
 import MapKit
 
 struct SearchView: View {
-    let myLocation: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 63.40504016561072, longitude: 10.425258382949021)
-    //@State private var showSheet = true
+    let myLocation: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 63.40926104796149, longitude: 10.420481903713338)
     
     var body: some View {
-        Map(){
-            
-            Marker("Carolina Home", coordinate: myLocation)
-                .tint(.black)
+        Map{
+            Marker("My Location", coordinate: myLocation)
+                .tint(.blue)
         }
-       
-        
-    }
-        
             
-}
-
-
+        }
+        //.task {
+        // The task modifier runs the async function automatically.
+        //  await fetchTollsAsync()
+        //}
+    }
+    
+    // Use async/await for cleaner, more modern code.
+    /*func fetchTollsAsync() async {
+     
+     let urlString = "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/api/v4/vegobjekter/45?inkluder=lokasjon&inkluder=egenskaper&antall=2"
+     
+     guard let url = URL(string: urlString) else {
+     print("Invalid URL")
+     return
+     }
+     
+     var request = URLRequest(url: url)
+     request.setValue("application/json", forHTTPHeaderField: "Accept")
+     
+     do {
+     let (data, response) = try await URLSession.shared.data(for: request)
+     
+     if let httpResponse = response as? HTTPURLResponse {
+     print("HTTP status code: \(httpResponse.statusCode)")
+     print("HTTP headers: \(httpResponse.allHeaderFields)")
+     }
+     
+     print("Data length: \(data.count) bytes")
+     
+     // Try to decode as JSON
+     let json = try JSONSerialization.jsonObject(with: data, options: [])
+     print("Decoded JSON:")
+     print(json)
+     
+     // Try to convert to String
+     if let jsonString = String(data: data, encoding: .utf8) {
+     print("API response as String:")
+     print(jsonString)
+     }
+     
+     } catch {
+     print("Error: \(error.localizedDescription)")
+     }
+     }*/
 
