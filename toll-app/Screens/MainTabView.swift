@@ -25,7 +25,7 @@ struct MainTabView: View {
                     Label("Search", systemImage: "location.fill")
                 }
                 .tag(0)
-            VehicleView()
+            MapView()
                 .tabItem {
                     Label("Vehicles", systemImage: "car.fill")
                 }
@@ -35,6 +35,7 @@ struct MainTabView: View {
                     Label("profile", systemImage: "person.fill")
                 }
                 .tag(2)
+            
         }
         .sheet(isPresented: $showSheet) {
             VStack {

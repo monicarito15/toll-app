@@ -1,0 +1,512 @@
+
+{
+  "objekter": [
+    {
+      "id": 82443541,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/45/82443541",
+      "egenskaper": [
+        {
+          "id": 10951,
+          "navn": "Timesregel, passeringsgruppe",
+          "verdi": 240016,
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 10952,
+          "navn": "Timesregel, varighet",
+          "verdi": 60,
+          "enhet": {
+            "id": 35,
+            "navn": "Minutt",
+            "kortnavn": "min"
+          },
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 11883,
+          "navn": "Operatør_Id",
+          "verdi": 100126,
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 9595,
+          "navn": "Bomstasjon_Id",
+          "verdi": 1,
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 10271,
+          "navn": "Etableringsår",
+          "verdi": 2019,
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 1820,
+          "navn": "Takst liten bil",
+          "verdi": 36,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          },
+          "egenskapstype": "Flyttall"
+        },
+        {
+          "id": 9410,
+          "navn": "Rushtidstakst liten bil",
+          "verdi": 68,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          },
+          "egenskapstype": "Flyttall"
+        },
+        {
+          "id": 1819,
+          "navn": "Takst stor bil",
+          "verdi": 85,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          },
+          "egenskapstype": "Flyttall"
+        },
+        {
+          "id": 9411,
+          "navn": "Rushtidstakst stor bil",
+          "verdi": 149,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          },
+          "egenskapstype": "Flyttall"
+        },
+        {
+          "id": 9412,
+          "navn": "Timesregel",
+          "verdi": "Første passering gjelder",
+          "enum_id": 13257,
+          "egenskapstype": "Tekstenum"
+        },
+        {
+          "id": 10715,
+          "navn": "Link til bomstasjon",
+          "verdi": "www.ferde.no",
+          "egenskapstype": "Tekst"
+        },
+        {
+          "id": 10714,
+          "navn": "Navn bompengeanlegg (fra CS)",
+          "verdi": "Ferde AS - Bomringen Bergen",
+          "egenskapstype": "Tekst"
+        },
+        {
+          "id": 9390,
+          "navn": "Bomstasjonstype",
+          "verdi": "AutoPASS + automatisk",
+          "enum_id": 13133,
+          "egenskapstype": "Tekstenum"
+        },
+        {
+          "id": 9409,
+          "navn": "Tidsdifferensiert takst",
+          "verdi": "Ja",
+          "enum_id": 13255,
+          "egenskapstype": "Tekstenum"
+        },
+        {
+          "id": 9414,
+          "navn": "Innkrevningsretning",
+          "verdi": "Med metrering",
+          "enum_id": 13259,
+          "egenskapstype": "Tekstenum"
+        },
+        {
+          "id": 1078,
+          "navn": "Navn bomstasjon",
+          "verdi": "Sandviken",
+          "egenskapstype": "Tekst"
+        },
+        {
+          "id": 9405,
+          "navn": "Rushtid ettermiddag, fra",
+          "verdi": "14:30",
+          "egenskapstype": "Tid"
+        },
+        {
+          "id": 9407,
+          "navn": "Rushtid morgen, fra",
+          "verdi": "06:30",
+          "egenskapstype": "Tid"
+        },
+        {
+          "id": 9408,
+          "navn": "Rushtid morgen, til",
+          "verdi": "08:59",
+          "egenskapstype": "Tid"
+        },
+        {
+          "id": 9406,
+          "navn": "Rushtid ettermiddag, til",
+          "verdi": "16:29",
+          "egenskapstype": "Tid"
+        }
+      ],
+      "lokasjon": {
+        "kommuner": [4601],
+        "fylker": [46],
+        "kontraktsområder": [
+          {
+            "id": 1013286169,
+            "nummer": 9304,
+            "navn": "9304 Bergen 2021-2026 (2023-)"
+          },
+          {
+            "id": 1013286170,
+            "nummer": 9304,
+            "navn": "9304 Bergen 2021-2026 (2021-2022)"
+          },
+          {
+            "id": 1013286171,
+            "nummer": 9304,
+            "navn": "9304 Bergen 2021-2026 (2022-2023)"
+          },
+          {
+            "id": 1014690328,
+            "nummer": 9352,
+            "navn": "9352 Bergen 2022-2027"
+          },
+          {
+            "id": 1014698600,
+            "nummer": 9361,
+            "navn": "9361 automasjon Vestland og Rogaland 2022-2025"
+          },
+          {
+            "id": 1015100486,
+            "nummer": 9304,
+            "navn": "9304 Bergen 2021-2026"
+          },
+          {
+            "id": 1019163851,
+            "nummer": 3904,
+            "navn": "9304 Bergen 2026-2031"
+          },
+          {
+            "id": 1025229463,
+            "nummer": 9352,
+            "navn": "9352 Bergen 2027-2022"
+          }
+        ],
+        "riksvegruter": [
+          {
+            "enumid": 20290,
+            "riksvegrute": "Rute 4a: E39 Stavanger - Bergen - Ålesund"
+          }
+        ],
+        "vegforvaltere": [
+          {
+            "enumid": 21771,
+            "vegforvalter": "Statens vegvesen"
+          }
+        ],
+        "adresser": [
+          {
+            "navn": "Åsaneveien",
+            "adressekode": 52002
+          }
+        ],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 39
+            },
+            "strekning": {
+              "strekning": 77,
+              "delstrekning": 1,
+              "arm": false,
+              "adskilte_løp": "Med",
+              "trafikantgruppe": "K",
+              "retning": "MED",
+              "meter": 2638.446,
+              "adskilte_løp_nummer": "1-1"
+            },
+            "metrertLokasjon": {
+              "retning": "MED",
+              "kjørefelt": [
+                "1",
+                "3"
+              ]
+            },
+            "kortform": "EV39 S77D1 m2638"
+          }
+        ],
+        "stedfestinger": [
+          {
+            "type": "Punkt",
+            "veglenkesekvensid": 805617,
+            "relativPosisjon": 0.00836412,
+            "retning": "MED",
+            "kjørefelt": [
+              "1",
+              "3"
+            ],
+            "kortform": "0.00836412@805617"
+          }
+        ],
+        "geometri": {
+          "wkt": "POINT Z (-32178.466 6737228.032 31.684)",
+          "srid": 5973
+        }
+      }
+    },
+    {
+      "id": 82559832,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/45/82559832",
+      "egenskaper": [
+        {
+          "id": 10951,
+          "navn": "Timesregel, passeringsgruppe",
+          "verdi": 240016,
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 10952,
+          "navn": "Timesregel, varighet",
+          "verdi": 60,
+          "enhet": {
+            "id": 35,
+            "navn": "Minutt",
+            "kortnavn": "min"
+          },
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 11883,
+          "navn": "Operatør_Id",
+          "verdi": 100126,
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 9595,
+          "navn": "Bomstasjon_Id",
+          "verdi": 8,
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 10271,
+          "navn": "Etableringsår",
+          "verdi": 2019,
+          "egenskapstype": "Heltall"
+        },
+        {
+          "id": 1820,
+          "navn": "Takst liten bil",
+          "verdi": 36,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          },
+          "egenskapstype": "Flyttall"
+        },
+        {
+          "id": 9410,
+          "navn": "Rushtidstakst liten bil",
+          "verdi": 68,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          },
+          "egenskapstype": "Flyttall"
+        },
+        {
+          "id": 1819,
+          "navn": "Takst stor bil",
+          "verdi": 85,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          },
+          "egenskapstype": "Flyttall"
+        },
+        {
+          "id": 9411,
+          "navn": "Rushtidstakst stor bil",
+          "verdi": 149,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          },
+          "egenskapstype": "Flyttall"
+        },
+        {
+          "id": 9412,
+          "navn": "Timesregel",
+          "verdi": "Første passering gjelder",
+          "enum_id": 13257,
+          "egenskapstype": "Tekstenum"
+        },
+        {
+          "id": 10715,
+          "navn": "Link til bomstasjon",
+          "verdi": "www.ferde.no",
+          "egenskapstype": "Tekst"
+        },
+        {
+          "id": 10714,
+          "navn": "Navn bompengeanlegg (fra CS)",
+          "verdi": "Ferde AS - Bomringen Bergen",
+          "egenskapstype": "Tekst"
+        },
+        {
+          "id": 9390,
+          "navn": "Bomstasjonstype",
+          "verdi": "AutoPASS + automatisk",
+          "enum_id": 13133,
+          "egenskapstype": "Tekstenum"
+        },
+        {
+          "id": 9409,
+          "navn": "Tidsdifferensiert takst",
+          "verdi": "Ja",
+          "enum_id": 13255,
+          "egenskapstype": "Tekstenum"
+        },
+        {
+          "id": 9414,
+          "navn": "Innkrevningsretning",
+          "verdi": "Mot metrering",
+          "enum_id": 13260,
+          "egenskapstype": "Tekstenum"
+        },
+        {
+          "id": 1078,
+          "navn": "Navn bomstasjon",
+          "verdi": "Straume",
+          "egenskapstype": "Tekst"
+        },
+        {
+          "id": 9405,
+          "navn": "Rushtid ettermiddag, fra",
+          "verdi": "14:30",
+          "egenskapstype": "Tid"
+        },
+        {
+          "id": 9407,
+          "navn": "Rushtid morgen, fra",
+          "verdi": "06:30",
+          "egenskapstype": "Tid"
+        },
+        {
+          "id": 9408,
+          "navn": "Rushtid morgen, til",
+          "verdi": "08:59",
+          "egenskapstype": "Tid"
+        },
+        {
+          "id": 9406,
+          "navn": "Rushtid ettermiddag, til",
+          "verdi": "16:29",
+          "egenskapstype": "Tid"
+        }
+      ],
+      "lokasjon": {
+        "kommuner": [4601],
+        "fylker": [46],
+        "kontraktsområder": [
+          {
+            "id": 1009936819,
+            "nummer": 4604,
+            "navn": "4604 Bergen-Os-Austevoll 2021-2026"
+          },
+          {
+            "id": 1013281098,
+            "nummer": 4611,
+            "navn": "4611 Tunnel 2021-2025"
+          },
+          {
+            "id": 1022469639,
+            "nummer": 4651,
+            "navn": "E4651 Bergen"
+          },
+          {
+            "id": 1025175023,
+            "nummer": 4655,
+            "navn": "E4655 Veglys Bergen og omland"
+          }
+        ],
+        "vegforvaltere": [
+          {
+            "enumid": 21780,
+            "vegforvalter": "Vestland fylkeskommune"
+          }
+        ],
+        "adresser": [
+          {
+            "navn": "Straumeveien",
+            "adressekode": 33290
+          }
+        ],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 556
+            },
+            "strekning": {
+              "strekning": 1,
+              "delstrekning": 1,
+              "arm": false,
+              "adskilte_løp": "Nei",
+              "trafikantgruppe": "K",
+              "retning": "MED",
+              "meter": 5140.832
+            },
+            "metrertLokasjon": {
+              "retning": "MED",
+              "kjørefelt": [
+                "1",
+                "2"
+              ]
+            },
+            "kortform": "FV556 S1D1 m5141"
+          }
+        ],
+        "stedfestinger": [
+          {
+            "type": "Punkt",
+            "veglenkesekvensid": 805716,
+            "relativPosisjon": 0.20441435,
+            "retning": "MED",
+            "kjørefelt": [
+              "1",
+              "2"
+            ],
+            "kortform": "0.20441435@805716"
+          }
+        ],
+        "geometri": {
+          "wkt": "POINT Z (-36045.964 6727021.841 5.105)",
+          "srid": 5973
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 2,
+    "sidestørrelse": 2,
+    "neste": {
+      "start": "82559832:16",
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/45?inkluder=lokasjon&inkluder=egenskaper&start=82559832:16&antall=2"
+    }
+  }
+}

@@ -1,4 +1,26 @@
+import SwiftUI
+import MapKit
 
+struct MapView: View {
+    let camapaPosition: MapCameraPosition = .region(.init(center: .init(latitude: 63.40504016561072, longitude: 10.425258382949021), latitudinalMeters: 1300, longitudinalMeters: 1300))
+        
+    var body: some View {
+        Map(initialPosition: camapaPosition){
+            Marker("Toll Location", systemImage: "car", coordinate: .tollLocation)
+                
+        }
+    }
+    
+    
+}
+
+extension CLLocationCoordinate2D {
+    static let tollLocation = CLLocationCoordinate2D(latitude: 63.40504016561072, longitude: 10.425258382949021)
+}
+
+
+
+/*
 import SwiftUI
 import MapKit
 
@@ -10,12 +32,20 @@ struct MapView: View {
     )
 
     var body: some View {
+       /* Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: tolls, ) {
+                Marker("\(toll.id): \(toll.navn)", coordinate: toll.coordinate)
+                    .tint(.red)
+            }
+        */
+        
         Map {
-            ForEach(tolls) { toll in
+            
+            ForEach(tolls) {toll in
                 Marker("\(toll.id): \(toll.navn)", coordinate: toll.coordinate)
                     .tint(.red)
             }
         }
+        
         .task {
             do {
                 tolls = try await TollService.shared.fetchTollsAsync()
@@ -33,3 +63,4 @@ struct MapView: View {
   //  MapView()
 //}
  
+*/

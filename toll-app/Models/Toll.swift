@@ -1,4 +1,5 @@
-import Foundation
+/*
+ import Foundation
 import CoreLocation
  
  struct TollResponse: Decodable {
@@ -64,4 +65,7 @@ import CoreLocation
      let navn: String
      let verdi: String
  }
+
+ 
+ */
  
