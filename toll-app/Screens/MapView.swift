@@ -3,16 +3,22 @@ import MapKit
 
 struct MapView: View {
     let camapaPosition: MapCameraPosition = .region(.init(center: .init(latitude: 63.40504016561072, longitude: 10.425258382949021), latitudinalMeters: 1300, longitudinalMeters: 1300))
+    
+    let locationManager = CLLocationManager()
         
     var body: some View {
         Map(initialPosition: camapaPosition){
-            Marker("Toll Location", systemImage: "car", coordinate: .tollLocation)
-                
+           Marker("Toll Location", systemImage: "car", coordinate: .tollLocation)
+             
+            UserAnnotation()
+        }
+        .onAppear {
+            locationManager.requestWhenInUseAuthorization()
         }
     }
     
-    
 }
+
 
 extension CLLocationCoordinate2D {
     static let tollLocation = CLLocationCoordinate2D(latitude: 63.40504016561072, longitude: 10.425258382949021)

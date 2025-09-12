@@ -2,21 +2,16 @@ import SwiftUI
 import MapKit
 
 struct SearchView: View {
-    let myLocation: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 63.40926104796149, longitude: 10.420481903713338)
+    
     
     var body: some View {
-        Map{
-            Marker("My Location", coordinate: myLocation)
-                .tint(.blue)
-        }
-            
-        }
+        MapView()
         //.task {
         // The task modifier runs the async function automatically.
         //  await fetchTollsAsync()
         //}
     }
-    
+}
     // Use async/await for cleaner, more modern code.
     /*func fetchTollsAsync() async {
      

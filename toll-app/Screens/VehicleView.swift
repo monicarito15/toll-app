@@ -12,7 +12,5 @@ struct VehicleView: View {
     }
 }
 
-#Preview {
-    VehicleView()
-}
+
 

@@ -25,7 +25,7 @@ struct MainTabView: View {
                     Label("Search", systemImage: "location.fill")
                 }
                 .tag(0)
-            MapView()
+            VehicleView()
                 .tabItem {
                     Label("Vehicles", systemImage: "car.fill")
                 }
