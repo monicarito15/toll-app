@@ -1,21 +1,24 @@
 import SwiftUI
 import MapKit
+import CoreLocation
+
 
 struct MapView: View {
-    let camapaPosition: MapCameraPosition = .region(.init(center: .init(latitude: 63.405304, longitude: 10.425768), latitudinalMeters: 1300, longitudinalMeters: 1300))
+    
+    @State private var toll: [Vegobjekt] = [] // Store fetched toll objects
+    
+    let camapaPosition: MapCameraPosition = .region(.init(center: .init(latitude: 60.391262, longitude: 5.322054), latitudinalMeters: 1300, longitudinalMeters: 1300))
     
     let locationManager = CLLocationManager()
-        
+    
     var body: some View {
-        Map(initialPosition: camapaPosition){
-           Marker("Toll Location", systemImage: "car", coordinate: .tollLocation)
-             
-            
-            
+        Map(initialPosition: camapaPosition) {
+            ForEach(toll) { vegobjekt in
+                if let coordinate = vegobjekt.lokasjon.coordinates {
+                    Marker("Toll #\(vegobjekt.id)", systemImage: "car", coordinate: coordinate)
+                }
+            }
             UserAnnotation()
-            
-            
-                
         }
         .tint(.pink)
         .onAppear {
@@ -28,58 +31,23 @@ struct MapView: View {
             MapScaleView()
         }
         .mapStyle(.standard(elevation: .realistic))
+        .task {
+            do {
+                toll = try await TollService.shared.getTolls()
+            } catch GHError.invalidURL {
+                print("Invalid URL")
+            } catch GHError.invalidResponse {
+                print("Invalid Response")
+            } catch GHError.invalidData {
+                print("Invalid Data")
+            } catch {
+                print("Unexpected error: \(error).")
+            }
+        }
     }
     
-}
-
+    }
 
 extension CLLocationCoordinate2D {
     static let tollLocation = CLLocationCoordinate2D(latitude: 63.40504016561072, longitude: 10.425258382949021)
 }
-
-
-
-/*
-import SwiftUI
-import MapKit
-
-struct MapView: View {
-    @State private var tolls: [Toll] = []
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 63.40504016561072, longitude: 10.425258382949021),
-        span: MKCoordinateSpan(latitudeDelta: 5.0, longitudeDelta: 5.0)
-    )
-
-    var body: some View {
-       /* Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: tolls, ) {
-                Marker("\(toll.id): \(toll.navn)", coordinate: toll.coordinate)
-                    .tint(.red)
-            }
-        */
-        
-        Map {
-            
-            ForEach(tolls) {toll in
-                Marker("\(toll.id): \(toll.navn)", coordinate: toll.coordinate)
-                    .tint(.red)
-            }
-        }
-        
-        .task {
-            do {
-                tolls = try await TollService.shared.fetchTollsAsync()
-                if let first = tolls.first {
-                    region.center = first.coordinate
-                }
-            } catch {
-                print("Error fetching tolls: \(error.localizedDescription)")
-            }
-        }
-    }
-    
-}
-//#Preview {
-  //  MapView()
-//}
- 
-*/

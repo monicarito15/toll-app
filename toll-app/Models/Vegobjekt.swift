@@ -3,7 +3,8 @@
 //  toll-app
 //
 //  Created by Carolina Mera  on 12/09/2025.
-//
+//Data model for Vegobjekt API response
+
 import Foundation
 import CoreLocation
  
@@ -18,7 +19,6 @@ struct Vegobjekt: Identifiable, Decodable {
     let egenskaper: [Egenskap]
     let lokasjon: Lokasjon
 }
-
 
 struct Egenskap: Decodable {
     let id: Int
