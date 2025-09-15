@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import ArcGIS
 
 
 struct MapView: View {
@@ -8,6 +9,8 @@ struct MapView: View {
     @State private var toll: [Vegobjekt] = [] // Store fetched toll objects
     
     let camapaPosition: MapCameraPosition = .region(.init(center: .init(latitude: 60.391262, longitude: 5.322054), latitudinalMeters: 1300, longitudinalMeters: 1300))
+    
+
     
     let locationManager = CLLocationManager()
     

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A22633952E783CBD00CABA7A /* ArcGIS in Frameworks */ = {isa = PBXBuildFile; productRef = A22633942E783CBD00CABA7A /* ArcGIS */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		A26BAE452E6EF0D600B45F61 /* toll-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "toll-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A22633952E783CBD00CABA7A /* ArcGIS in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = "toll-app";
 			packageProductDependencies = (
+				A22633942E783CBD00CABA7A /* ArcGIS */,
 			);
 			productName = "toll-app";
 			productReference = A26BAE452E6EF0D600B45F61 /* toll-app.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = A26BAE3C2E6EF0D600B45F61;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A22633932E783CBD00CABA7A /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A26BAE462E6EF0D600B45F61 /* Products */;
 			projectDirPath = "";
@@ -322,6 +331,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A22633932E783CBD00CABA7A /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Esri/arcgis-maps-sdk-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 200.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A22633942E783CBD00CABA7A /* ArcGIS */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A22633932E783CBD00CABA7A /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */;
+			productName = ArcGIS;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A26BAE3D2E6EF0D600B45F61 /* Project object */;
 }
