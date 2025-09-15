@@ -2,7 +2,7 @@ import SwiftUI
 import MapKit
 
 struct MapView: View {
-    let camapaPosition: MapCameraPosition = .region(.init(center: .init(latitude: 63.40504016561072, longitude: 10.425258382949021), latitudinalMeters: 1300, longitudinalMeters: 1300))
+    let camapaPosition: MapCameraPosition = .region(.init(center: .init(latitude: 63.405304, longitude: 10.425768), latitudinalMeters: 1300, longitudinalMeters: 1300))
     
     let locationManager = CLLocationManager()
         
@@ -10,11 +10,24 @@ struct MapView: View {
         Map(initialPosition: camapaPosition){
            Marker("Toll Location", systemImage: "car", coordinate: .tollLocation)
              
+            
+            
             UserAnnotation()
+            
+            
+                
         }
+        .tint(.pink)
         .onAppear {
             locationManager.requestWhenInUseAuthorization()
         }
+        .mapControls {
+            MapUserLocationButton()
+            MapCompass()
+            MapPitchToggle()
+            MapScaleView()
+        }
+        .mapStyle(.standard(elevation: .realistic))
     }
     
 }
