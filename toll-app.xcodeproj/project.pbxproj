@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A22633952E783CBD00CABA7A /* ArcGIS in Frameworks */ = {isa = PBXBuildFile; productRef = A22633942E783CBD00CABA7A /* ArcGIS */; };
+		A226339E2E78591500CABA7A /* ArcGIS in Frameworks */ = {isa = PBXBuildFile; productRef = A226339D2E78591500CABA7A /* ArcGIS */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A22633952E783CBD00CABA7A /* ArcGIS in Frameworks */,
+				A226339E2E78591500CABA7A /* ArcGIS in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = "toll-app";
 			packageProductDependencies = (
-				A22633942E783CBD00CABA7A /* ArcGIS */,
+				A226339D2E78591500CABA7A /* ArcGIS */,
 			);
 			productName = "toll-app";
 			productReference = A26BAE452E6EF0D600B45F61 /* toll-app.app */;
@@ -101,7 +101,7 @@
 			mainGroup = A26BAE3C2E6EF0D600B45F61;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A22633932E783CBD00CABA7A /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */,
+				A226339C2E78591500CABA7A /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A26BAE462E6EF0D600B45F61 /* Products */;
@@ -333,7 +333,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A22633932E783CBD00CABA7A /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */ = {
+		A226339C2E78591500CABA7A /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Esri/arcgis-maps-sdk-swift.git";
 			requirement = {
@@ -344,9 +344,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A22633942E783CBD00CABA7A /* ArcGIS */ = {
+		A226339D2E78591500CABA7A /* ArcGIS */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A22633932E783CBD00CABA7A /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */;
+			package = A226339C2E78591500CABA7A /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */;
 			productName = ArcGIS;
 		};
 /* End XCSwiftPackageProductDependency section */
