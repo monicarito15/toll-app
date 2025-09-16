@@ -1,4 +1,3 @@
-
 //  Tollservice.swift
 //  toll-app
 //
@@ -30,12 +29,16 @@ struct TollService: Decodable {
         guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { // si la es 200 -> está bien, si no Error
             throw GHError.invalidResponse // si la respuesta es inválida
         }
+        // Cambio: log de la respuesta y decodificación usando VegokbjektResponse
+        print("Raw API response: ", String(data: data, encoding: .utf8) ?? "<no string>")
         //get data
         do {
             let decoder = JSONDecoder()
             decoder.keyDecodingStrategy = .convertFromSnakeCase // convierte si es q se encuentra cammelCase
-            return try decoder.decode([Vegobjekt].self, from: data)
+            let response = try decoder.decode(VegokbjektResponse.self, from: data)
+            return response.objekter
         } catch {
+            print("Decoding error: ", error)
             throw GHError.invalidData // si los datos son inválidos
             
             
@@ -46,6 +49,3 @@ struct TollService: Decodable {
     
     
 }
-
-
-

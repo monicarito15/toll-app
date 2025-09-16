@@ -8,22 +8,30 @@ struct MapView: View {
     
     @State private var toll: [Vegobjekt] = [] // Store fetched toll objects
     
-    let camaraPosition: MapCameraPosition = .region(.init(center: .init(latitude: 60.397076, longitude: 5.324383), latitudinalMeters: 1300, longitudinalMeters: 1300))
     
-
+    /*@State private var camaraPosition: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 60.397076, longitude: 5.324383),
+            latitudinalMeters: 1000,
+            longitudinalMeters: 100
+        )
+    )*/
+    let camaraPosition: MapCameraPosition = .region(.init(center: .init(latitude: 60.418006092804866, longitude: 5.312973779070781), latitudinalMeters: 1000, longitudinalMeters: 1000))
+    
     
     let locationManager = CLLocationManager()
     
     var body: some View {
         Map(initialPosition: camaraPosition) {
             ForEach(toll) { vegobjekt in
-                if let coordinate = vegobjekt.lokasjon.coordinates {
-                    Marker("Toll #\(vegobjekt.id)", systemImage: "car", coordinate: coordinate)
+                if let coordinate = vegobjekt.lokasjon.coordinates
+                {
+                    Marker("Toll #\(vegobjekt.id),", systemImage: "car", coordinate: coordinate)
                 }
             }
             UserAnnotation()
         }
-        .tint(.pink)
+        .tint(.green)
         .onAppear {
             locationManager.requestWhenInUseAuthorization()
         }

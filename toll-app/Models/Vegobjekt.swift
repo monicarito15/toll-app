@@ -15,16 +15,67 @@ import ArcGIS
 
 
 struct Vegobjekt: Identifiable, Decodable {
-    let id: Int
+    let id: String
     let href: String
     let egenskaper: [Egenskap]
     let lokasjon: Lokasjon
+
+    private enum CodingKeys: String, CodingKey {
+        case id, href, egenskaper, lokasjon
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        // id as String, Int, or Double
+        if let idString = try? container.decode(String.self, forKey: .id) {
+            id = idString
+        } else if let idInt = try? container.decode(Int.self, forKey: .id) {
+            id = String(idInt)
+        } else if let idDouble = try? container.decode(Double.self, forKey: .id) {
+            id = String(idDouble)
+        } else {
+            throw DecodingError.dataCorruptedError(forKey: .id, in: container, debugDescription: "id is not String, Int, or Double")
+        }
+        href = try container.decode(String.self, forKey: .href)
+        egenskaper = try container.decode([Egenskap].self, forKey: .egenskaper)
+        lokasjon = try container.decode(Lokasjon.self, forKey: .lokasjon)
+    }
 }
 
+
 struct Egenskap: Decodable {
-    let id: Int
+    let id: String
     let navn: String
-    let verdi: Int
+    let verdi: String
+
+    private enum CodingKeys: String, CodingKey {
+        case id, navn, verdi
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        // id as String, Int, or Double
+        if let idString = try? container.decode(String.self, forKey: .id) {
+            id = idString
+        } else if let idInt = try? container.decode(Int.self, forKey: .id) {
+            id = String(idInt)
+        } else if let idDouble = try? container.decode(Double.self, forKey: .id) {
+            id = String(idDouble)
+        } else {
+            throw DecodingError.dataCorruptedError(forKey: .id, in: container, debugDescription: "id is not String, Int, or Double")
+        }
+        navn = try container.decode(String.self, forKey: .navn)
+        // verdi as String, Int, or Double
+        if let verdiString = try? container.decode(String.self, forKey: .verdi) {
+            verdi = verdiString
+        } else if let verdiInt = try? container.decode(Int.self, forKey: .verdi) {
+            verdi = String(verdiInt)
+        } else if let verdiDouble = try? container.decode(Double.self, forKey: .verdi) {
+            verdi = String(verdiDouble)
+        } else {
+            throw DecodingError.dataCorruptedError(forKey: .verdi, in: container, debugDescription: "verdi is not String, Int, or Double")
+        }
+    }
 }
 
 struct Lokasjon: Decodable {
@@ -42,7 +93,13 @@ struct Lokasjon: Decodable {
               let easting = Double(components[0]),
               let northing = Double(components[1]) else { return nil }
         // Use Esri SDK to convert UTM to WGS84
-        return convertUTMToWGS84(easting: easting, northing: northing)
+        //return convertUTMToWGS84(easting: easting, northing: northing)
+        
+        if let coord = convertUTMToWGS84(easting: easting, northing: northing) {
+                    print("Converted UTM (\(easting), \(northing)) → WGS84 (\(coord.latitude), \(coord.longitude))")
+                    return coord
+                }
+                return nil
     }
     
 }
@@ -53,11 +110,7 @@ struct Geometri: Decodable {
     let srid: Int
 }
 
-import ArcGIS
-import CoreLocation
 
-import ArcGIS
-import CoreLocation
 
 func convertUTMToWGS84(easting: Double, northing: Double) -> CLLocationCoordinate2D? {
     // SRID 5973 = EUREF89 / UTM zone 32N
@@ -71,8 +124,3 @@ func convertUTMToWGS84(easting: Double, northing: Double) -> CLLocationCoordinat
     }
     return nil
 }
-
-
-
-
-
