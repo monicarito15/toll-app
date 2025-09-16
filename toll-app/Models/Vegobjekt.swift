@@ -15,36 +15,14 @@ import ArcGIS
 
 
 struct Vegobjekt: Identifiable, Decodable {
-    let id: String
+    let id: Int
     let href: String
     let egenskaper: [Egenskap]
     let lokasjon: Lokasjon
-
-    private enum CodingKeys: String, CodingKey {
-        case id, href, egenskaper, lokasjon
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        // id as String, Int, or Double
-        if let idString = try? container.decode(String.self, forKey: .id) {
-            id = idString
-        } else if let idInt = try? container.decode(Int.self, forKey: .id) {
-            id = String(idInt)
-        } else if let idDouble = try? container.decode(Double.self, forKey: .id) {
-            id = String(idDouble)
-        } else {
-            throw DecodingError.dataCorruptedError(forKey: .id, in: container, debugDescription: "id is not String, Int, or Double")
-        }
-        href = try container.decode(String.self, forKey: .href)
-        egenskaper = try container.decode([Egenskap].self, forKey: .egenskaper)
-        lokasjon = try container.decode(Lokasjon.self, forKey: .lokasjon)
-    }
 }
 
-
 struct Egenskap: Decodable {
-    let id: String
+    let id: Int
     let navn: String
     let verdi: String
 
@@ -52,20 +30,14 @@ struct Egenskap: Decodable {
         case id, navn, verdi
     }
 
+    // Decoding solo para manejar verdi por que puede estae como String, Int, o Double
     init(from decoder: Decoder) throws {
+        // id y navn se quedan con sus respectivos tipos. Cuando se usa init(from decoder:) personalizado, se tiene que decodificar manualmente todos los campos de la struct, no solo el q me interesa
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        // id as String, Int, or Double
-        if let idString = try? container.decode(String.self, forKey: .id) {
-            id = idString
-        } else if let idInt = try? container.decode(Int.self, forKey: .id) {
-            id = String(idInt)
-        } else if let idDouble = try? container.decode(Double.self, forKey: .id) {
-            id = String(idDouble)
-        } else {
-            throw DecodingError.dataCorruptedError(forKey: .id, in: container, debugDescription: "id is not String, Int, or Double")
-        }
+        id = try container.decode(Int.self, forKey: .id)
         navn = try container.decode(String.self, forKey: .navn)
-        // verdi as String, Int, or Double
+        
+        // verdi
         if let verdiString = try? container.decode(String.self, forKey: .verdi) {
             verdi = verdiString
         } else if let verdiInt = try? container.decode(Int.self, forKey: .verdi) {

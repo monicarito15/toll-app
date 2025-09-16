@@ -31,7 +31,7 @@ struct MapView: View {
             }
             UserAnnotation()
         }
-        .tint(.green)
+        .tint(.red)
         .onAppear {
             locationManager.requestWhenInUseAuthorization()
         }
