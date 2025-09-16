@@ -16,7 +16,7 @@ struct MapView: View {
             longitudinalMeters: 100
         )
     )*/
-    let camaraPosition: MapCameraPosition = .region(.init(center: .init(latitude: 60.418006092804866, longitude: 5.312973779070781), latitudinalMeters: 1000, longitudinalMeters: 1000))
+    let camaraPosition: MapCameraPosition = .region(.init(center: .init(latitude: 60.418006092804866, longitude: 5.312973779070781), latitudinalMeters: 1500, longitudinalMeters: 1500))
     
     
     let locationManager = CLLocationManager()
@@ -26,7 +26,28 @@ struct MapView: View {
             ForEach(toll) { vegobjekt in
                 if let coordinate = vegobjekt.lokasjon.coordinates
                 {
-                    Marker("Toll #\(vegobjekt.id),", systemImage: "car", coordinate: coordinate)
+                    
+                    let tollName = vegobjekt.egenskaper.first(where: { $0.navn == "Navn bomstasjon" })?.verdi
+                        ?? vegobjekt.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" })?.verdi
+                        ?? "Unknown"
+
+                    
+                    
+
+                    let labelText = "Toll #\(vegobjekt.id) - \(tollName)"
+                    
+                    Annotation(labelText, coordinate: coordinate){
+                        Label(labelText, systemImage: "car")
+                            .labelStyle(.iconOnly)
+                            .font(.title)
+                            .shadow(radius: 5)
+                            .foregroundColor(.blue)
+                           
+                      
+                               
+                }
+                    //Marker("Toll #\(vegobjekt.id),", systemImage: "car", coordinate: coordinate)
+                    
                 }
             }
             UserAnnotation()

@@ -11,6 +11,7 @@ import ArcGIS
  
  struct VegokbjektResponse: Decodable {
      let objekter: [Vegobjekt]
+     
  }
 
 
@@ -24,7 +25,8 @@ struct Vegobjekt: Identifiable, Decodable {
 struct Egenskap: Decodable {
     let id: Int
     let navn: String
-    let verdi: String
+    let verdi: String?
+    
 
     private enum CodingKeys: String, CodingKey {
         case id, navn, verdi
