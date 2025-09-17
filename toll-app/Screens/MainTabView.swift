@@ -40,7 +40,7 @@ struct MainTabView: View {
         .sheet(isPresented: $showSheet) {
             VStack {
                 CalculatorView()
-                // Aquí puedes poner el contenido del sheet
+                
             }
             .presentationDetents([.medium, .large]) // Permite subir/bajar el sheet
         }

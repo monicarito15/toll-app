@@ -23,14 +23,15 @@ struct TollService: Decodable {
         guard let url = URL(string: endpoint) else { //getting the URL
             throw GHError.invalidURL } // si hay un error de URL inválida
         
-        
         let (data, response) = try await URLSession.shared.data(from: url)
-        //get response si no hay un error
-        guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { // si la es 200 -> está bien, si no Error
+        
+        // response si no hay un error
+        guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { // si la respuesta 200 -> está bien
             throw GHError.invalidResponse // si la respuesta es inválida
         }
-        // Cambio: log de la respuesta y decodificación usando VegokbjektResponse
+
         print("Raw API response: ", String(data: data, encoding: .utf8) ?? "<no string>")
+        
         //get data
         do {
             let decoder = JSONDecoder()
