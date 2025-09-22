@@ -11,6 +11,8 @@ struct CalculatorView: View {
     @State private var selectedVehicleType = "Car"
     @State private var selectedDateTime = Date()
     
+    @State private var locationManager = LocationManager()
+    
     let fuelTypes = ["Gasoline", "Diesel", "Electric", "Hybrid"]
     let vehicleTypes = ["Car", "Truck", "Motorcycle", "Bus"]
     
@@ -20,11 +22,26 @@ struct CalculatorView: View {
             Form {
                 
                 Section(header: Text("Find tolls between locations")) {
-                    TextField ("From", text: $from)
-                        .padding()
-                        .onSubmit {
-                            focus = .to
+                    ZStack (alignment: .trailing){
+                        TextField ("From", text: $from)
+                            .padding()
+                            .onSubmit {
+                                focus = .to
+                            }
+                        Button(action: {
+                            locationManager.requestLocation()
+                            
+                        }) {
+                            Image(systemName: "location.fill")
+                                .foregroundColor(.blue)
                         }
+                        .onReceive(locationManager.$currentAddress) { address in
+                            if let address = address, !address.isEmpty {
+                                from = address
+                            }
+                        }
+                    }
+                    
                     
                         .focused($focus, equals: .from)
                     TextField ("To", text: $to)

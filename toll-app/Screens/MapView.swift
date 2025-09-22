@@ -15,27 +15,30 @@ struct MapView: View {
     
 
     @State private var route: MKRoute? // Store the calculated route
-    
-    
     @State private var toll: [Vegobjekt] = [] // Store fetched toll objects
     
-    
-    /*@State private var camaraPosition: MapCameraPosition = .region(
-     MKCoordinateRegion(
-     center: CLLocationCoordinate2D(latitude: 60.397076, longitude: 5.324383),
-     latitudinalMeters: 1000,
-     longitudinalMeters: 100
-     )
-     )*/
+    @StateObject private var locationManager = LocationManager()
+
     let camaraPosition: MapCameraPosition = .region(.init(center: .init(latitude: 60.418006092804866, longitude: 5.312973779070781), latitudinalMeters: 1500, longitudinalMeters: 1500))
     
     
-    let locationManager = CLLocationManager()
+    //let locationManager = CLLocationManager()
     
     var body: some View {
         VStack {
             ZStack {
                 Map(initialPosition: camaraPosition) {
+                    
+                    // user location
+                    if let userLocation = locationManager.userLocation {
+                        // Center map on user location
+                        Marker("My location", coordinate: userLocation)
+                    }
+                        
+                    //Marker("Destination", coordinate: CLLocationCoordinate2D(latitude: 60.418006092804866, longitude: 5.312973779070781))
+                    
+                    
+                    // tolls
                     ForEach(toll) { vegobjekt in
                         if let coordinate = vegobjekt.lokasjon.coordinates {
                             let tollName = vegobjekt.egenskaper.first(where: { $0.navn == "Navn bomstasjon" })?.verdi
@@ -48,10 +51,11 @@ struct MapView: View {
                                     .font(.title)
                                     .shadow(radius: 5)
                                     .foregroundColor(.blue)
+                                
                             }
                         }
                     }
-                    UserAnnotation()
+                   // UserAnnotation()
                     if let route = route {
                         MapPolyline(route)
                             .stroke(.blue, lineWidth: 5)
@@ -66,22 +70,21 @@ struct MapView: View {
                 }
                 .mapStyle(.standard(elevation: .realistic))
             }
-            Button("Calcular ruta entre dos tolls") {
-                if toll.count >= 2,
-                   let coord1 = toll[0].lokasjon.coordinates,
-                   let coord2 = toll[1].lokasjon.coordinates {
-                    // For test: draw route between first two tolls
-                    getDirections(from: coord1, to: coord2)
-                } else if let firstToll = toll.first?.lokasjon.coordinates {
-                    // For test: draw route from user location to first toll
-                    getDirections(to: firstToll)
+            Button("Calcular ruta") {
+                if let userLocation = locationManager.userLocation,
+                   let firstToll = toll.first?.lokasjon.coordinates {
+                    print("Calculate route from \(userLocation) to \(firstToll)")
+                    getDirections(from: userLocation, to: firstToll)
+                } else {
+                    print("Not found user location and toll")
                 }
             }
             .padding()
         }
-        .onAppear {
-            locationManager.requestWhenInUseAuthorization()
-        }
+        //.onAppear {
+          //  locationManager.requestWhenInUseAuthorization()
+            
+        //}
         .task {
             do {
                 toll = try await TollService.shared.getTolls()
@@ -97,47 +100,22 @@ struct MapView: View {
         }
     }
     
-    func getUserLocation() async -> CLLocationCoordinate2D? {
-        let updates = CLLocationUpdate.liveUpdates() // Get live location updates
-        
-        do {
-            let update = try await updates.first { $0.location?.coordinate != nil}
-            return update?.location?.coordinate
-            
-        } catch {
-            print("Error getting user location: \(error)")
-        }
-        return nil
-    }
-    
-    // Draw route from user location to destination
-    func getDirections(to destination: CLLocationCoordinate2D)  {
-        Task {
-            guard let userLocation = await getUserLocation() else { return }
-            print("User location: \(userLocation.latitude), \(userLocation.longitude)")
-            
-                let request = MKDirections.Request()
-            request.source = MKMapItem(placemark: .init(coordinate: userLocation))
-            request.destination = MKMapItem(placemark: .init(coordinate: destination))
-            
-            do {
-                let directions = try await MKDirections(request: request).calculate()
-                route = directions.routes.first // Store the first route
-            } catch {
-                print("Error calculating directions: \(error)")
-            }
-        }
-    }
-    
-    // Draw route between two coordinates
+    // Function for draw route between two coordinates
     func getDirections(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) {
         Task {
             let request = MKDirections.Request()
             request.source = MKMapItem(placemark: .init(coordinate: from))
             request.destination = MKMapItem(placemark: .init(coordinate: to))
+            request.transportType = .automobile
             do {
                 let directions = try await MKDirections(request: request).calculate()
-                route = directions.routes.first
+                if let firstRoute = directions.routes.first {
+                    print("Route distance: \(firstRoute.distance) meters")
+                    print("Route estimated duration: \(firstRoute.expectedTravelTime) seconds")
+                    route = firstRoute
+                } else {
+                    print("Not found a route")
+                }
             } catch {
                 print("Error calculating directions: \(error)")
             }
