@@ -81,10 +81,12 @@ struct MapView: View {
             }
             .padding()
         }
-        //.onAppear {
-          //  locationManager.requestWhenInUseAuthorization()
+        .onAppear {
+            if let userLocation = locationManager.userLocation {
+                getDirectionsToAddress(from: userLocation, toAddress: to )
+            }
             
-        //}
+        }
         .task {
             do {
                 toll = try await TollService.shared.getTolls()
@@ -119,6 +121,23 @@ struct MapView: View {
             } catch {
                 print("Error calculating directions: \(error)")
             }
+        }
+    }
+    
+    // fuction to get direction TO address - Geocoding = de direccion a coordenadas
+    func getDirectionsToAddress (from: CLLocationCoordinate2D, toAddress: String) {
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(toAddress) { placemaks, error in
+            if let error = error {
+                print("Geocoder error: \(error)")
+                return
+            }
+            if let destination = placemaks?.first?.location?.coordinate {
+                getDirections(from: from, to: destination)
+            } else {
+                print("No destination found for \(toAddress)")
+            }
+            
         }
     }
 }
