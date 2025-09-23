@@ -6,13 +6,30 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A235F7152E8401C5000D9452 /* ArcGIS in Frameworks */ = {isa = PBXBuildFile; productRef = A235F7142E8401C5000D9452 /* ArcGIS */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		A26BAE452E6EF0D600B45F61 /* toll-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "toll-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A235F7122E840117000D9452 /* Exceptions for "toll-app" folder in "toll-app" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A26BAE442E6EF0D600B45F61 /* toll-app */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A26BAE472E6EF0D600B45F61 /* toll-app */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A235F7122E840117000D9452 /* Exceptions for "toll-app" folder in "toll-app" target */,
+			);
 			path = "toll-app";
 			sourceTree = "<group>";
 		};
@@ -23,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A235F7152E8401C5000D9452 /* ArcGIS in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +83,7 @@
 			);
 			name = "toll-app";
 			packageProductDependencies = (
+				A235F7142E8401C5000D9452 /* ArcGIS */,
 			);
 			productName = "toll-app";
 			productReference = A26BAE452E6EF0D600B45F61 /* toll-app.app */;
@@ -78,7 +97,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1640;
-				LastUpgradeCheck = 1640;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					A26BAE442E6EF0D600B45F61 = {
 						CreatedOnToolsVersion = 16.4;
@@ -94,6 +113,9 @@
 			);
 			mainGroup = A26BAE3C2E6EF0D600B45F61;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A235F7132E8401C5000D9452 /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A26BAE462E6EF0D600B45F61 /* Products */;
 			projectDirPath = "";
@@ -183,6 +205,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -239,6 +262,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -252,7 +276,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = "toll-app/Info.plist";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need the location to show it on the map";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -280,7 +305,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = "toll-app/Info.plist";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need the location to show it on the map";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -322,6 +348,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A235F7132E8401C5000D9452 /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Esri/arcgis-maps-sdk-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 200.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A235F7142E8401C5000D9452 /* ArcGIS */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A235F7132E8401C5000D9452 /* XCRemoteSwiftPackageReference "arcgis-maps-sdk-swift" */;
+			productName = ArcGIS;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A26BAE3D2E6EF0D600B45F61 /* Project object */;
 }
