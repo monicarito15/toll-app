@@ -49,7 +49,7 @@ struct CalculatorView: View {
                     .focused($focus, equals: .from)
                     
                     
-                    // ToDirections
+                    // ToDirectionsView
                     Button(action: {
                         showToDirections = true
                     }) {

@@ -3,6 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @State private var showSheet = false
     @State private var selectedTab = 0
+    @State private var didAppearOnce = false // para saber si ya se abrio el sheet alguna vez
     
     @State private var currentDetent: PresentationDetent = .medium // padre del estado del tamano global
 
@@ -13,10 +14,15 @@ struct MainTabView: View {
             get: { selectedTab },
             set: { newValue in
                 if newValue == 0 {
-                    showSheet = false // resetea el sheet aunque este abierto,
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // espera 0.1 segundos para que el swiftui tenga para procesar el cambio de tab
-                        showSheet = true
-                        
+                    if didAppearOnce {
+                        showSheet = false // cierra el sheet si ya se habia abierto antes
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // espera 0.1 segundos para que el swiftui tenga para procesar el cambio de tab
+                            showSheet = true
+                            
+                        }
+                    } else {
+                        showSheet = true // la primera vez que se abre el tab, abre el sheet
+                        didAppearOnce = true
                     }
                 }
                 selectedTab = newValue
@@ -25,8 +31,9 @@ struct MainTabView: View {
         TabView(selection: tabBinding) {
             SearchView(showSheet: $showSheet, currentDetent: $currentDetent)
                 .tabItem {
-                    Label("Search", systemImage: "location.fill")
+                    Label("Travel", systemImage: "magnifyingglass.circle.fill")
                 }
+            
                 .tag(0)
             VehicleView()
                 .tabItem {

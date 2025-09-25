@@ -20,6 +20,9 @@ struct SearchView: View {
                 CalculatorView (currentDetent: $currentDetent)
             }
             .presentationDetents([.medium, .large], selection: $currentDetent)
+            .onAppear {
+                currentDetent = .medium // Asegura que el sheet siempre se abra medium
+            }
         }
     }
         
