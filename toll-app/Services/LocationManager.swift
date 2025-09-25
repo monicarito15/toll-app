@@ -44,7 +44,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             self.authorizationStatus = manager.authorizationStatus
         }
     }
-    
+    // reverseGeocoding - convertir coordenadas a direccion
     func reverseGeocode(location: CLLocation){
         geocoder.reverseGeocodeLocation(location) { placemark, error in
             if let placemark = placemark?.first{
