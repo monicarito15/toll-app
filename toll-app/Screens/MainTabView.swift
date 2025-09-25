@@ -3,6 +3,9 @@ import SwiftUI
 struct MainTabView: View {
     @State private var showSheet = false
     @State private var selectedTab = 0
+    
+    @State private var currentDetent: PresentationDetent = .medium // padre del estado del tamano global
+
 
     var body: some View {
         //logica para resetear el sheet si ya esta abierto
@@ -20,7 +23,7 @@ struct MainTabView: View {
             }
         )
         TabView(selection: tabBinding) {
-            SearchView()
+            SearchView(showSheet: $showSheet, currentDetent: $currentDetent)
                 .tabItem {
                     Label("Search", systemImage: "location.fill")
                 }
@@ -38,11 +41,9 @@ struct MainTabView: View {
             
         }
         .sheet(isPresented: $showSheet) {
-            VStack {
-                CalculatorView()
-                
-            }
-            .presentationDetents([.medium, .large]) // Permite subir/bajar el sheet
+         
+                CalculatorView(currentDetent: $currentDetent)
+            .presentationDetents([.medium, .large], selection: $currentDetent)
         }
     }
 }

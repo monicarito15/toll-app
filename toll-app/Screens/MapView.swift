@@ -19,14 +19,14 @@ struct MapView: View {
     
     @StateObject private var locationManager = LocationManager()
 
-    let camaraPosition: MapCameraPosition = .region(.init(center: .init(latitude: 60.418006092804866, longitude: 5.312973779070781), latitudinalMeters: 1500, longitudinalMeters: 1500))
+    //let camaraPosition: MapCameraPosition = .region(.init(center: .init(latitude: 60.418006092804866, longitude: 5.312973779070781), latitudinalMeters: 1500, longitudinalMeters: 1500))
     
     
     
     var body: some View {
         VStack {
             ZStack {
-                Map(initialPosition: camaraPosition) {
+                Map() {
                     
                     // user location
                     if let userLocation = locationManager.userLocation {

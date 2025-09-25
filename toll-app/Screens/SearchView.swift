@@ -3,6 +3,8 @@ import MapKit
 
 struct SearchView: View {
     
+    @Binding var showSheet: Bool
+    @Binding var currentDetent : PresentationDetent
     
     var body: some View {
         MapView(
@@ -12,6 +14,14 @@ struct SearchView: View {
                         fuelType: "Gasoline",
                         dateTime: Date()
         )
+        
+        .sheet(isPresented: $showSheet) {
+            VStack {
+                CalculatorView (currentDetent: $currentDetent)
+            }
+            .presentationDetents([.medium, .large], selection: $currentDetent)
+        }
     }
+        
 }
 

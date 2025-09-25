@@ -4,12 +4,17 @@ struct CalculatorView: View {
     @State private var from = ""
     @State private var to = ""
     @State private var showMap = false
+    @State private var showToDirections = false
+    @Binding var currentDetent: PresentationDetent
+
     
     @FocusState private var focus: FormFieldFocus?
     
     @State private var selectedFuelType = "Gasoline"
     @State private var selectedVehicleType = "Car"
     @State private var selectedDateTime = Date()
+    
+    
     
     @State private var locationManager = LocationManager()
     
@@ -41,20 +46,31 @@ struct CalculatorView: View {
                             }
                         }
                     }
+                    .focused($focus, equals: .from)
                     
                     
-                        .focused($focus, equals: .from)
-                    TextField ("To", text: $to)
-                        .padding()
-                        .onSubmit {
-                            focus = nil
+                    // ToDirections
+                    Button(action: {
+                        showToDirections = true
+                    }) {
+                        HStack {
+                            Text(to.isEmpty ? "To" : to)
+                           
+                            .foregroundColor(to.isEmpty ? .gray : .primary)
+                                
+                            }
+                            .padding()
                         }
-                        .focused($focus, equals: .to)
+                    
+                    .focused($focus, equals: .to)
+                    
+                    
+                    
                     DatePicker("Date and Time",
                                selection: $selectedDateTime,
                                displayedComponents: [.date, .hourAndMinute])
                 }
-               
+                
                 Section(header: Text("Vehicle Information")) {
                     Picker("Select Vehicle Type", selection: $selectedVehicleType) {
                         ForEach(vehicleTypes, id: \.self) { type in
@@ -73,15 +89,15 @@ struct CalculatorView: View {
                     
                     Button("Calculate route") {
                         showMap = true
-                    
+                        
                     }
                     .sheet(isPresented: $showMap) {
-                    MapView(
-                    from: from,
-                    to:to,
-                    vehicleType: selectedVehicleType,
-                    fuelType: selectedFuelType,
-                    dateTime: selectedDateTime
+                        MapView(
+                            from: from,
+                            to:to,
+                            vehicleType: selectedVehicleType,
+                            fuelType: selectedFuelType,
+                            dateTime: selectedDateTime
                         )
                     }
                     .padding()
@@ -93,13 +109,13 @@ struct CalculatorView: View {
                     
                 }
                 
-                    
+                
                 Section(header: Text("Nearby tolls")) {
                     SheetScrollView()
                     
                 }
-              
                 
+            
             } // Form
             
             
@@ -114,13 +130,19 @@ struct CalculatorView: View {
             }
         }
         
-        
-        
-        
         .onAppear {
             focus = .from
         }
-    }
+        
+        .sheet(isPresented: $showToDirections){
+            ToDirectionsView(searchText: $to, currentDetent: $currentDetent)
+                .presentationDetents([.medium, .large], selection: $currentDetent)
+            }
+        }
+    
+    
+    
+    
     enum FormFieldFocus: Hashable {
         case from
         case to
