@@ -19,9 +19,13 @@ struct ToDirectionsView : View {
     @StateObject private var locationManager = LocationManager()
     @State private var searchResults: [MKMapItem] = []
     
-    @State private var recentSearches: [String] = []
+    @State private var recentSearches: [RecentSearch] = []
     @AppStorage("recentSearches") private var recentSearchesData: Data = Data()
     
+    struct RecentSearch : Codable,Hashable {
+        let name : String
+        let address: String
+    }
   
     
     var body: some View {
@@ -39,7 +43,8 @@ struct ToDirectionsView : View {
                     
                         .onSubmit { // al hacer enter dismiss y regresa al main sheet
                             dismiss()
-                            saveSearch(searchText)
+                            saveSearch(searchText, address: searchText)
+
                         }
                         .padding()
                         .cornerRadius(5)
@@ -63,14 +68,25 @@ struct ToDirectionsView : View {
                             .foregroundColor(.gray)
                         
                         ForEach(recentSearches, id: \.self) { item in
-                            Text(item)
-                                .padding()
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                            VStack(alignment: .leading) {
+                                Text(item.name)
+                                    .font(.headline)
+                                Text(item.address)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.vertical,6)
+                            .padding(.horizontal)
+                            .frame(maxWidth: .infinity,alignment: .leading )
+                            .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                            
                             
                                 .onTapGesture {
-                                    searchText = item // Coloca esa búsqueda en el campo de texto
-                                    searchAddresses(query: item) // Ejecuta la función de búsqueda con ese texto
+                                    searchText = item.name // Coloca esa búsqueda en el campo de texto
+                                    //searchText = item.address
+                                    searchAddresses(query: item.name)
+                                    dismiss()
                                 }
                                
                                                 
@@ -94,8 +110,10 @@ struct ToDirectionsView : View {
                     .padding(.vertical, 5)
                     .onTapGesture {
                         // Acción al seleccionar una dirección
-                        searchText = item.name ?? ""
-                        saveSearch(item.name ?? "")
+                        let name = item.name ?? "Unknown"
+                        let address = item.placemark.title ?? "No Address"
+                        searchText = name
+                        saveSearch(name,address: address)
                         
                         searchResults = [] // Borra los resultados de búsqueda
                         dismiss() // cierra el sheet al seleccionar la direccion
@@ -154,24 +172,31 @@ struct ToDirectionsView : View {
     }
     
     // Guarda una nueva busqueda
-    func saveSearch(_ text: String){
-        guard !text.isEmpty else { return } // Si el texto está vacío, no hace nada (evita guardar cadenas vacías)
-        if !recentSearches.contains(text){ // Solo guarda si la búsqueda no está repetida
-            recentSearches.insert(text, at:0) // lo agrega al principio
-            if recentSearches.count > 5 { // Si hay más de 5 búsquedas guardadas
+    func saveSearch(_ name: String, address: String) {
+        guard !name.isEmpty else { return } // No guarda búsquedas vacías
+        
+        // Evita duplicados (solo si no existe con el mismo nombre y dirección)
+        if !recentSearches.contains(where: { $0.name == name && $0.address == address }) {
+            let newSearch = RecentSearch(name: name, address: address)
+            recentSearches.insert(newSearch, at: 0)
+            
+            // Mantiene solo las últimas 5 búsquedas
+            if recentSearches.count > 5 {
                 recentSearches.removeLast()
             }
-            // Convierte la lista recentSearches en datos (Data) usando JSON para guardarla en UserDefaults
+            
+            // Guarda la lista en AppStorage
             if let data = try? JSONEncoder().encode(recentSearches) {
-                recentSearchesData = data // // Guarda esos datos codificados en @AppStorage
+                recentSearchesData = data
             }
         }
     }
+
     
     // Carga las busquedas guardadas
     func loadRecentSearch(){
         // Intenta decodificar (leer) la lista guardada en @AppStorage
-        if let decoded = try? JSONDecoder().decode([String].self, from: recentSearchesData) {
+        if let decoded = try? JSONDecoder().decode([RecentSearch].self, from: recentSearchesData) {
             recentSearches = decoded // Si la decodificación funciona, asigna las búsquedas guardadas a la variable recentSearches
         }
     }
