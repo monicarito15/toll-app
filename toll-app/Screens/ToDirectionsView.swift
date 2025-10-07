@@ -42,8 +42,16 @@ struct ToDirectionsView : View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                     
                         .onSubmit { // al hacer enter dismiss y regresa al main sheet
-                            dismiss()
-                            saveSearch(searchText, address: searchText)
+                            if let first = searchResults.first {
+                                let name = first.name ?? searchText
+                                let address = first.placemark.title ?? searchText
+                                saveSearch(searchText, address: searchText)
+                            }
+                            // Limpiar y cerrar
+                            DispatchQueue.main.async {
+                                searchResults = [] // Borra los resultados de búsqueda
+                                dismiss() // cierra el sheet al seleccionar la direccion
+                            }
 
                         }
                         .padding()
@@ -78,15 +86,18 @@ struct ToDirectionsView : View {
                             .padding(.vertical,6)
                             .padding(.horizontal)
                             .frame(maxWidth: .infinity,alignment: .leading )
-                            .background(Color(.systemGray6))
-                                .cornerRadius(8)
-                            
                             
                                 .onTapGesture {
-                                    searchText = item.name // Coloca esa búsqueda en el campo de texto
-                                    //searchText = item.address
-                                    searchAddresses(query: item.name)
-                                    dismiss()
+                                    searchText = item.name
+                                        searchAddresses(query: item.name)
+                                        saveSearch(item.name, address: item.address)
+                                   
+                                    
+                                    
+                                    DispatchQueue.main.async {
+                                        searchResults = [] // Borra los resultados de búsqueda
+                                        dismiss() // cierra el sheet al seleccionar la direccion
+                                    }
                                 }
                                
                                                 
@@ -115,8 +126,12 @@ struct ToDirectionsView : View {
                         searchText = name
                         saveSearch(name,address: address)
                         
-                        searchResults = [] // Borra los resultados de búsqueda
-                        dismiss() // cierra el sheet al seleccionar la direccion
+                        DispatchQueue.main.async {
+                            searchResults = [] // Borra los resultados de búsqueda
+                            dismiss() // cierra el sheet al seleccionar la direccion
+                        }
+                            
+                        
                     }
                     
                     
@@ -174,7 +189,8 @@ struct ToDirectionsView : View {
     // Guarda una nueva busqueda
     func saveSearch(_ name: String, address: String) {
         guard !name.isEmpty else { return } // No guarda búsquedas vacías
-        
+        recentSearches.removeAll { $0.name.lowercased() == name.lowercased() }
+
         // Evita duplicados (solo si no existe con el mismo nombre y dirección)
         if !recentSearches.contains(where: { $0.name == name && $0.address == address }) {
             let newSearch = RecentSearch(name: name, address: address)
