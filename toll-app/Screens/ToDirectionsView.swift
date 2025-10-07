@@ -14,9 +14,15 @@ struct ToDirectionsView : View {
     
     @Binding var searchText : String
     @Binding var currentDetent: PresentationDetent
+    @Environment(\.dismiss) private var dismiss
     
     @StateObject private var locationManager = LocationManager()
     @State private var searchResults: [MKMapItem] = []
+    
+    @State private var recentSearches: [String] = []
+    @AppStorage("recentSearches") private var recentSearchesData: Data = Data()
+    
+  
     
     var body: some View {
         
@@ -30,12 +36,17 @@ struct ToDirectionsView : View {
                     
                     TextField("Search", text: $searchText)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                        //.textInputAutocapitalization(.words)
+                    
+                        .onSubmit { // al hacer enter dismiss y regresa al main sheet
+                            dismiss()
+                            saveSearch(searchText)
+                        }
                         .padding()
                         .cornerRadius(5)
                         .onChange(of: searchText) { value, _ in
-                            searchAddresses(query: value)
-                        }
+                                        searchAddresses(query: value)
+                                                }
+                       
                     
                 }
                 .padding(12)
@@ -43,11 +54,35 @@ struct ToDirectionsView : View {
                 
                 
                 
+                // Muestra las busquedas mas recientes solo si no se esta escribiendo
+                if !recentSearches.isEmpty && searchText.isEmpty { // solo muestra: si el recentsearch no esta vacio y el searchtext esta vacio
+                    VStack (alignment: .leading) {
+                        Text("Recent search")
+                            .padding()
+                            .font(.headline .bold())
+                            .foregroundColor(.gray)
+                        
+                        ForEach(recentSearches, id: \.self) { item in
+                            Text(item)
+                                .padding()
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                            
+                                .onTapGesture {
+                                    searchText = item // Coloca esa búsqueda en el campo de texto
+                                    searchAddresses(query: item) // Ejecuta la función de búsqueda con ese texto
+                                }
+                               
+                                                
+                        }
+                       
+
+                    }
+                    
+                    
+                }
                 
-                Divider()
-                
-               
-                
+                // lista de las direcciones
                 List(searchResults, id: \.self) { item in
                     VStack(alignment: .leading) {
                         Text(item.name ?? "Unknown")
@@ -60,25 +95,33 @@ struct ToDirectionsView : View {
                     .onTapGesture {
                         // Acción al seleccionar una dirección
                         searchText = item.name ?? ""
-                        // Cierra el sheet al seleccionar una dirección
-                        currentDetent = .medium // Cambia a medium antes de cerrar
-                        // Aquí podrías agregar lógica adicional, como actualizar un estado en el padre
-                        searchResults = [] // Limpia los resultados de búsqueda
+                        saveSearch(item.name ?? "")
                         
-                    }
-
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .principal) {
-                            Text("Directions")
-                                .font(.system(size:30, weight: .bold))
-                                .foregroundColor(.gray)
-                        }
+                        searchResults = [] // Borra los resultados de búsqueda
+                        dismiss() // cierra el sheet al seleccionar la direccion
                     }
                     
+                    
+                } //End list
+                
+               
+            
+                
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text("Directions")
+                            .font(.system(size:30, weight: .bold))
+                            .foregroundColor(.gray)
+                    }
                 }
                 
-                .presentationDetents([.medium, .large], selection: $currentDetent) // usa el mismo binding
+                .presentationDetents([.medium, .large], selection: $currentDetent)
+                .onAppear {
+                    currentDetent = .large
+                    searchText = "" //clear the textfiel search
+                    loadRecentSearch()
+                }
             }
         }
     }
@@ -109,6 +152,31 @@ struct ToDirectionsView : View {
             }
         }
     }
+    
+    // Guarda una nueva busqueda
+    func saveSearch(_ text: String){
+        guard !text.isEmpty else { return } // Si el texto está vacío, no hace nada (evita guardar cadenas vacías)
+        if !recentSearches.contains(text){ // Solo guarda si la búsqueda no está repetida
+            recentSearches.insert(text, at:0) // lo agrega al principio
+            if recentSearches.count > 5 { // Si hay más de 5 búsquedas guardadas
+                recentSearches.removeLast()
+            }
+            // Convierte la lista recentSearches en datos (Data) usando JSON para guardarla en UserDefaults
+            if let data = try? JSONEncoder().encode(recentSearches) {
+                recentSearchesData = data // // Guarda esos datos codificados en @AppStorage
+            }
+        }
+    }
+    
+    // Carga las busquedas guardadas
+    func loadRecentSearch(){
+        // Intenta decodificar (leer) la lista guardada en @AppStorage
+        if let decoded = try? JSONDecoder().decode([String].self, from: recentSearchesData) {
+            recentSearches = decoded // Si la decodificación funciona, asigna las búsquedas guardadas a la variable recentSearches
+        }
+    }
+    
+    
 }
         
     
