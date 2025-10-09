@@ -9,20 +9,20 @@ import Foundation
 import CoreLocation
 import ArcGIS
  
- struct VegokbjektResponse: Decodable {
+ struct VegokbjektResponse: Codable{
      let objekter: [Vegobjekt]
      
  }
 
 
-struct Vegobjekt: Identifiable, Decodable {
+struct Vegobjekt: Identifiable,Codable {
     let id: Int
     let href: String
     let egenskaper: [Egenskap]
     let lokasjon: Lokasjon
 }
 
-struct Egenskap: Decodable {
+struct Egenskap: Codable {
     let id: Int
     let navn: String
     let verdi: String?
@@ -31,6 +31,8 @@ struct Egenskap: Decodable {
     private enum CodingKeys: String, CodingKey {
         case id, navn, verdi
     }
+    
+   
 
     // Decoding solo para manejar verdi por que puede estae como String, Int, o Double
     init(from decoder: Decoder) throws {
@@ -52,7 +54,7 @@ struct Egenskap: Decodable {
     }
 }
 
-struct Lokasjon: Decodable {
+struct Lokasjon: Codable {
     let geometri: Geometri
     
     var coordinates: CLLocationCoordinate2D? {
@@ -79,7 +81,7 @@ struct Lokasjon: Decodable {
 }
 
 
-struct Geometri: Decodable {
+struct Geometri: Codable {
     let wkt: String
     let srid: Int
 }
