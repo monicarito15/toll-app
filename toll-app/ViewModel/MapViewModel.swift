@@ -68,6 +68,8 @@ final class MapViewModel: ObservableObject {
                     await self.getDirections(from: from, to: destination)
                 }
             } else {
+                
+                
                 print("No coordinate found for address: \(toAddress)")
             }
         }
