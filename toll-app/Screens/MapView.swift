@@ -12,24 +12,28 @@ import ArcGIS
 
 struct MapView: View {
     
+    // 🔹 estos vienen desde la vista anterior, los dejamos igual
     let from: String
     let to: String
     let vehicleType: String
     let fuelType: String
     let dateTime: Date
     
+    // 🟢 ahora usamos el ViewModel, que contiene toda la lógica de ubicación, rutas y tolls
     @StateObject private var mapViewModel = MapViewModel()
    
     var body: some View {
         VStack {
             ZStack {
-                Map {
+                Map() {
                     
+                    // user location
                     if let userLocation = mapViewModel.userLocation {
-                        Marker("Mi ubicación", coordinate: userLocation)
+                        // Center map on user location
+                        Marker("My location", coordinate: userLocation)
                     }
                     
-                    // Se muestran los tolls (bomestasjoner).
+                    // tolls
                     ForEach(mapViewModel.toll) { vegobjekt in
                         if let coordinate = vegobjekt.lokasjon.coordinates {
                             let tollName = vegobjekt.egenskaper.first(where: { $0.navn == "Navn bomstasjon" })?.verdi
@@ -46,7 +50,7 @@ struct MapView: View {
                         }
                     }
                     
-                    // Mostramos la línea de la ruta, si existe.
+                    // route line
                     if let route = mapViewModel.route {
                         MapPolyline(route)
                             .stroke(.blue, lineWidth: 5)
@@ -62,31 +66,30 @@ struct MapView: View {
                 .mapStyle(.standard(elevation: .realistic))
             }
             
-            // Botón para calcular la ruta manualmente.
+            // Botón para calcular ruta manualmente
             Button("Calcular ruta") {
                 if let userLocation = mapViewModel.userLocation,
                    let firstToll = mapViewModel.toll.first?.lokasjon.coordinates {
-                    print("Calcular ruta desde \(userLocation) hasta \(firstToll)")
+                    print("Calculate route from \(userLocation) to \(firstToll)")
                     Task {
                         await mapViewModel.getDirections(from: userLocation, to: firstToll)
                     }
                 } else {
-                    print("No se encontró la ubicación del usuario o ningún toll.")
+                    print("Not found user location and toll")
                 }
             }
             .padding()
         }
         .onAppear {
-            // Cuando aparece la vista, actualizamos la ubicación del usuario.
+            // 🟢 Cuando la vista aparece, se actualiza la ubicación del usuario
             mapViewModel.updateUserLocation()
-            
-            // Si ya hay ubicación, creamos la ruta hacia la dirección 'to'.
             if let userLocation = mapViewModel.userLocation {
-                mapViewModel.getDirectionsToAddress(from: userLocation, toAddress: to)
+                // 🟢 Y se calcula la ruta hacia la dirección 'to'
+                mapViewModel.getDirectionsToAddress(from: userLocation, toAddress: to )
             }
         }
         .task {
-            // Cargamos los tolls desde la API.
+            // 🟢 Carga los tolls desde la API cuando aparece la vista
             await mapViewModel.fetchTolls()
         }
     }

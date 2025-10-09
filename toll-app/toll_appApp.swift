@@ -15,5 +15,3 @@ struct toll_appApp: App {
         }
     }
 }
-
-
