@@ -30,7 +30,7 @@ struct CalculatorView: View {
                 Section(header: Text("Find tolls between locations")) {
                     ZStack (alignment: .trailing){
                         TextField ("From", text: $from)
-                            .padding()
+                             .padding()
                             .onSubmit {
                                 focus = .to
                             }

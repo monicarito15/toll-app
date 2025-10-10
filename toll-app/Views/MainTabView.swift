@@ -8,6 +8,7 @@ struct MainTabView: View {
     @State private var currentDetent: PresentationDetent = .medium // padre del estado del tamano global
 
 
+
     var body: some View {
         //logica para resetear el sheet si ya esta abierto
         let tabBinding = Binding<Int>( // Create a binding to monitor tab changes

@@ -12,14 +12,13 @@ import ArcGIS
 
 struct MapView: View {
     
-    // 🔹 estos vienen desde la vista anterior, los dejamos igual
     let from: String
     let to: String
     let vehicleType: String
     let fuelType: String
     let dateTime: Date
     
-    // 🟢 ahora usamos el ViewModel, que contiene toda la lógica de ubicación, rutas y tolls
+    // ahora usamos el ViewModel, que contiene toda la lógica de ubicación, rutas y tolls
     @StateObject private var mapViewModel = MapViewModel()
    
     var body: some View {
@@ -81,15 +80,15 @@ struct MapView: View {
             .padding()
         }
         .onAppear {
-            // 🟢 Cuando la vista aparece, se actualiza la ubicación del usuario
+            //Cuando la vista aparece, se actualiza la ubicación del usuario
             mapViewModel.updateUserLocation()
             if let userLocation = mapViewModel.userLocation {
-                // 🟢 Y se calcula la ruta hacia la dirección 'to'
+                //Y se calcula la ruta hacia la dirección 'to'
                 mapViewModel.getDirectionsToAddress(from: userLocation, toAddress: to )
             }
         }
         .task {
-            // 🟢 Carga los tolls desde la API cuando aparece la vista
+            //Carga los tolls desde la API cuando aparece la vista
             await mapViewModel.fetchTolls()
         }
     }

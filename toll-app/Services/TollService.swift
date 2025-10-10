@@ -18,7 +18,7 @@ struct TollService: Decodable {
     
     
     func getTolls() async throws -> [Vegobjekt] { //get tolls async
-        let endpoint = "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/api/v4/vegobjekter/45?inkluder=lokasjon&inkluder=egenskaper&antall=2"
+        let endpoint = "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/api/v4/vegobjekter/45?inkluder=lokasjon&inkluder=egenskaper"
         
         guard let url = URL(string: endpoint) else { //getting the URL
             throw GHError.invalidURL } // si hay un error de URL inválida
