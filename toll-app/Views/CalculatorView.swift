@@ -6,8 +6,7 @@ struct CalculatorView: View {
     @State private var showMap = false
     @State private var showToDirections = false
     @Binding var currentDetent: PresentationDetent
-   
-
+       
     
     @FocusState private var focus: FormFieldFocus?
     

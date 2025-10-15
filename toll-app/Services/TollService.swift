@@ -13,12 +13,12 @@ enum GHError: Error {
 }
 
 
-struct TollService: Decodable {
+struct TollService{
     static let shared = TollService()
     
     
     func getTolls() async throws -> [Vegobjekt] { //get tolls async
-        let endpoint = "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/api/v4/vegobjekter/45?inkluder=lokasjon&inkluder=egenskaper"
+        let endpoint = "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/api/v4/vegobjekter/45?inkluder=lokasjon&inkluder=egenskaper&antall=20"
         
         guard let url = URL(string: endpoint) else { //getting the URL
             throw GHError.invalidURL } // si hay un error de URL inválida
@@ -36,7 +36,7 @@ struct TollService: Decodable {
         do {
             let decoder = JSONDecoder()
             decoder.keyDecodingStrategy = .convertFromSnakeCase // convierte si es q se encuentra cammelCase
-            let response = try decoder.decode(VegokbjektResponse.self, from: data)
+            let response = try decoder.decode(VegobjektResponse.self, from: data)
             return response.objekter
         } catch {
             print("Decoding error: ", error)

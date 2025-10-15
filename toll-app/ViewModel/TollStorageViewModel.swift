@@ -6,60 +6,84 @@
 // Logica que guarda local los tolls
 
 import SwiftUI
+import SwiftData
 
+@MainActor
 final class TollStorageViewModel : ObservableObject {
     
-    @AppStorage("tollLocalData") private var tollDataJSON: String = "" // Guarda el JSON completo se guarda como texto "(String)" bajo la clave "tollLocalData"
-
     @Published var tolls: [Vegobjekt] = [] // @Published avisa a los views cuando cambian los datos (para actualizar la UI)
     
     
-    // Función principal que carga los datos (primero localmente, luego de la API)
-    func loadTolls() async {
-        //1-Cargar: Carga los datos si existen (local)
-        if !tollDataJSON.isEmpty { // si existen algo guardado local como string "text json"
-            
-            // Convertir: Convierte el String (que contiene texto en formato JSON) a tipo Data usando codificación UTF-8
-            if let data = tollDataJSON.data(using: .utf8),
-                
-            // Decodifica ese Data en una lista de objetos Vegobjekt
-            // (pasa de texto JSON A objetos reales [Vegobjekt])
-            let decodedData = try? JSONDecoder().decode([Vegobjekt].self, from: data) {
-                self.tolls = decodedData //Asigna los datos locales a la lista de tolls
-                print("Load tolls from local storage")
-            }
-        }
+    // Función principal que carga los datos desde la base de datos local- si no hay datos locales, llama a la api para obtenerlos
+    func loadTolls(using modelContext : ModelContext ) async {
         
-        
-        //ACTUALIZAR LOS DATOS DESDE LA API (para obtener datos más recientes) llamando el servicio "TollService" y actualizando
         do {
-           //Llama a TollService para traer los peajes directamente desde internet
-            let apiTolls = try await TollService.shared.getTolls()
+            //Crear un descriptor para obtener todos los objetos Vegobjekt
+            let descriptor = FetchDescriptor<Vegobjekt>()
             
-            //Actualiza la lista local con los nuevos datos de la API
-            self.tolls = apiTolls // apiTolls queda actualizada con la api
+            //Cargar los objetos locales guardados (si existen)
+            tolls = try modelContext.fetch(descriptor)
             
-            //Convierte la lista [Vegobjekt] (objetos Swift) a JSON (Data)
-            if let encodedData = try? JSONEncoder().encode(apiTolls),
-               
-               //Convierte ese Data a String (texto JSON) para poder guardarlo localmente
-
-                   let jsonString = String(data:encodedData,encoding: .utf8){
-                       // Guarda el JsonString en AppStorage (UserDefaults)
-                       tollDataJSON = jsonString
-                       print("Saved tolls to local storage")
-
-                   }
+            // Si la base local está vacía, traer los datos de la API
+            if tolls.isEmpty {
+                print("No local tolls found, fetching from API")
+                try await fetchAndSaveFromApi(using: modelContext)
+            } else {
+                //Si encontró datos locales, lo muestra en la consola
+                print("Loaded tolls from (local DataBase)SwiftData - Total Found local:)(\(tolls.count))")
+            }
             
         } catch {
-            print("Error fetching API",error)
-            
-            
+            print("Error loading from SwitfData dataBase: \(error)")
         }
+    }
+        
+        
+        //Función que trae los peajes desde la API y los guarda localmente en SwiftData database
+        private func fetchAndSaveFromApi(using modelContext: ModelContext) async throws {
+            print("Fetching tolls from API...")
+            
+            // Llama tollservice , llama a la API
+            let apiTolls = try await TollService.shared.getTolls()
+            print("Received \(apiTolls.count) tolls from API")
+
+        
+            // Clear old data in swiftData(local)
+            for toll in try modelContext.fetch(FetchDescriptor<Vegobjekt>()){
+                modelContext.delete(toll)
+            }
+            print("Cleared old toll data from SwiftData")
+            
+            // Inserta los nuevos peajes uno por uno
+            for toll in apiTolls {
+                modelContext.insert(toll)
+            }
+            print("Inserted \(apiTolls.count) new tolls into SwiftData")
+            
+            //Guarda los cambios en la base de datos
+            try modelContext.save()
+            print("Saved successfully in the swiftData database")
+                
+            // Verifica que se guardaron correctamente haciendo un fetch
+            let savedTolls = try modelContext.fetch(FetchDescriptor<Vegobjekt>())
+            print("Verified \(savedTolls.count) tolls are now in SwiftData")
+            
+                for toll in savedTolls {
+                    print("Saved toll: \(toll.id) - \(toll.egenskaper.first?.verdi ?? "Unknown")")
+                }
+            
+                //Actualiza la lista publicada (para la UI)
+                tolls = apiTolls
+                print("Saved and loaded \(tolls.count) tolls into memory from SwiftData")
+            }
+    }
+        
+        
+        
         
 
-    }
     
     
-}
+    
+
 

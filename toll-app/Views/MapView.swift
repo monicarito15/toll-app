@@ -20,6 +20,10 @@ struct MapView: View {
     
     // ahora usamos el ViewModel, que contiene toda la lógica de ubicación, rutas y tolls
     @StateObject private var mapViewModel = MapViewModel()
+    
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var tollStorageVM = TollStorageViewModel()
+
    
     var body: some View {
         VStack {
@@ -34,7 +38,7 @@ struct MapView: View {
                     
                     // tolls
                     ForEach(mapViewModel.toll) { vegobjekt in
-                        if let coordinate = vegobjekt.lokasjon.coordinates {
+                        if let coordinate = vegobjekt.lokasjon?.coordinates {
                             let tollName = vegobjekt.egenskaper.first(where: { $0.navn == "Navn bomstasjon" })?.verdi
                                 ?? vegobjekt.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" })?.verdi
                                 ?? "Unknown"
@@ -68,7 +72,7 @@ struct MapView: View {
             // Botón para calcular ruta manualmente
             Button("Calcular ruta") {
                 if let userLocation = mapViewModel.userLocation,
-                   let firstToll = mapViewModel.toll.first?.lokasjon.coordinates {
+                   let firstToll = mapViewModel.toll.first?.lokasjon?.coordinates {
                     print("Calculate route from \(userLocation) to \(firstToll)")
                     Task {
                         await mapViewModel.getDirections(from: userLocation, to: firstToll)
@@ -86,6 +90,11 @@ struct MapView: View {
                 //Y se calcula la ruta hacia la dirección 'to'
                 mapViewModel.getDirectionsToAddress(from: userLocation, toAddress: to )
             }
+               
+                    Task {
+                        await tollStorageVM.loadTolls(using: modelContext)
+                    }
+                
         }
         .task {
             //Carga los tolls desde la API cuando aparece la vista

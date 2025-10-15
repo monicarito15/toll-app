@@ -12,6 +12,7 @@ import CoreLocation
 
 @MainActor
 final class MapViewModel: ObservableObject {
+   
     
     @Published var route: MKRoute? // Ruta calculada.
     @Published var toll: [Vegobjekt] = [] // Lista de tolls desde la API.
