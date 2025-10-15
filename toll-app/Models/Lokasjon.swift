@@ -10,27 +10,12 @@ import CoreLocation
 import ArcGIS
 
 @Model
-class Lokasjon: Codable {
+class Lokasjon {
     var geometri: Geometri
     
     init(geometri: Geometri) {
         self.geometri = geometri
     }
-    
-    enum CodingKeys: String, CodingKey {
-           case geometri
-       }
-    
-    required init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            geometri = try container.decode(Geometri.self, forKey: .geometri)
-        }
-    
-    func encode(to encoder: Encoder) throws {
-           var container = encoder.container(keyedBy: CodingKeys.self)
-           try container.encode(geometri, forKey: .geometri)
-       }
-    
     
     var coordinates: CLLocationCoordinate2D? {
         let wkt = geometri.wkt

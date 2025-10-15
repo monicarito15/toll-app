@@ -11,29 +11,13 @@ import CoreLocation
 import ArcGIS
 
 @Model
-class Geometri: Codable {
+class Geometri {
     var wkt: String
     var srid: Int
     
     init(wkt: String, srid: Int) {
         self.wkt = wkt
         self.srid = srid
-    }
-    
-    enum CodingKeys: String, CodingKey {
-        case wkt, srid
-    }
-    
-    required init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        wkt = try container.decode(String.self,forKey: .wkt)
-        srid = try container.decode(Int.self, forKey: .srid)
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(wkt, forKey: .wkt)
-        try container.encode(srid, forKey: .srid)
     }
 }
 

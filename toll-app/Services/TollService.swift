@@ -16,37 +16,40 @@ enum GHError: Error {
 struct TollService{
     static let shared = TollService()
     
-    
-    func getTolls() async throws -> [Vegobjekt] { //get tolls async
-        let endpoint = "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/api/v4/vegobjekter/45?inkluder=lokasjon&inkluder=egenskaper&antall=20"
-        
-        guard let url = URL(string: endpoint) else { //getting the URL
-            throw GHError.invalidURL } // si hay un error de URL inválida
-        
-        let (data, response) = try await URLSession.shared.data(from: url)
-        
-        // response si no hay un error
-        guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { // si la respuesta 200 -> está bien
-            throw GHError.invalidResponse // si la respuesta es inválida
+    func getTolls() async throws -> [Vegobjekt] {
+        let endpoint = "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/api/v4/vegobjekter/45?inkluder=lokasjon&inkluder=egenskaper"
+        guard let url = URL(string: endpoint) else {
+            throw GHError.invalidURL
         }
-
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {
+            throw GHError.invalidResponse
+        }
         print("Raw API response: ", String(data: data, encoding: .utf8) ?? "<no string>")
-        
-        //get data
         do {
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase // convierte si es q se encuentra cammelCase
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
             let response = try decoder.decode(VegobjektResponse.self, from: data)
-            return response.objekter
+            print("API object count: \(response.objekter.count)")
+            for (index, toll) in response.objekter.enumerated() {
+                print("Toll #\(index + 1): id=\(toll.id) egenskaper=\(toll.egenskaper.count)")
+            }
+            // Conversión de structs API a modelos SwiftData
+            let vegobjekter: [Vegobjekt] = response.objekter.map { api in
+                let egenskaper = api.egenskaper.map { e in
+                    Egenskap(id: e.id, navn: e.navn, verdi: e.verdi)
+                }
+                let lokasjon: Lokasjon? = {
+                    guard let l = api.lokasjon else { return nil }
+                    let geo = Geometri(wkt: l.geometri.wkt, srid: l.geometri.srid)
+                    return Lokasjon(geometri: geo)
+                }()
+                return Vegobjekt(id: api.id, href: api.href, egenskaper: egenskaper, lokasjon: lokasjon)
+            }
+            return vegobjekter
         } catch {
             print("Decoding error: ", error)
-            throw GHError.invalidData // si los datos son inválidos
-            
-            
+            throw GHError.invalidData
         }
-        
     }
-    
-    
 }
-

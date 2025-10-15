@@ -47,43 +47,48 @@ final class TollStorageViewModel : ObservableObject {
             let apiTolls = try await TollService.shared.getTolls()
             print("Received \(apiTolls.count) tolls from API")
 
-        
-            // Clear old data in swiftData(local)
-            for toll in try modelContext.fetch(FetchDescriptor<Vegobjekt>()){
-                modelContext.delete(toll)
-            }
-            print("Cleared old toll data from SwiftData")
-            
-            // Inserta los nuevos peajes uno por uno
-            for toll in apiTolls {
-                modelContext.insert(toll)
-            }
-            print("Inserted \(apiTolls.count) new tolls into SwiftData")
-            
-            //Guarda los cambios en la base de datos
-            try modelContext.save()
-            print("Saved successfully in the swiftData database")
-                
-            // Verifica que se guardaron correctamente haciendo un fetch
-            let savedTolls = try modelContext.fetch(FetchDescriptor<Vegobjekt>())
-            print("Verified \(savedTolls.count) tolls are now in SwiftData")
-            
-                for toll in savedTolls {
-                    print("Saved toll: \(toll.id) - \(toll.egenskaper.first?.verdi ?? "Unknown")")
+            //Limpia los datos viejos de SwiftData
+                for toll in try modelContext.fetch(FetchDescriptor<Vegobjekt>()) {
+                    modelContext.delete(toll)
                 }
+                print("Cleared old toll data from SwiftData")
             
-                //Actualiza la lista publicada (para la UI)
-                tolls = apiTolls
-                print("Saved and loaded \(tolls.count) tolls into memory from SwiftData")
+            // Crea nuevas instancias válidas y guardarlas
+               var insertedCount = 0
+               for apiToll in apiTolls {
+                   let newEgenskaper = apiToll.egenskaper.map { eg in
+                       Egenskap(id: eg.id, navn: eg.navn, verdi: eg.verdi)
+                   }
+
+                   var newLokasjon: Lokasjon? = nil
+                   if let oldLokasjon = apiToll.lokasjon {
+                       let geo = Geometri(wkt: oldLokasjon.geometri.wkt, srid: oldLokasjon.geometri.srid)
+                       newLokasjon = Lokasjon(geometri: geo)
+                   }
+
+                   // Solo inserta si newLokasjon no es nil
+                   let newToll = Vegobjekt(id: apiToll.id, href: apiToll.href, egenskaper: newEgenskaper, lokasjon: newLokasjon)
+                   modelContext.insert(newToll)
+                   insertedCount += 1
+                   print("Saved toll: \(newToll.id) - \(newToll.egenskaper.first?.verdi ?? "Unknown")")
+               }
+               print("Inserted \(insertedCount) new tolls into SwiftData")
+            
+            // Guarda los cambios
+                do {
+                    try modelContext.save()
+                    print("Saved successfully in the swiftData database")
+                } catch {
+                    print("Error saving tolls in SwiftData: \(error)")
+                }
+
+                //Actualiza la lista publicada (para la UI) haciendo un fetch real de la base local
+                do {
+                    let descriptor = FetchDescriptor<Vegobjekt>()
+                    tolls = try modelContext.fetch(descriptor)
+                    print("Saved and loaded \(tolls.count) tolls into memory from SwiftData")
+                } catch {
+                    print("Error fetching tolls after save: \(error)")
+                }
             }
     }
-        
-        
-        
-        
-
-    
-    
-    
-
-
