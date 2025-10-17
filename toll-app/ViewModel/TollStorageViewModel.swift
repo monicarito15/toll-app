@@ -14,9 +14,11 @@ final class TollStorageViewModel : ObservableObject {
     @Published var tolls: [Vegobjekt] = [] // @Published avisa a los views cuando cambian los datos (para actualizar la UI)
     
     
+
     // Función principal que carga los datos desde la base de datos local- si no hay datos locales, llama a la api para obtenerlos
     func loadTolls(using modelContext : ModelContext ) async {
-        
+        printLastTollUpdateDate() // Muestra la fecha de última actualización en la terminal
+        //await updateTollsIfNeeded(using: modelContext) // Espera a que termine la actualización si es necesario
         do {
             //Crear un descriptor para obtener todos los objetos Vegobjekt
             let descriptor = FetchDescriptor<Vegobjekt>()
@@ -41,7 +43,7 @@ final class TollStorageViewModel : ObservableObject {
         
         //Función que trae los peajes desde la API y los guarda localmente en SwiftData database
         private func fetchAndSaveFromApi(using modelContext: ModelContext) async throws {
-            print("Fetching tolls from API...")
+            print("Fetching tolls from API")
             
             // Llama tollservice , llama a la API
             let apiTolls = try await TollService.shared.getTolls()
@@ -91,4 +93,35 @@ final class TollStorageViewModel : ObservableObject {
                     print("Error fetching tolls after save: \(error)")
                 }
             }
+    
+    func printLastTollUpdateDate() {
+        let lastUpdate = UserDefaults.standard.object(forKey: "lastTollUpdate") as? Date
+        if let lastUpdate = lastUpdate {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "dd/MM/yyyy HH:mm"
+            print("Last toll update date from API: \(formatter.string(from: lastUpdate))")
+        } else {
+            print("Last toll update date from API: Not found record")
+        }
+    }
+    
+    
+    // Funcion que llama a la API solo si ha pasado más de un mes desde la última actualización
+    func shouldUpdateFromAPI() -> Bool {
+        let lastUpdate = UserDefaults.standard.object(forKey: "lastTollUpdate") as? Date ?? .distantPast
+        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date())!
+        return lastUpdate < oneMonthAgo
+        
+    }
+    func updateTollsIfNeeded(using modelContext: ModelContext) async {
+        if shouldUpdateFromAPI() {
+            try? await fetchAndSaveFromApi(using: modelContext)
+            UserDefaults.standard.set(Date(), forKey: "lastTollUpdate")
+            let formatter = DateFormatter()
+            formatter.dateFormat = "dd/MM/yyyy HH:mm"
+            print("Tolls updated from API. Fecha guardada: \(formatter.string(from: Date()))")
+        }
+        
+    }
+    
     }
