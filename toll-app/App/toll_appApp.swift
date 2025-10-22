@@ -8,13 +8,17 @@ struct toll_appApp: App {
         Vegobjekt.self,
         Egenskap.self,
         Lokasjon.self,
-        Geometri.self
+        Geometri.self,
+        RecentSearch.self
     )
+  
 
     var body: some Scene {
         WindowGroup {
             MainTabView()
                 .modelContainer(modelContainer) // inyecta el context en todas las vistas
+                
+
         }
     }
 }

@@ -10,24 +10,21 @@
 
 import Foundation
 
-// Modelo raíz que representa la respuesta completa de la API (un array de objetos VegobjektAPI)
 struct VegobjektResponse: Decodable {
-    let objekter: [VegobjektAPI] // 'objekter' es el array principal de peajes en la respuesta JSON
+    let objekter: [VegobjektAPI]
 }
 
-// Modelo temporal para cada peaje recibido de la API
 struct VegobjektAPI: Decodable {
-    let id: Int // Identificador único del peaje
-    let href: String // Enlace a la API para este peaje
-    let egenskaper: [EgenskapAPI] // Lista de propiedades/atributos del peaje
-    let lokasjon: LokasjonAPI? // Información de localización (puede ser nil)
+    let id: Int
+    let href: String
+    let egenskaper: [EgenskapAPI]
+    let lokasjon: LokasjonAPI?
 }
 
-// Modelo temporal para cada propiedad/atributo de un peaje
 struct EgenskapAPI: Decodable {
-    let id: Int // Identificador de la propiedad
-    let navn: String // Nombre de la propiedad
-    let verdi: String? // Valor de la propiedad (puede ser String, Int o Double en el JSON, aquí siempre String)
+    let id: Int
+    let navn: String
+    let verdi: String?
 
     enum CodingKeys: String, CodingKey {
         case id, navn, verdi
@@ -50,13 +47,11 @@ struct EgenskapAPI: Decodable {
     }
 }
 
-// Modelo temporal para la localización del peaje
 struct LokasjonAPI: Decodable {
-    let geometri: GeometriAPI // Información geométrica (punto, línea, etc.)
+    let geometri: GeometriAPI
 }
 
-// Modelo temporal para la geometría (coordenadas, sistema de referencia)
 struct GeometriAPI: Decodable {
-    let wkt: String // Representación WKT de la geometría
-    let srid: Int // Código del sistema de referencia espacial
+    let wkt: String
+    let srid: Int
 }

@@ -8,32 +8,23 @@
 
 import SwiftUI
 import MapKit
-
+import SwiftData
 
 struct ToDirectionsView : View {
     
+    @StateObject private var viewModel = ToDirectionsViewModel()
+
     @Binding var searchText : String
     @Binding var currentDetent: PresentationDetent
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     
-    @StateObject private var locationManager = LocationManager()
-    @State private var searchResults: [MKMapItem] = []
-    
-    @State private var recentSearches: [RecentSearch] = []
-    @AppStorage("recentSearches") private var recentSearchesData: Data = Data()
-    
-    struct RecentSearch : Codable,Hashable {
-        let name : String
-        let address: String
-    }
-  
     
     var body: some View {
         
         NavigationView {
-            
             VStack (alignment: .leading){
-                
+                // Search bar
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.gray)
@@ -42,40 +33,77 @@ struct ToDirectionsView : View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                     
                         .onSubmit { // al hacer enter dismiss y regresa al main sheet
-                            if let first = searchResults.first {
+                            if let first = viewModel.searchResults.first {
                                 let name = first.name ?? searchText
                                 let address = first.placemark.title ?? searchText
-                                saveSearch(searchText, address: searchText)
-                            }
-                            // Limpiar y cerrar
-                            DispatchQueue.main.async {
-                                searchResults = [] // Borra los resultados de búsqueda
-                                dismiss() // cierra el sheet al seleccionar la direccion
+                                Task {
+                                    await viewModel.saveSearch(name,address: address, using: modelContext)
+                                    
+                                }
+                                // Limpiar y cerrar
+                                DispatchQueue.main.async {
+                                    viewModel.searchResults = [] // Borra los resultados de búsqueda
+                                    dismiss() // cierra el sheet al seleccionar la direccion
+                                }
                             }
 
                         }
                         .padding()
                         .cornerRadius(5)
+                    // Cuando cambia el texto, ejecuta la búsqueda
                         .onChange(of: searchText) { value, _ in
-                                        searchAddresses(query: value)
+                            viewModel.searchAddresses(query: value)
                                                 }
-                       
-                    
                 }
                 .padding(12)
                 .background(Color(.systemGray6))
                 
                 
                 
-                // Muestra las busquedas mas recientes solo si no se esta escribiendo
-                if !recentSearches.isEmpty && searchText.isEmpty { // solo muestra: si el recentsearch no esta vacio y el searchtext esta vacio
+                
+                // lista de resultados de busqueda (SEARCH DIRECTIONS)
+                
+                List(viewModel.searchResults, id: \.self) { item in
+                    VStack(alignment: .leading) {
+                        Text(item.name ?? "Unknown")
+                            .font(.headline)
+                        Text(item.placemark.title ?? "No Address")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.vertical,2)
+                    .onTapGesture {
+                        // Acción al seleccionar una dirección
+                        let name = item.name ?? "Unknown"
+                        let address = item.placemark.title ?? "No Address"
+                        searchText = name
+                        Task {
+                            await viewModel.saveSearch(name,address: address,using: modelContext)
+                            
+                            DispatchQueue.main.async {
+                                viewModel.searchResults = [] // Borra los resultados de búsqueda
+                                dismiss() // cierra el sheet al seleccionar la direccion
+                            }
+                        }
+                            
+                        
+                    }
+                    
+                    
+                } //End list
+                
+               
+                // Muestra(RECENT SEARCH) cuando el campo está vacío
+                if !viewModel.recentSearches.isEmpty && searchText.isEmpty { // solo muestra: si el recentsearch no esta vacio y el searchtext esta vacio
                     VStack (alignment: .leading) {
                         Text("Recent search")
                             .padding()
                             .font(.headline .bold())
                             .foregroundColor(.gray)
+    
                         
-                        ForEach(recentSearches, id: \.self) { item in
+                        // Lista de búsquedas recientes
+                        ForEach(viewModel.recentSearches, id: \.self) { item in
                             VStack(alignment: .leading) {
                                 Text(item.name)
                                     .font(.headline)
@@ -87,16 +115,18 @@ struct ToDirectionsView : View {
                             .padding(.horizontal)
                             .frame(maxWidth: .infinity,alignment: .leading )
                             
-                                .onTapGesture {
+                                .onTapGesture {                                // Al hacer tap a una búsqueda reciente: vuelve a buscarla
+
                                     searchText = item.name
-                                        searchAddresses(query: item.name)
-                                        saveSearch(item.name, address: item.address)
-                                   
-                                    
-                                    
-                                    DispatchQueue.main.async {
-                                        searchResults = [] // Borra los resultados de búsqueda
-                                        dismiss() // cierra el sheet al seleccionar la direccion
+                                    viewModel.searchAddresses(query: item.name)
+                                    Task {
+                                        await viewModel.saveSearch(item.name, address: item.address, using: modelContext)
+                                        
+                                        
+                                        DispatchQueue.main.async {
+                                            viewModel.searchResults = [] // Borra los resultados de búsqueda
+                                            dismiss() // cierra el sheet al seleccionar la direccion
+                                        }
                                     }
                                 }
                                
@@ -108,116 +138,27 @@ struct ToDirectionsView : View {
                     
                     
                 }
-                
-                // lista de las direcciones
-                List(searchResults, id: \.self) { item in
-                    VStack(alignment: .leading) {
-                        Text(item.name ?? "Unknown")
-                            .font(.headline)
-                        Text(item.placemark.title ?? "No Address")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                    }
-                    .padding(.vertical, 5)
-                    .onTapGesture {
-                        // Acción al seleccionar una dirección
-                        let name = item.name ?? "Unknown"
-                        let address = item.placemark.title ?? "No Address"
-                        searchText = name
-                        saveSearch(name,address: address)
-                        
-                        DispatchQueue.main.async {
-                            searchResults = [] // Borra los resultados de búsqueda
-                            dismiss() // cierra el sheet al seleccionar la direccion
-                        }
-                            
-                        
-                    }
-                    
-                    
-                } //End list
-                
-               
             
-                
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .principal) {
-                        Text("Directions")
-                            .font(.system(size:30, weight: .bold))
-                            .foregroundColor(.gray)
-                    }
-                }
-                
-                .presentationDetents([.medium, .large], selection: $currentDetent)
-                .onAppear {
-                    currentDetent = .large
-                    searchText = "" //clear the textfiel search
-                    loadRecentSearch()
+        }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Directions")
+                        .font(.system(size:30, weight: .bold))
+                        .foregroundColor(.gray)
                 }
             }
-        }
-    }
             
-            
-    func searchAddresses(query: String) {
-        guard !query.isEmpty else {
-            searchResults = []
-            return
-        }
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = query
-        
-        //Centrar la busqueda en la ubicacion actual
-        if let userLocation = locationManager.userLocation{
-            request.region = MKCoordinateRegion(
-                center: userLocation,
-                span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-            )
-        }
-        
-        let search = MKLocalSearch(request: request)
-        search.start { response, error in
-            if let items = response?.mapItems {
-                searchResults = items
-            } else {
-                searchResults = []
+            .presentationDetents([.medium, .large], selection: $currentDetent)
+            .onAppear {
+                currentDetent = .large
+                searchText = "" //clear the textfiel search
+            }
+            .task {
+                await viewModel.loadRecentSearch(using: modelContext)
             }
         }
     }
-    
-    // Guarda una nueva busqueda
-    func saveSearch(_ name: String, address: String) {
-        guard !name.isEmpty else { return } // No guarda búsquedas vacías
-        recentSearches.removeAll { $0.name.lowercased() == name.lowercased() }
-
-        // Evita duplicados (solo si no existe con el mismo nombre y dirección)
-        if !recentSearches.contains(where: { $0.name == name && $0.address == address }) {
-            let newSearch = RecentSearch(name: name, address: address)
-            recentSearches.insert(newSearch, at: 0)
-            
-            // Mantiene solo las últimas 5 búsquedas
-            if recentSearches.count > 5 {
-                recentSearches.removeLast()
-            }
-            
-            // Guarda la lista en AppStorage
-            if let data = try? JSONEncoder().encode(recentSearches) {
-                recentSearchesData = data
-            }
-        }
-    }
-
-    
-    // Carga las busquedas guardadas
-    func loadRecentSearch(){
-        // Intenta decodificar (leer) la lista guardada en @AppStorage
-        if let decoded = try? JSONDecoder().decode([RecentSearch].self, from: recentSearchesData) {
-            recentSearches = decoded // Si la decodificación funciona, asigna las búsquedas guardadas a la variable recentSearches
-        }
-    }
-    
-    
 }
         
     
