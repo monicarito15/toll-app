@@ -10,7 +10,7 @@ import MapKit
 import SwiftData
 
 @MainActor
-final class ToDirectionsViewModel : ObservableObject {
+final class SearchAddressViewModel : ObservableObject {
         
     @Published var searchResults: [MKMapItem] = []
     @Published var recentSearches: [RecentSearch] = []
