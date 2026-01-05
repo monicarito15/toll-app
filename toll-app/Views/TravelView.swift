@@ -1,7 +1,7 @@
 import SwiftUI
 import MapKit
 
-struct SearchView: View {
+struct TravelView: View {
     
     @Binding var showSheet: Bool
     @Binding var currentDetent : PresentationDetent

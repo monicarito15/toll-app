@@ -1,19 +1,16 @@
 import SwiftUI
 
-struct ProfileView: View {
+struct HistoryView: View {
     var body: some View {
         VStack {
             Image(systemName: "globe")
                 .imageScale(.large)
                 .foregroundStyle(.tint)
-            Text("Profile")
+            Text("VehicleViewe")
         }
         .padding()
     }
 }
 
-#Preview {
-    ProfileView()
-}
 
 
