@@ -24,8 +24,21 @@ struct TollService{
             throw GHError.invalidURL
         }
         
-        // Realiza la llamada HTTP asincrónica y obtiene los datos y la respuesta
-        let (data, response) = try await URLSession.shared.data(from: url)
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("toll-app (carolina.m@gmail.com)", forHTTPHeaderField: "X-Client") // cambiarlo despues con un correo verdadero
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        if let http = response as? HTTPURLResponse {
+            print("NVDB status: \(http.statusCode)")
+            print("NVDB headers: \(http.allHeaderFields)")
+        }
+
+        if let bodyString = String(data: data, encoding: .utf8) {
+            print("NVDB body (first 500 chars): \(bodyString.prefix(500))")
+        }
+        
         guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {
             throw GHError.invalidResponse
         }
@@ -66,3 +79,4 @@ struct TollService{
         }
     }
 }
+

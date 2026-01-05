@@ -6,6 +6,8 @@ struct CalculatorView: View {
     @State private var showMap = false
     @State private var showToDirections = false
     @Binding var currentDetent: PresentationDetent
+    
+    @Environment(\.dismiss) private var dismiss
        
     
     @FocusState private var focus: FormFieldFocus?
@@ -21,6 +23,7 @@ struct CalculatorView: View {
     let fuelTypes = ["Gasoline", "Diesel", "Electric", "Hybrid"]
     let vehicleTypes = ["Car", "Truck", "Motorcycle", "Bus"]
     
+    let onCalculate: (_ _from: String, _ _to: String) -> Void
     
     var body: some View {
         NavigationView {
@@ -87,11 +90,19 @@ struct CalculatorView: View {
                     }
                     .pickerStyle(MenuPickerStyle())
                     
+                    
                     Button("Calculate route") {
-                        showMap = true
+                        let fromTrim = from.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let toTrim = to.trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        guard !toTrim.isEmpty else { return }
+                        
+                        onCalculate(fromTrim, toTrim) //manda los datos al map
+                        dismiss()
+                        
                         
                     }
-                    .sheet(isPresented: $showMap) {
+                    /*.sheet(isPresented: $showMap) {
                         MapView(
                             from: from,
                             to:to,
@@ -99,7 +110,8 @@ struct CalculatorView: View {
                             fuelType: selectedFuelType,
                             dateTime: selectedDateTime
                         )
-                    }
+                    }*/
+                    
                     .padding()
                     .frame(maxWidth: .infinity) // para que ocupe todo el ancho
                     .background(Color.blue)   // el fondo que tú quieras
@@ -111,7 +123,7 @@ struct CalculatorView: View {
                 
                 
                 Section(header: Text("Nearby tolls")) {
-                    SheetScrollView()
+                    NearbyTolls()
                     
                 }
                 

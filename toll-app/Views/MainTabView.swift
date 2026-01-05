@@ -48,11 +48,13 @@ struct MainTabView: View {
                 .tag(2)
             
         }
-        .sheet(isPresented: $showSheet) {
+        /*.sheet(isPresented: $showSheet) {
          
-                CalculatorView(currentDetent: $currentDetent)
+            CalculatorView(currentDetent: $currentDetent,onCalculate: { _from, _to in
+                
+            })
             .presentationDetents([.medium, .large], selection: $currentDetent)
-        }
+        }*/
     }
 }
 #Preview {

@@ -3,7 +3,7 @@
 //  toll-app
 //
 //  Created by Carolina Mera on 09/10/2025.
-//
+// Aqui se ve la linea azul por el moemnto esta de mi locacion aun toll en bergen
 
 import SwiftUI
 import MapKit
@@ -18,8 +18,9 @@ struct MapView: View {
     let fuelType: String
     let dateTime: Date
     
+    
     // ahora usamos el ViewModel, que contiene toda la lógica de ubicación, rutas y tolls
-    @StateObject private var mapViewModel = MapViewModel()
+    @ObservedObject var mapViewModel = MapViewModel()
     
     @Environment(\.modelContext) private var modelContext
     @StateObject private var tollStorageVM = TollStorageViewModel()
@@ -53,6 +54,7 @@ struct MapView: View {
                         }
                     }
                     
+                    // la polilínea representa la ruta calculada entre `from` y `to`
                     // route line
                     if let route = mapViewModel.route {
                         MapPolyline(route)
@@ -69,32 +71,24 @@ struct MapView: View {
                 .mapStyle(.standard(elevation: .realistic))
             }
             
-            // Botón para calcular ruta manualmente
-            Button("Calcular ruta") {
-                if let userLocation = mapViewModel.userLocation,
-                   let firstToll = mapViewModel.toll.first?.lokasjon?.coordinates {
-                    print("Calculate route from \(userLocation) to \(firstToll)")
-                    Task {
-                        await mapViewModel.getDirections(from: userLocation, to: firstToll)
-                    }
-                } else {
-                    print("Not found user location and toll")
+            /*Button("Calcular ruta") {
+                Task { @MainActor in
+                    await mapViewModel.getDirectionsFromAddresses(fromAddress: from, toAddress: to)
                 }
             }
-            .padding()
+            .padding() */
         }
         .onAppear {
             //Cuando la vista aparece, se actualiza la ubicación del usuario
             mapViewModel.updateUserLocation()
-            if let userLocation = mapViewModel.userLocation {
-                //Y se calcula la ruta hacia la dirección 'to'
-                mapViewModel.getDirectionsToAddress(from: userLocation, toAddress: to )
+            // Si hay direcciones válidas, calcula la ruta entre `from` y `to`
+            Task { @MainActor in
+                await mapViewModel.getDirectionsFromAddresses(fromAddress: from, toAddress: to)
             }
                
-                    Task {
-                        await tollStorageVM.loadTolls(using: modelContext)
-                    }
-                
+            Task {
+                await tollStorageVM.loadTolls(using: modelContext)
+            }
         }
         .task {
             //Carga los tolls desde la API cuando aparece la vista
@@ -102,4 +96,5 @@ struct MapView: View {
         }
     }
 }
+
 

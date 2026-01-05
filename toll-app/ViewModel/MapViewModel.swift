@@ -12,7 +12,7 @@ import CoreLocation
 
 @MainActor
 final class MapViewModel: ObservableObject {
-   
+    
     
     @Published var route: MKRoute? // Ruta calculada.
     @Published var toll: [Vegobjekt] = [] // Lista de tolls desde la API.
@@ -55,9 +55,11 @@ final class MapViewModel: ObservableObject {
         }
     }
     
+    
+    
     // Convierte la dirección textual del destino a coordenadas (Geocoding).
     // Luego calcula la ruta desde la ubicación actual hacia esa dirección.
-    func getDirectionsToAddress(from: CLLocationCoordinate2D, toAddress: String) {
+    func geocode(from: CLLocationCoordinate2D, toAddress: String) {
         let geocoder = CLGeocoder()
         geocoder.geocodeAddressString(toAddress) { placemarks, error in
             if let error = error {
@@ -75,5 +77,63 @@ final class MapViewModel: ObservableObject {
             }
         }
     }
+    // Helper mínimo: address -> coordinate
+        private func geocodeAddress(_ address: String, completion: @escaping (CLLocationCoordinate2D?) -> Void) {
+            let geocoder = CLGeocoder()
+            geocoder.geocodeAddressString(address) { placemarks, error in
+                if let error = error {
+                    print("Geocoder Error: \(error)")
+                    completion(nil)
+                    return
+                }
+                completion(placemarks?.first?.location?.coordinate)
+            }
+        }
+    
+    
+    func getDirectionsFromAddresses(fromAddress: String, toAddress: String) async {
+        
+        let fromTrim = fromAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+                let toTrim = toAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+
+                guard !toTrim.isEmpty else {
+                    print("Missing 'to' address")
+                    return
+        }
+        // 1) Geocode TO
+        geocodeAddress(toTrim) { destination in
+            guard let destination else {
+                print("No coordinate found for TO: \(toTrim)")
+                return
+            }
+            
+            // 2) Origin = userLocation o geocode FROM
+            if fromTrim.isEmpty {
+                self.updateUserLocation()
+                guard let origin = self.userLocation else {
+                    print("No user location yet")
+                    return
+                }
+                
+                Task { @MainActor in
+                    await self.getDirections(from: origin, to: destination)
+                }
+                
+            } else {
+                self.geocodeAddress(fromTrim) { origin in
+                    guard let origin else {
+                        print ("No coordinate found for FROM: \(fromTrim)")
+                        return
+                    }
+                    
+                    Task { @MainActor in
+                        await self.getDirections(from: origin, to: destination)
+                    }
+                }
+            }
+            
+        }
+    }
+    
 }
 
