@@ -19,11 +19,13 @@ struct MapView: View {
     
     
     // ahora usamos el ViewModel, que contiene toda la lógica de ubicación, rutas y tolls
-    @ObservedObject var mapViewModel = MapViewModel()
+    @ObservedObject var mapViewModel : MapViewModel
     
     @Environment(\.modelContext) private var modelContext
     @StateObject private var tollStorageVM = TollStorageViewModel()
     @State private var cameraPosition: MapCameraPosition = .automatic
+    
+    @State private var showDetailsSheet = false
 
    
     var body: some View {
@@ -41,8 +43,8 @@ struct MapView: View {
                     ForEach(mapViewModel.toll) { vegobjekt in
                         if let coordinate = vegobjekt.lokasjon?.coordinates {
                             let tollName = vegobjekt.egenskaper.first(where: { $0.navn == "Navn bomstasjon" })?.verdi
-                                ?? vegobjekt.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" })?.verdi
-                                ?? "Unknown"
+                            ?? vegobjekt.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" })?.verdi
+                            ?? "Unknown"
                             let labelText = "Toll #\(vegobjekt.id) - \(tollName)"
                             Annotation(labelText, coordinate: coordinate) {
                                 Label(labelText, systemImage: "car")
@@ -69,10 +71,24 @@ struct MapView: View {
                     MapScaleView()
                 }
                 .mapStyle(.standard(elevation: .realistic))
+                
+                // ✅ UI normal: barrita abajo (NO dentro del Map)
+                if mapViewModel.hasResult {
+                    TollSummaryBar(
+                        tollCount: mapViewModel.tollsOnRoute.count,   // ✅ count
+                        total: mapViewModel.totalPrice
+                    ) {
+                    showDetailsSheet = true
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(.bottom, 8)
+                }
             }
+            .animation(.easeInOut, value: mapViewModel.hasResult)
+        }
             
 
-        }
+        
         .onAppear {
             //Cuando la vista aparece, se actualiza la ubicación del usuario
             mapViewModel.updateUserLocation()
@@ -109,6 +125,21 @@ struct MapView: View {
                 cameraPosition = .rect(rect)
             }
         }
+        
+        .onChange(of: mapViewModel.route) { _, _ in
+            mapViewModel.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
+        }
+
+        .onChange(of: mapViewModel.toll) { _, _ in
+            mapViewModel.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
+        }
+        
+        .sheet(isPresented: $showDetailsSheet) {
+            TollPassedListView(tolls: mapViewModel.tollsOnRoute)
+                .presentationDetents([.medium, .large])
+        }
+
+
 
 
     }

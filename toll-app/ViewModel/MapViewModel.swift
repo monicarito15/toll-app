@@ -19,7 +19,19 @@ final class MapViewModel: ObservableObject {
     @Published var userLocation: CLLocationCoordinate2D? // Ubicación actual del usuario.
     @Published var originCoordinate: CLLocationCoordinate2D? // From routa
     
+    // Para la barrita + sheet
+        @Published var hasResult: Bool = false
+        @Published var totalPrice: Double = 0
+        @Published var tollsOnRoute: [Vegobjekt] = []
+    
     private let locationManager = LocationManager()
+    
+    func resetResult() {
+            hasResult = false
+            totalPrice = 0
+            tollsOnRoute = []
+            route = nil
+        }
     
     // Copia la ubicación del usuario desde locationManager.
     func updateUserLocation() {
@@ -139,6 +151,51 @@ final class MapViewModel: ObservableObject {
             
         }
     }
+    
+    // ✅ Paso 1: detectar tolls en la ruta (precio por ahora 0)
+       func buildResultIfPossible(vehicle: VehicleType, fuel: FuelType, date: Date) {
+           guard let route else { return }
+           guard !toll.isEmpty else { return }
+
+           tollsOnRoute = tollsNearRoute(route: route, tolls: toll, maxDistanceMeters: 350)
+           totalPrice = 0
+           hasResult = true
+       }
+    
+    private func tollsNearRoute(route: MKRoute, tolls: [Vegobjekt], maxDistanceMeters: Double) -> [Vegobjekt] {
+        let polyline = route.polyline
+        let routePoints = samplePolylinePoints(polyline, step: 25) // step más bajo = más exacto
+
+        return tolls.filter { toll in
+            guard let c = toll.lokasjon?.coordinates else { return false }
+            let tollLoc = CLLocation(latitude: c.latitude, longitude: c.longitude)
+
+            for p in routePoints {
+                let d = tollLoc.distance(from: CLLocation(latitude: p.latitude, longitude: p.longitude))
+                if d <= maxDistanceMeters { return true }
+            }
+            return false
+        }
+    }
+
+    private func samplePolylinePoints(_ polyline: MKPolyline, step: Int) -> [CLLocationCoordinate2D] {
+        let count = polyline.pointCount
+        guard count > 0 else { return [] }
+
+        var coords = Array(repeating: CLLocationCoordinate2D(latitude: 0, longitude: 0), count: count)
+        polyline.getCoordinates(&coords, range: NSRange(location: 0, length: count))
+
+        guard step > 1 else { return coords }
+
+        var sampled: [CLLocationCoordinate2D] = []
+        for i in stride(from: 0, to: count, by: step) {
+            sampled.append(coords[i])
+        }
+        if let last = coords.last { sampled.append(last) }
+        return sampled
+    }
+
+
     
 }
 
