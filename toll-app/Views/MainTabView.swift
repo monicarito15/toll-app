@@ -30,31 +30,25 @@ struct MainTabView: View {
             }
         )
         TabView(selection: tabBinding) {
-            SearchView(showSheet: $showSheet, currentDetent: $currentDetent)
+            TravelView(showSheet: $showSheet, currentDetent: $currentDetent)
                 .tabItem {
                     Label("Travel", systemImage: "magnifyingglass.circle.fill")
                 }
             
                 .tag(0)
-            VehicleView()
+            HistoryView()
                 .tabItem {
-                    Label("Vehicles", systemImage: "car.fill")
+                    Label("History", systemImage: "car.fill")
                 }
                 .tag(1)
-            ProfileView()
+            /*ProfileView()
                 .tabItem{
                     Label("profile", systemImage: "person.fill")
                 }
-                .tag(2)
+                .tag(2)*/
             
         }
-        /*.sheet(isPresented: $showSheet) {
-         
-            CalculatorView(currentDetent: $currentDetent,onCalculate: { _from, _to in
-                
-            })
-            .presentationDetents([.medium, .large], selection: $currentDetent)
-        }*/
+       
     }
 }
 #Preview {

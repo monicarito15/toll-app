@@ -17,6 +17,7 @@ final class MapViewModel: ObservableObject {
     @Published var route: MKRoute? // Ruta calculada.
     @Published var toll: [Vegobjekt] = [] // Lista de tolls desde la API.
     @Published var userLocation: CLLocationCoordinate2D? // Ubicación actual del usuario.
+    @Published var originCoordinate: CLLocationCoordinate2D? // From routa
     
     private let locationManager = LocationManager()
     
@@ -109,11 +110,14 @@ final class MapViewModel: ObservableObject {
             
             // 2) Origin = userLocation o geocode FROM
             if fromTrim.isEmpty {
+                // usa la ubicacion del usuario como origen
                 self.updateUserLocation()
                 guard let origin = self.userLocation else {
                     print("No user location yet")
                     return
                 }
+                // Publica el origen para que  la vista pueda mover la camara
+                self.originCoordinate = origin
                 
                 Task { @MainActor in
                     await self.getDirections(from: origin, to: destination)
@@ -125,7 +129,8 @@ final class MapViewModel: ObservableObject {
                         print ("No coordinate found for FROM: \(fromTrim)")
                         return
                     }
-                    
+                    // Publica el origen para que  la vista pueda mover la camara
+                    self.originCoordinate = origin
                     Task { @MainActor in
                         await self.getDirections(from: origin, to: destination)
                     }

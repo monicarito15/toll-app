@@ -4,7 +4,11 @@ struct CalculatorView: View {
     @State private var from = ""
     @State private var to = ""
     @State private var showMap = false
+    
     @State private var showToDirections = false
+    @State private var showFromDirections = false
+    @State private var shouldApplyLocationToFrom = true
+
     @Binding var currentDetent: PresentationDetent
     
     @Environment(\.dismiss) private var dismiss
@@ -18,11 +22,12 @@ struct CalculatorView: View {
     
     
     
-    @State private var locationManager = LocationManager()
+    @StateObject private var locationManager = LocationManager()
     
     let fuelTypes = ["Gasoline", "Diesel", "Electric", "Hybrid"]
     let vehicleTypes = ["Car", "Truck", "Motorcycle", "Bus"]
     
+    // Callback: le manda from/to al mapa (vista padre) para calcular la ruta
     let onCalculate: (_ _from: String, _ _to: String) -> Void
     
     var body: some View {
@@ -30,25 +35,72 @@ struct CalculatorView: View {
             Form {
                 
                 Section(header: Text("Find tolls between locations")) {
-                    ZStack (alignment: .trailing){
-                        TextField ("From", text: $from)
-                             .padding()
-                            .onSubmit {
-                                focus = .to
+                        
+                       // FromDirectionView
+                        HStack {
+                            //cuando el usuario quiere buscar manual, abrimos el buscador, y prevenimos que el GPS vuelva a pisar "from"
+                            Button {
+                                showFromDirections = true
+                                shouldApplyLocationToFrom = false
+                                
+                            } label: {
+                                HStack {
+                                    Text(from.isEmpty ? "From" : from)
+                                        .foregroundStyle(from.isEmpty ? .gray : .primary)
+                                    
+                                    Spacer()
+                                    
+                                }
+                                .padding()
+                                
                             }
-                        Button(action: {
-                            locationManager.requestLocation()
+                            .buttonStyle(.plain)
                             
-                        }) {
-                            Image(systemName: "location.fill")
-                                .foregroundColor(.blue)
+                            Button {
+                                // Debug: confirma que el tap sí está pasando
+                                print("Location icon tapped")
+                                
+                                shouldApplyLocationToFrom = true
+
+                                // Si no hay permisos todavía, pide permisos
+                                // (esto evita que requestLocation falle sin darte nada)
+                                if locationManager.authorizationStatus == .notDetermined {
+                                    locationManager.requestAuthorization()
+                                    return
+                                }
+
+                                // Si está denegado/restringido, no va a funcionar
+                                if locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .restricted {
+                                    print("Location permission denied/restricted")
+                                    return
+                                }
+
+                                // Si todo ok, pide una ubicación
+                                locationManager.requestLocation()
+
+                            } label: {
+                                Image(systemName: "location.fill")
+                                    .foregroundColor(.blue)
+                            }
+                            
+
+                            .buttonStyle(.plain)
                         }
                         .onReceive(locationManager.$currentAddress) { address in
-                            if let address = address, !address.isEmpty {
+                            guard let address, !address.isEmpty else {
+                                return }
+                            print("onReceive currentAddress:", address)
+                            print("shouldApplyLocationToFrom:", shouldApplyLocationToFrom)
+                            
+                            if shouldApplyLocationToFrom {
                                 from = address
+                                
+                                shouldApplyLocationToFrom = false
                             }
                         }
-                    }
+                                
+
+                            
                     .focused($focus, equals: .from)
                     
                     
@@ -102,15 +154,7 @@ struct CalculatorView: View {
                         
                         
                     }
-                    /*.sheet(isPresented: $showMap) {
-                        MapView(
-                            from: from,
-                            to:to,
-                            vehicleType: selectedVehicleType,
-                            fuelType: selectedFuelType,
-                            dateTime: selectedDateTime
-                        )
-                    }*/
+
                     
                     .padding()
                     .frame(maxWidth: .infinity) // para que ocupe todo el ancho
@@ -144,12 +188,22 @@ struct CalculatorView: View {
         
         .onAppear {
             focus = .from
+            shouldApplyLocationToFrom = true
+            locationManager.requestLocation()
         }
+        
+        
         
         .sheet(isPresented: $showToDirections){
             ToDirectionsView(searchText: $to, currentDetent: $currentDetent)
                 .presentationDetents([.medium, .large], selection: $currentDetent)
             }
+        .sheet(isPresented: $showFromDirections) {
+            FromDirectionsView(searchText: $from, currentDetent: $currentDetent)
+        }
+        .onDisappear {
+            shouldApplyLocationToFrom = false
+        }
         }
     
     

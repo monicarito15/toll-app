@@ -4,7 +4,7 @@ import SwiftData
 
 struct ToDirectionsView: View {
 
-    @StateObject private var viewModel = ToDirectionsViewModel()
+    @StateObject private var viewModel = SearchAddressViewModel()
 
     @Binding var searchText: String
     @Binding var currentDetent: PresentationDetent

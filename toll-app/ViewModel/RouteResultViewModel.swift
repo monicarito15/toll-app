@@ -1,4 +1,4 @@
-//
+/*
 //  RouteResultViewModel.swift
 //  toll-app
 //
@@ -74,4 +74,4 @@ class RouteResultViewModel: ObservableObject {
     
     
     
-}
+} */

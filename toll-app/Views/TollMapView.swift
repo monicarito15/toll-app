@@ -1,4 +1,4 @@
-import SwiftUI
+/*import SwiftUI
 import MapKit
 
 struct TollMapView: View {
@@ -52,4 +52,4 @@ struct TollMapView: View {
             }
         }
     }
-}
+} */

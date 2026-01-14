@@ -3,7 +3,6 @@
 //  toll-app
 //
 //  Created by Carolina Mera on 09/10/2025.
-// Aqui se ve la linea azul por el moemnto esta de mi locacion aun toll en bergen
 
 import SwiftUI
 import MapKit
@@ -24,12 +23,13 @@ struct MapView: View {
     
     @Environment(\.modelContext) private var modelContext
     @StateObject private var tollStorageVM = TollStorageViewModel()
+    @State private var cameraPosition: MapCameraPosition = .automatic
 
    
     var body: some View {
         VStack {
             ZStack {
-                Map() {
+                Map(position: $cameraPosition) {
                     
                     // user location
                     if let userLocation = mapViewModel.userLocation {
@@ -71,12 +71,7 @@ struct MapView: View {
                 .mapStyle(.standard(elevation: .realistic))
             }
             
-            /*Button("Calcular ruta") {
-                Task { @MainActor in
-                    await mapViewModel.getDirectionsFromAddresses(fromAddress: from, toAddress: to)
-                }
-            }
-            .padding() */
+
         }
         .onAppear {
             //Cuando la vista aparece, se actualiza la ubicación del usuario
@@ -94,6 +89,28 @@ struct MapView: View {
             //Carga los tolls desde la API cuando aparece la vista
             await mapViewModel.fetchTolls()
         }
+        
+        .onChange(of: mapViewModel.route) { _, route in
+            guard let route else { return }
+
+            var rect = route.polyline.boundingMapRect
+
+            //Padding cómodo (ajusta a tu gusto)
+            rect = rect.insetBy(dx: -1200, dy: -1200)
+
+            //Evita zoom demasiado cerca en rutas cortas
+            let minSide: Double = 3000 // metros aprox en MapRect (depende, pero funciona bien como "anti-zoom")
+            if rect.size.width < minSide {
+                let expand = (minSide - rect.size.width) / 2
+                rect = rect.insetBy(dx: -expand, dy: -expand)
+            }
+
+            withAnimation(.easeInOut) {
+                cameraPosition = .rect(rect)
+            }
+        }
+
+
     }
 }
 
