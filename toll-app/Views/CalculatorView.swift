@@ -16,19 +16,19 @@ struct CalculatorView: View {
     
     @FocusState private var focus: FormFieldFocus?
     
-    @State private var selectedFuelType = "Gasoline"
-    @State private var selectedVehicleType = "Car"
+    @State private var selectedFuelType : FuelType = .gas
+    @State private var selectedVehicleType : VehicleType = .car
     @State private var selectedDateTime = Date()
     
     
     
     @StateObject private var locationManager = LocationManager()
     
-    let fuelTypes = ["Gasoline", "Diesel", "Electric", "Hybrid"]
-    let vehicleTypes = ["Car", "Truck", "Motorcycle", "Bus"]
+    let fuelTypes :[FuelType] = [.gas, .electric]
+    let vehicleTypes : [VehicleType] = [.car, .motorcycle]
     
     // Callback: le manda from/to al mapa (vista padre) para calcular la ruta
-    let onCalculate: (_ _from: String, _ _to: String) -> Void
+    let onCalculate: (_ _from: String, _ _to: String, _ _vehicle: VehicleType, _ fuel:FuelType, _ _date: Date) -> Void
     
     var body: some View {
         NavigationView {
@@ -128,15 +128,15 @@ struct CalculatorView: View {
                 
                 Section(header: Text("Vehicle Information")) {
                     Picker("Select Vehicle Type", selection: $selectedVehicleType) {
-                        ForEach(vehicleTypes, id: \.self) { type in
-                            Text(type)
+                        ForEach(vehicleTypes) { type in
+                                Text(type.rawValue.capitalized).tag(type)
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
                     
                     Picker("Select Fuel Type", selection: $selectedFuelType) {
-                        ForEach(fuelTypes, id: \.self) { type in
-                            Text(type)
+                        ForEach(fuelTypes) { type in
+                            Text(type.rawValue.capitalized).tag(type)
                         }
                         
                     }
@@ -149,7 +149,7 @@ struct CalculatorView: View {
                         
                         guard !toTrim.isEmpty else { return }
                         
-                        onCalculate(fromTrim, toTrim) //manda los datos al map
+                        onCalculate(fromTrim, toTrim, selectedVehicleType, selectedFuelType, selectedDateTime) //manda los datos al map
                         dismiss()
                         
                         

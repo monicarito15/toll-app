@@ -1,3 +1,5 @@
+
+// Este es el parent de calculatorView
 import SwiftUI
 import MapKit
 
@@ -10,23 +12,29 @@ struct TravelView: View {
     
     @State private var from = ""
     @State private var to = ""
+    @State private var vehicleType: VehicleType = .car
+    @State private var fuelType: FuelType = .gas
+    @State private var dateTime: Date = Date()
     
     var body: some View {
         MapView(
-            from: "Start Location",
-                        to: "End Location",
-                        vehicleType: "Car",
-                        fuelType: "Gasoline",
-                        dateTime: Date(),
-                        mapViewModel: vm
-        )
+            from: from,
+            to: to,
+            vehicleType: vehicleType,
+            fuelType: fuelType,
+            dateTime: dateTime,
+            mapViewModel: vm
+)
         
         .sheet(isPresented: $showSheet) {
             VStack {
                 CalculatorView (currentDetent: $currentDetent) {
-                    newFrom, newTo  in
+                    newFrom, newTo, newVehicle, newFuel, newDate in
                     from = newFrom
                     to = newTo
+                    vehicleType = newVehicle
+                    fuelType = newFuel
+                    dateTime = newDate
                     
                     Task {@MainActor in
                         await vm.getDirectionsFromAddresses(fromAddress: from, toAddress: to)}

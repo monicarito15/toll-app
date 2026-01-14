@@ -13,8 +13,8 @@ struct MapView: View {
     
     let from: String
     let to: String
-    let vehicleType: String
-    let fuelType: String
+    let vehicleType: VehicleType
+    let fuelType: FuelType
     let dateTime: Date
     
     
