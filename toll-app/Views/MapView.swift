@@ -40,7 +40,7 @@ struct MapView: View {
                     }
                     
                     // tolls
-                    ForEach(mapViewModel.toll) { vegobjekt in
+                    ForEach(mapViewModel.tollsOnRoute) { vegobjekt in
                         if let coordinate = vegobjekt.lokasjon?.coordinates {
                             let tollName = vegobjekt.egenskaper.first(where: { $0.navn == "Navn bomstasjon" })?.verdi
                             ?? vegobjekt.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" })?.verdi
@@ -72,10 +72,10 @@ struct MapView: View {
                 }
                 .mapStyle(.standard(elevation: .realistic))
                 
-                // ✅ UI normal: barrita abajo (NO dentro del Map)
+                // UI normal: barrita abajo (Solo cuando hay resultado)
                 if mapViewModel.hasResult {
                     TollSummaryBar(
-                        tollCount: mapViewModel.tollsOnRoute.count,   // ✅ count
+                        tollCount: mapViewModel.tollsOnRoute.count,   //
                         total: mapViewModel.totalPrice
                     ) {
                     showDetailsSheet = true
@@ -92,6 +92,7 @@ struct MapView: View {
         .onAppear {
             //Cuando la vista aparece, se actualiza la ubicación del usuario
             mapViewModel.updateUserLocation()
+            
             // Si hay direcciones válidas, calcula la ruta entre `from` y `to`
             Task { @MainActor in
                 await mapViewModel.getDirectionsFromAddresses(fromAddress: from, toAddress: to)
@@ -106,6 +107,7 @@ struct MapView: View {
             await mapViewModel.fetchTolls()
         }
         
+        // este onChange: mueve cámara + buildResult
         .onChange(of: mapViewModel.route) { _, route in
             guard let route else { return }
 
@@ -124,6 +126,9 @@ struct MapView: View {
             withAnimation(.easeInOut) {
                 cameraPosition = .rect(rect)
             }
+            
+            
+
         }
         
         .onChange(of: mapViewModel.route) { _, _ in
