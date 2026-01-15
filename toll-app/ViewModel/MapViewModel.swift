@@ -152,7 +152,7 @@ final class MapViewModel: ObservableObject {
         }
     }
     
-    // ✅ Paso 1: detectar tolls en la ruta (precio por ahora 0)
+    // detectar tolls en la ruta (precio por ahora 0)
        func buildResultIfPossible(vehicle: VehicleType, fuel: FuelType, date: Date) {
            guard let route else { return }
            guard !toll.isEmpty else { return }

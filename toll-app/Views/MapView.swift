@@ -47,11 +47,11 @@ struct MapView: View {
                             ?? "Unknown"
                             let labelText = "Toll #\(vegobjekt.id) - \(tollName)"
                             Annotation(labelText, coordinate: coordinate) {
-                                Label(labelText, systemImage: "car")
+                                Label(labelText, systemImage: "dollarsign.circle.fill")
                                     .labelStyle(.iconOnly)
-                                    .font(.title)
-                                    .shadow(radius: 5)
-                                    .foregroundColor(.blue)
+                                    .font(.system(size:18))
+                                    .shadow(radius: 3)
+                                    
                             }
                         }
                     }
