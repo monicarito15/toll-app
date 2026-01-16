@@ -23,7 +23,7 @@ struct TravelView: View {
             vehicleType: vehicleType,
             fuelType: fuelType,
             dateTime: dateTime,
-            mapViewModel: vm
+            mapVM: vm
 )
         
         .sheet(isPresented: $showSheet) {

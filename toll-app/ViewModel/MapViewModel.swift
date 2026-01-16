@@ -1,9 +1,5 @@
-//
-//  MapViewModel.swift
-//  toll-app
-//
-//  Created by Carolina Mera on 09/10/2025.
-//  ViewModel: contiene la lógica de ubicación, rutas y tolls.
+
+//  ViewModel: contiene la lógica de ubicación, rutas y tolls desde NVDB, hasResult(muestra la barra despues del calculo).
 
 
 import SwiftUI
@@ -23,6 +19,8 @@ final class MapViewModel: ObservableObject {
         @Published var hasResult: Bool = false
         @Published var totalPrice: Double = 0
         @Published var tollsOnRoute: [Vegobjekt] = []
+    
+
     
     private let locationManager = LocationManager()
     
@@ -143,6 +141,7 @@ final class MapViewModel: ObservableObject {
                     }
                     // Publica el origen para que  la vista pueda mover la camara
                     self.originCoordinate = origin
+                    
                     Task { @MainActor in
                         await self.getDirections(from: origin, to: destination)
                     }
@@ -194,8 +193,6 @@ final class MapViewModel: ObservableObject {
         if let last = coords.last { sampled.append(last) }
         return sampled
     }
-
-
-    
+        
 }
 

@@ -19,10 +19,15 @@ struct MapView: View {
     
     
     // ahora usamos el ViewModel, que contiene toda la lógica de ubicación, rutas y tolls
-    @ObservedObject var mapViewModel : MapViewModel
     
-    @Environment(\.modelContext) private var modelContext
+    @ObservedObject var mapVM : MapViewModel
     @StateObject private var tollStorageVM = TollStorageViewModel()
+    @Environment(\.modelContext) private var modelContext
+
+    
+    @StateObject private var feeVM = FeeViewModel()
+    @StateObject private var feeStorageVM = FeeStorageViewModel()
+    
     @State private var cameraPosition: MapCameraPosition = .automatic
     
     @State private var showDetailsSheet = false
@@ -34,20 +39,20 @@ struct MapView: View {
                 Map(position: $cameraPosition) {
                     
                     // user location
-                    if let userLocation = mapViewModel.userLocation {
+                    if let userLocation = mapVM.userLocation {
                         // Center map on user location
                         Marker("My location", coordinate: userLocation)
                     }
                     
                     // tolls
-                    ForEach(mapViewModel.tollsOnRoute) { vegobjekt in
+                    ForEach(mapVM.tollsOnRoute) { vegobjekt in
                         if let coordinate = vegobjekt.lokasjon?.coordinates {
                             let tollName = vegobjekt.egenskaper.first(where: { $0.navn == "Navn bomstasjon" })?.verdi
                             ?? vegobjekt.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" })?.verdi
                             ?? "Unknown"
                             let labelText = "Toll #\(vegobjekt.id) - \(tollName)"
                             Annotation(labelText, coordinate: coordinate) {
-                                Label(labelText, systemImage: "dollarsign.circle.fill")
+                                Label(labelText, systemImage: "creditcard.fill")
                                     .labelStyle(.iconOnly)
                                     .font(.system(size:18))
                                     .shadow(radius: 3)
@@ -58,7 +63,7 @@ struct MapView: View {
                     
                     // la polilínea representa la ruta calculada entre `from` y `to`
                     // route line
-                    if let route = mapViewModel.route {
+                    if let route = mapVM.route {
                         MapPolyline(route)
                             .stroke(.blue, lineWidth: 5)
                     }
@@ -73,10 +78,10 @@ struct MapView: View {
                 .mapStyle(.standard(elevation: .realistic))
                 
                 // UI normal: barrita abajo (Solo cuando hay resultado)
-                if mapViewModel.hasResult {
+                if mapVM.hasResult {
                     TollSummaryBar(
-                        tollCount: mapViewModel.tollsOnRoute.count,   //
-                        total: mapViewModel.totalPrice
+                        tollCount: mapVM.tollsOnRoute.count,
+                        total: feeVM.totalPrice
                     ) {
                     showDetailsSheet = true
                     }
@@ -84,18 +89,18 @@ struct MapView: View {
                     .padding(.bottom, 8)
                 }
             }
-            .animation(.easeInOut, value: mapViewModel.hasResult)
+            .animation(.easeInOut, value: mapVM.hasResult)
         }
             
 
         
         .onAppear {
             //Cuando la vista aparece, se actualiza la ubicación del usuario
-            mapViewModel.updateUserLocation()
+            mapVM.updateUserLocation()
             
             // Si hay direcciones válidas, calcula la ruta entre `from` y `to`
             Task { @MainActor in
-                await mapViewModel.getDirectionsFromAddresses(fromAddress: from, toAddress: to)
+                await mapVM.getDirectionsFromAddresses(fromAddress: from, toAddress: to)
             }
                
             Task {
@@ -104,20 +109,20 @@ struct MapView: View {
         }
         .task {
             //Carga los tolls desde la API cuando aparece la vista
-            await mapViewModel.fetchTolls()
+            await mapVM.fetchTolls()
         }
         
-        // este onChange: mueve cámara + buildResult
-        .onChange(of: mapViewModel.route) { _, route in
+        // este onChange: mueve cámara + buildResult "Solo se ejecuta cuando cambia la ruta"
+        .onChange(of: mapVM.route) { _, route in
             guard let route else { return }
+            
+            var rect = route.polyline.boundingMapRect// Calcula el rectángulo que contiene toda la ruta
 
-            var rect = route.polyline.boundingMapRect
-
-            //Padding cómodo (ajusta a tu gusto)
+            //Añade padding para que la ruta no quede pegada a los bordes
             rect = rect.insetBy(dx: -1200, dy: -1200)
 
             //Evita zoom demasiado cerca en rutas cortas
-            let minSide: Double = 3000 // metros aprox en MapRect (depende, pero funciona bien como "anti-zoom")
+            let minSide: Double = 3000
             if rect.size.width < minSide {
                 let expand = (minSide - rect.size.width) / 2
                 rect = rect.insetBy(dx: -expand, dy: -expand)
@@ -126,21 +131,39 @@ struct MapView: View {
             withAnimation(.easeInOut) {
                 cameraPosition = .rect(rect)
             }
-            
-            
 
+        }
+        // Se ejecuta cuando ya existe una ruta
+        .onChange(of: mapVM.route) { _, _ in
+            mapVM.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
         }
         
-        .onChange(of: mapViewModel.route) { _, _ in
-            mapViewModel.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
+      
+       /* .onChange(of: mapVM.tollsOnRoute) { _, _ in
+            mapVM.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
+        }*/
+        
+        
+        // Este onChange: solo se ejecuta cuando ya existen tolls en ruta y Calcula/ carga fees - usa swiftdata 24H
+        .onChange(of: mapVM.tollsOnRoute) { _, tolls in
+            guard !tolls.isEmpty else { return }
+
+            feeVM.loadOrCalculateFees(
+                tollsOnRoute: tolls,
+                from: from,
+                to: to,
+                vehicle: vehicleType,
+                fuel: fuelType,
+                date: dateTime,
+                modelContext: modelContext,
+                storage: feeStorageVM
+            )
         }
 
-        .onChange(of: mapViewModel.toll) { _, _ in
-            mapViewModel.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
-        }
+
         
         .sheet(isPresented: $showDetailsSheet) {
-            TollPassedListView(tolls: mapViewModel.tollsOnRoute)
+            TollPassedListView(tolls: mapVM.tollsOnRoute)
                 .presentationDetents([.medium, .large])
         }
 
