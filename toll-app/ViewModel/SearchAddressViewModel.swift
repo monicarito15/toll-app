@@ -65,7 +65,7 @@ final class SearchAddressViewModel : ObservableObject {
         // Guarda y recarga las 5 últimas
         do {
             try context.save()
-            print("Saved new search in SwiftData")
+            //print("Saved new search in SwiftData")
             
             await loadRecentSearch(using: context)// Recarga la lista desde la base
 
@@ -96,7 +96,7 @@ final class SearchAddressViewModel : ObservableObject {
             )
             descriptor.fetchLimit = 5
             let fetched = try context.fetch(descriptor)
-            print("Fetched \(fetched.count) recent searches from SwiftData") 
+            //print("Fetched \(fetched.count) recent searches from SwiftData") 
             recentSearches = fetched
             
         } catch {

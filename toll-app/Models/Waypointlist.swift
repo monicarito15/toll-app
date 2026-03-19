@@ -23,27 +23,24 @@ struct Waypointlist: Codable {
 
 
 struct WaypointRequest: Codable {
-    let waypoints: [Waypointlist]
+    let fra: Waypointlist
+    let til: Waypointlist
     let dato_yyyymmdd: String
     let tidspunkt_hhmm: String
     let bilsize: Int // car, truck, moto etc.
-    let litenbiltype: Int// fuel type for small vehicles
-    //let Storbiltype: Int // fuel type for large vehicles
-    //let billengdeunder: String
+    let litenbiltype: Int // fuel type for small vehicles
     let retur: Int
     let tidsreferanser: Int?
-    
-    enum codingKeys: String, CodingKey {
-        case waypoints = "Waypoints"
+
+    enum CodingKeys: String, CodingKey {
+        case fra = "Fra"
+        case til = "Til"
         case dato_yyyymmdd = "Dato_yyyymmdd"
         case tidspunkt_hhmm = "Tidspunkt_hhmm"
         case bilsize = "Bilsize"
         case litenbiltype = "Litenbiltype"
-        //case Storbiltype = "Storbiltype"
-        //case billengdeunder = "Billengdeunder"
         case retur = "Retur"
         case tidsreferanser = "Tidsreferanser"
-        
     }
 }
 

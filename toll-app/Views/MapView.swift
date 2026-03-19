@@ -158,6 +158,42 @@ struct MapView: View {
                 modelContext: modelContext,
                 storage: feeStorageVM
             )
+
+            guard let origin = mapVM.originCoordinate,
+                  let destination = mapVM.destinationCoordinate else { return }
+
+            let dateFormatter: DateFormatter = {
+                let f = DateFormatter()
+                f.dateFormat = "yyyyMMdd"
+                return f
+            }()
+            let timeFormatter: DateFormatter = {
+                let f = DateFormatter()
+                f.dateFormat = "HHmm"
+                return f
+            }()
+
+            let waypointBody = WaypointRequest(
+                fra: Waypointlist(latitude: origin.latitude, longitude: origin.longitude, time: nil),
+                til: Waypointlist(latitude: destination.latitude, longitude: destination.longitude, time: nil),
+                dato_yyyymmdd: dateFormatter.string(from: dateTime),
+                tidspunkt_hhmm: timeFormatter.string(from: dateTime),
+                bilsize: vehicleType == .car ? 1 : 2,
+                litenbiltype: fuelType == .electric ? 2 : 1,
+                retur: 0,
+                tidsreferanser: 1
+            )
+
+            Task {
+                do {
+                    let response = try await BompengerService.shared.getFeesByWaypoint(body: waypointBody)
+                    if let totalPrice = response.tur?.first?.totalPrice {
+                        await MainActor.run { feeVM.totalPrice = totalPrice }
+                    }
+                } catch {
+                    print("getFeesByWaypoint error: \(error)")
+                }
+            }
         }
 
 

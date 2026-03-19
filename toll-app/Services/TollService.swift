@@ -31,12 +31,12 @@ struct TollService{
         let (data, response) = try await URLSession.shared.data(for: request)
 
         if let http = response as? HTTPURLResponse {
-            print("NVDB status: \(http.statusCode)")
-            print("NVDB headers: \(http.allHeaderFields)")
+            //print("NVDB status: \(http.statusCode)")
+            //print("NVDB headers: \(http.allHeaderFields)")
         }
 
         if let bodyString = String(data: data, encoding: .utf8) {
-            print("NVDB body (first 500 chars): \(bodyString.prefix(500))")
+            //print("NVDB body (first 500 chars): \(bodyString.prefix(500))")
         }
         
         guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {

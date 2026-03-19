@@ -35,6 +35,7 @@ final class TollStorageViewModel : ObservableObject {
                 print("Loaded tolls from (local DataBase)SwiftData - Total Found local:)(\(tolls.count))")
             }
             
+            
         } catch {
             print("Error loading from SwitfData dataBase: \(error)")
         }

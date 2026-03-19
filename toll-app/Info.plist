@@ -2,10 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We need your location to show nearby tolls and calculate routes.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>We need your location to show nearby tolls and calculate routes, even when the app is in the background.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to show nearby tolls and calculate routes.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need your location to show nearby tolls and calculate routes, even when the app is in the background.</string>
+	<key>OCP_APIM_SUBSCRIPTION_KEY</key>
+	<string>723c73bd46e24ebf88d3df8beeae4d0c</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array/>
 	<key>CFBundleExecutable</key>
@@ -30,7 +32,6 @@
 	</array>
 	<key>NSPrincipalClass</key>
 	<string>6.0</string>
-	
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

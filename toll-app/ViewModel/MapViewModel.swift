@@ -14,6 +14,7 @@ final class MapViewModel: ObservableObject {
     @Published var toll: [Vegobjekt] = [] // Lista de tolls desde la API.
     @Published var userLocation: CLLocationCoordinate2D? // Ubicación actual del usuario.
     @Published var originCoordinate: CLLocationCoordinate2D? // From routa
+    @Published var destinationCoordinate: CLLocationCoordinate2D? // To routa
     
     // Para la barrita + sheet
         @Published var hasResult: Bool = false
@@ -29,6 +30,8 @@ final class MapViewModel: ObservableObject {
             totalPrice = 0
             tollsOnRoute = []
             route = nil
+            originCoordinate = nil
+            destinationCoordinate = nil
         }
     
     // Copia la ubicación del usuario desde locationManager.
@@ -117,7 +120,8 @@ final class MapViewModel: ObservableObject {
                 print("No coordinate found for TO: \(toTrim)")
                 return
             }
-            
+            self.destinationCoordinate = destination
+
             // 2) Origin = userLocation o geocode FROM
             if fromTrim.isEmpty {
                 // usa la ubicacion del usuario como origen
@@ -128,11 +132,11 @@ final class MapViewModel: ObservableObject {
                 }
                 // Publica el origen para que  la vista pueda mover la camara
                 self.originCoordinate = origin
-                
+
                 Task { @MainActor in
                     await self.getDirections(from: origin, to: destination)
                 }
-                
+
             } else {
                 self.geocodeAddress(fromTrim) { origin in
                     guard let origin else {
@@ -141,13 +145,13 @@ final class MapViewModel: ObservableObject {
                     }
                     // Publica el origen para que  la vista pueda mover la camara
                     self.originCoordinate = origin
-                    
+
                     Task { @MainActor in
                         await self.getDirections(from: origin, to: destination)
                     }
                 }
             }
-            
+
         }
     }
     
