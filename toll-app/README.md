@@ -2,7 +2,7 @@
 
 A SwiftUI-based iOS application that calculates toll costs for routes in Norway using real-time data from the NVDB (Norwegian Road Database) API.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
@@ -16,7 +16,7 @@ A SwiftUI-based iOS application that calculates toll costs for routes in Norway 
 
 ---
 
-## 🎯 Overview
+## Overview
 
 This app helps drivers in Norway calculate toll costs for their routes. It fetches toll station data from the NVDB API, stores it locally using SwiftData for offline access, and calculates routes using MapKit to identify which toll stations are along the way.
 
@@ -24,9 +24,9 @@ This app helps drivers in Norway calculate toll costs for their routes. It fetch
 
 ---
 
-## ✨ Features
+## Features
 
-### ✅ Implemented
+### Implemented
 
 - **Route Calculation**: Calculate routes between two addresses using MapKit
 - **Current Location Integration**: Automatically detect and use your current location as starting point
@@ -38,14 +38,14 @@ This app helps drivers in Norway calculate toll costs for their routes. It fetch
 - **Date & Time Selection**: Select when you'll be traveling
 - **Autopass Toggle**: Indicate if you have an Autopass account
 
-### 🚧 In Development
+### In Development
 
 - **Price Calculation**: Calculate actual toll costs based on vehicle type, fuel type, time, and Autopass status
 - **Route Alternatives**: Show multiple route options with different toll costs
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 The app follows the MVVM (Model-View-ViewModel) architecture pattern with SwiftUI and Swift Concurrency (async/await).
 
@@ -74,7 +74,7 @@ The app follows the MVVM (Model-View-ViewModel) architecture pattern with SwiftU
 
 ---
 
-## 🔧 Core Components
+## Core Components
 
 ### Views
 
@@ -305,7 +305,7 @@ enum FuelType: String, Codable, CaseIterable, Identifiable {
 
 ---
 
-## 🔄 Data Flow
+## Data Flow
 
 ### 1. App Launch
 
@@ -378,7 +378,7 @@ private func tollsNearRoute(route: MKRoute, tolls: [Vegobjekt], maxDistanceMeter
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Requirements
 
@@ -417,7 +417,7 @@ The app will automatically:
 
 ---
 
-## 🎮 Usage
+## Usage
 
 ### Calculate a Route
 
@@ -497,7 +497,7 @@ Uses `CLLocationManager` with:
 
 ---
 
-## 🌐 API Integration
+## API Integration
 
 ### NVDB API Details
 
@@ -547,7 +547,7 @@ The NVDB API requires a `X-Client` header for identification. Be respectful with
 
 ---
 
-## 🚀 Future Enhancements
+## Future Enhancements
 
 ### Priority Features
 
@@ -578,7 +578,7 @@ The NVDB API requires a `X-Client` header for identification. Be respectful with
 
 ---
 
-## 🐛 Known Issues
+## Known Issues
 
 1. **Price Calculation**: Currently returns $0 - waiting for pricing data/API
 2. **350m Threshold**: Might miss tolls on complex interchanges or need tuning
@@ -587,7 +587,7 @@ The NVDB API requires a `X-Client` header for identification. Be respectful with
 
 ---
 
-## 📝 Code Style
+## Code Style
 
 - **Architecture**: MVVM with SwiftUI
 - **Concurrency**: Swift Concurrency (async/await) preferred over Dispatch/Combine
@@ -597,13 +597,13 @@ The NVDB API requires a `X-Client` header for identification. Be respectful with
 
 ---
 
-## 📄 License
+## License
 
-[Add your license here]
+
 
 ---
 
-## 👥 Credits
+## Credits
 
 **Developer**: Carolina Mera
 
@@ -613,9 +613,9 @@ The NVDB API requires a `X-Client` header for identification. Be respectful with
 
 ---
 
-## 📞 Contact
+## Contact
 
-For questions or support, contact: [carolina.m@gmail.com]
+For questions or support, contact: [carolinamera1985@gmail.com]
 
 ---
 

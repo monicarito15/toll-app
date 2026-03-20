@@ -2,7 +2,7 @@
 
 Una aplicación iOS basada en SwiftUI que calcula los costos de peajes para rutas en Noruega utilizando datos en tiempo real de la API NVDB (Base de Datos de Carreteras de Noruega).
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
 - [Descripción General](#descripción-general)
 - [Características](#características)
@@ -16,7 +16,7 @@ Una aplicación iOS basada en SwiftUI que calcula los costos de peajes para ruta
 
 ---
 
-## 🎯 Descripción General
+## Descripción General
 
 Esta aplicación ayuda a los conductores en Noruega a calcular los costos de peaje para sus rutas. Obtiene datos de estaciones de peaje desde la API NVDB, los almacena localmente usando SwiftData para acceso sin conexión, y calcula rutas usando MapKit para identificar qué estaciones de peaje están en el camino.
 
@@ -24,9 +24,9 @@ Esta aplicación ayuda a los conductores en Noruega a calcular los costos de pea
 
 ---
 
-## ✨ Características
+## Características
 
-### ✅ Implementadas
+### Implementadas
 
 - **Cálculo de Rutas**: Calcula rutas entre dos direcciones usando MapKit
 - **Integración de Ubicación Actual**: Detecta y usa automáticamente tu ubicación actual como punto de partida
@@ -45,7 +45,7 @@ Esta aplicación ayuda a los conductores en Noruega a calcular los costos de pea
 
 ---
 
-## 🏗 Arquitectura
+## Arquitectura
 
 La aplicación sigue el patrón de arquitectura MVVM (Model-View-ViewModel) con SwiftUI y Swift Concurrency (async/await).
 
@@ -74,7 +74,7 @@ La aplicación sigue el patrón de arquitectura MVVM (Model-View-ViewModel) con 
 
 ---
 
-## 🔧 Componentes Principales
+##  Componentes Principales
 
 ### Vistas
 
@@ -305,7 +305,7 @@ enum FuelType: String, Codable, CaseIterable, Identifiable {
 
 ---
 
-## 🔄 Flujo de Datos
+##  Flujo de Datos
 
 ### 1. Inicio de Aplicación
 
@@ -378,7 +378,7 @@ private func tollsNearRoute(route: MKRoute, tolls: [Vegobjekt], maxDistanceMeter
 
 ---
 
-## 📦 Instalación
+## Instalación
 
 ### Requisitos
 
@@ -417,7 +417,7 @@ La aplicación automáticamente:
 
 ---
 
-## 🎮 Uso
+## Uso
 
 ### Calcular una Ruta
 
@@ -445,7 +445,7 @@ Las búsquedas recientes se guardan automáticamente y se pueden acceder desde l
 
 ---
 
-## 🔬 Detalles Técnicos
+##  Detalles Técnicos
 
 ### Integración con SwiftData
 
@@ -497,7 +497,7 @@ Usa `CLLocationManager` con:
 
 ---
 
-## 🌐 Integración con API
+## Integración con API
 
 ### Detalles de API NVDB
 
@@ -547,7 +547,7 @@ La API NVDB requiere un encabezado `X-Client` para identificación. Sé respetuo
 
 ---
 
-## 🚀 Mejoras Futuras
+##  Mejoras Futuras
 
 ### Características Prioritarias
 
@@ -578,7 +578,7 @@ La API NVDB requiere un encabezado `X-Client` para identificación. Sé respetuo
 
 ---
 
-## 🐛 Problemas Conocidos
+##  Problemas Conocidos
 
 1. **Cálculo de Precios**: Actualmente devuelve $0 - esperando datos/API de precios
 2. **Umbral de 350m**: Podría perder peajes en intercambios complejos o necesitar ajuste
@@ -587,7 +587,7 @@ La API NVDB requiere un encabezado `X-Client` para identificación. Sé respetuo
 
 ---
 
-## 📝 Estilo de Código
+## Estilo de Código
 
 - **Arquitectura**: MVVM con SwiftUI
 - **Concurrencia**: Swift Concurrency (async/await) preferido sobre Dispatch/Combine
@@ -597,13 +597,13 @@ La API NVDB requiere un encabezado `X-Client` para identificación. Sé respetuo
 
 ---
 
-## 📄 Licencia
+## Licencia
 
-[Agregar tu licencia aquí]
+
 
 ---
 
-## 👥 Créditos
+## Créditos
 
 **Desarrolladora**: Carolina Mera
 
@@ -613,9 +613,9 @@ La API NVDB requiere un encabezado `X-Client` para identificación. Sé respetuo
 
 ---
 
-## 📞 Contacto
+##  Contacto
 
-Para preguntas o soporte, contactar: [carolina.m@gmail.com]
+Para preguntas o soporte, contactar: [carolinamera1985@gmail.com]
 
 ---
 
