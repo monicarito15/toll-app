@@ -31,7 +31,10 @@ struct TravelView: View {
         
         .sheet(isPresented: $showSheet) {
             VStack {
-                CalculatorView (currentDetent: $currentDetent) {
+                CalculatorView(
+                    mapVM: vm,
+                    currentDetent: $currentDetent,
+                    onCalculate:{
                     newFrom, newTo, newVehicle, newFuel, newDate, newAutopass  in
                     from = newFrom
                     to = newTo
@@ -41,9 +44,12 @@ struct TravelView: View {
                     hasAutopass = newAutopass
                     
                     Task {@MainActor in
-                        await vm.getDirectionsFromAddresses(fromAddress: from, toAddress: to)}
+                        await vm.getDirectionsFromAddresses(fromAddress: from, toAddress: to)
+                    }
+                
                 }
-            }
+            )
+        }
             .presentationDetents([.medium, .large], selection: $currentDetent)
             .onAppear {
                 currentDetent = .medium // Asegura que el sheet siempre se abra medium

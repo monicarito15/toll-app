@@ -12,7 +12,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     // MARK: - CoreLocation objects
     private let manager = CLLocationManager()   // el manager real que pide permisos y ubicación
-    private let geocoder = CLGeocoder()         // convierte coordenadas -> dirección (texto)
+    private let geocoder = CLGeocoder()         // convierte coordenadas  dirección (texto)
 
     // MARK: - Published state (SwiftUI escucha estos cambios)
     @Published var userLocation: CLLocationCoordinate2D?         // coordenadas actuales del usuario
