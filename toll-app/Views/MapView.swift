@@ -16,6 +16,7 @@ struct MapView: View {
     let vehicleType: VehicleType
     let fuelType: FuelType
     let dateTime: Date
+    let hasAutopass: Bool
     
     
     // ahora usamos el ViewModel, que contiene toda la lógica de ubicación, rutas y tolls
@@ -139,15 +140,16 @@ struct MapView: View {
         }
         
       
-       /* .onChange(of: mapVM.tollsOnRoute) { _, _ in
-            mapVM.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
-        }*/
         
         
         // Este onChange: solo se ejecuta cuando ya existen tolls en ruta y Calcula/ carga fees - usa swiftdata 24H
         .onChange(of: mapVM.tollsOnRoute) { _, tolls in
             guard !tolls.isEmpty else { return }
+            
+            // Configure autopass before calling API
+            feeVM.hasAutoPassAgreement = hasAutopass
 
+            // FeeViewModel handles everything: cache, API call, fallback
             feeVM.loadOrCalculateFees(
                 tollsOnRoute: tolls,
                 from: from,
@@ -156,44 +158,10 @@ struct MapView: View {
                 fuel: fuelType,
                 date: dateTime,
                 modelContext: modelContext,
-                storage: feeStorageVM
+                storage: feeStorageVM,
+                originCoordinate: mapVM.originCoordinate,
+                destinationCoordinate: mapVM.destinationCoordinate
             )
-
-            guard let origin = mapVM.originCoordinate,
-                  let destination = mapVM.destinationCoordinate else { return }
-
-            let dateFormatter: DateFormatter = {
-                let f = DateFormatter()
-                f.dateFormat = "yyyyMMdd"
-                return f
-            }()
-            let timeFormatter: DateFormatter = {
-                let f = DateFormatter()
-                f.dateFormat = "HHmm"
-                return f
-            }()
-
-            let waypointBody = WaypointRequest(
-                fra: Waypointlist(latitude: origin.latitude, longitude: origin.longitude, time: nil),
-                til: Waypointlist(latitude: destination.latitude, longitude: destination.longitude, time: nil),
-                dato_yyyymmdd: dateFormatter.string(from: dateTime),
-                tidspunkt_hhmm: timeFormatter.string(from: dateTime),
-                bilsize: vehicleType == .car ? 1 : 2,
-                litenbiltype: fuelType == .electric ? 2 : 1,
-                retur: 0,
-                tidsreferanser: 1
-            )
-
-            Task {
-                do {
-                    let response = try await BompengerService.shared.getFeesByWaypoint(body: waypointBody)
-                    if let totalPrice = response.tur?.first?.totalPrice {
-                        await MainActor.run { feeVM.totalPrice = totalPrice }
-                    }
-                } catch {
-                    print("getFeesByWaypoint error: \(error)")
-                }
-            }
         }
 
 

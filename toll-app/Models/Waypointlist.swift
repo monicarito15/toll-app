@@ -61,3 +61,24 @@ struct WaypointResponse: Codable {
         }
     }
 }
+
+
+extension WaypointResponse {
+    // Gets the correct price based on autopass status
+    func getPrice(hasAutopass: Bool) -> Double? {
+        guard let trip = tur?.first else { return nil }
+        
+        if hasAutopass {
+            return trip.totalWithAutopass ?? trip.totalPrice
+        } else {
+            return trip.totalPrice
+        }
+    }
+    
+    // Gets both prices for debugging
+    func getPrices() -> (withoutAutopass: Double?, withAutopass: Double?) {
+        guard let trip = tur?.first else { return (nil, nil) }
+        return (trip.totalPrice, trip.totalWithAutopass)
+    }
+}
+

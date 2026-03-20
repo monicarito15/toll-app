@@ -1,0 +1,10 @@
+
+1. Usuario calcula ruta
+   ↓
+2. FeeViewModel verifica cache (24h)
+   ├─ Si hay cache válido → Usa cache ✅
+   └─ Si NO hay cache:
+      ↓
+      Llama a BompengerService.getFeesByWaypoint() 🌐 (TU API REAL)
+      ├─ Si API responde → Guarda en cache ✅
+      └─ Si API falla → Usa TollPriceCalculator 📊 (fallback)

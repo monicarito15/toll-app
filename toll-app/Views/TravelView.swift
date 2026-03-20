@@ -15,6 +15,8 @@ struct TravelView: View {
     @State private var vehicleType: VehicleType = .car
     @State private var fuelType: FuelType = .gas
     @State private var dateTime: Date = Date()
+    @State private var hasAutopass: Bool = false
+ 
     
     var body: some View {
         MapView(
@@ -23,18 +25,20 @@ struct TravelView: View {
             vehicleType: vehicleType,
             fuelType: fuelType,
             dateTime: dateTime,
+            hasAutopass: hasAutopass,
             mapVM: vm
-)
+        )
         
         .sheet(isPresented: $showSheet) {
             VStack {
                 CalculatorView (currentDetent: $currentDetent) {
-                    newFrom, newTo, newVehicle, newFuel, newDate in
+                    newFrom, newTo, newVehicle, newFuel, newDate, newAutopass  in
                     from = newFrom
                     to = newTo
                     vehicleType = newVehicle
                     fuelType = newFuel
                     dateTime = newDate
+                    hasAutopass = newAutopass
                     
                     Task {@MainActor in
                         await vm.getDirectionsFromAddresses(fromAddress: from, toAddress: to)}
