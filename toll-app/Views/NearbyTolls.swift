@@ -34,46 +34,32 @@ struct NearbyTolls: View {
         
         // Ordenar por distancia (más cercanos primero)
         return nearby.sorted { toll1, toll2 in
-            guard let coord1 = toll1.lokasjon?.coordinates,
-                  let coord2 = toll2.lokasjon?.coordinates else { return false }
-            
-            let loc1 = CLLocation(latitude: coord1.latitude, longitude: coord1.longitude)
-            let loc2 = CLLocation(latitude: coord2.latitude, longitude: coord2.longitude)
-            
-            return userCLLocation.distance(from: loc1) < userCLLocation.distance(from: loc2)
+            guard let dist1 = toll1.distanceInMeters(from: userLocation),
+                  let dist2 = toll2.distanceInMeters(from: userLocation) else { return false }
+            return dist1 < dist2
         }
     }
     
-    // Helper para obtener el nombre del peaje desde sus propiedades
-    private func getTollName(_ toll: Vegobjekt) -> String {
-        // Buscar la propiedad "Navn bomstasjon" primero
-        if let navnProp = toll.egenskaper.first(where: { $0.navn == "Navn bomstasjon" }),
-           let navn = navnProp.verdi {
-            return navn
-        }
-        // Si no existe, buscar "Navn bompengeanlegg (fra CS)"
-        if let navnProp = toll.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" }),
-           let navn = navnProp.verdi {
-            return navn
-        }
-        // Si tampoco existe, mostrar "Unknown Toll"
-        return "Unknown Toll"
-    }
+//    // Helper para obtener el nombre del peaje desde sus propiedades
+//    private func getTollName(_ toll: Vegobjekt) -> String {
+//        // Buscar la propiedad "Navn bomstasjon" primero
+//        if let navnProp = toll.egenskaper.first(where: { $0.navn == "Navn bomstasjon" }),
+//           let navn = navnProp.verdi {
+//            return navn
+//        }
+//        // Si no existe, buscar "Navn bompengeanlegg (fra CS)"
+//        if let navnProp = toll.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" }),
+//           let navn = navnProp.verdi {
+//            return navn
+//        }
+//        // Si tampoco existe, mostrar "Unknown Toll"
+//        return "Unknown Toll"
+//    }
     
     // Helper para calcular distancia en formato legible
     private func getDistance(to toll: Vegobjekt) -> String {
-        guard let userLocation = mapVm.userLocation,
-              let tollCoords = toll.lokasjon?.coordinates else { return "—" }
-        
-        let userCLLocation = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
-        let tollLocation = CLLocation(latitude: tollCoords.latitude, longitude: tollCoords.longitude)
-        let distance = userCLLocation.distance(from: tollLocation)
-        
-        if distance < 1000 {
-            return String(format: "%.0f m", distance)
-        } else {
-            return String(format: "%.1f km", distance / 1000)
-        }
+        guard let userLocation = mapVm.userLocation else { return "—" }
+        return toll.distance(from: userLocation)
     }
     
     var body: some View {
@@ -103,7 +89,7 @@ struct NearbyTolls: View {
                                 onTollTapped?(toll)
                             } label: {
                                 TollCard(
-                                    name: getTollName(toll),
+                                    name: toll.displayName,
                                     distance: getDistance(to: toll),
                                     colorScheme: colorScheme
                                 )
@@ -120,7 +106,7 @@ struct NearbyTolls: View {
     }
 }
 
-// MARK: - Toll Card Component
+
 private struct TollCard: View {
     let name: String
     let distance: String

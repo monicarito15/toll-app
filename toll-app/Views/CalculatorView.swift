@@ -13,7 +13,7 @@ struct CalculatorView: View {
     @State private var showToDirections = false
     @State private var showFromDirections = false
     @State private var shouldApplyLocationToFrom = true
-    @State private var autopassOn: Bool = false
+    @State private var autopassOn: Bool = true
     
     @Binding var currentDetent: PresentationDetent
     
@@ -82,7 +82,7 @@ struct CalculatorView: View {
         }
     }
     
-    // MARK: - Route & Time Section
+    // Route & Time Section
     private var routeAndTimeSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ROUTE & TIME")
@@ -216,7 +216,7 @@ struct CalculatorView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    // MARK: - Vehicle Details Section
+    // Vehicle Details Section
     private var vehicleDetailsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("VEHICLE DETAILS")
@@ -314,13 +314,22 @@ struct CalculatorView: View {
         .background(colorScheme == .dark ? Color(.systemGray6) : .white)
     }
     
-    // MARK: - Calculate Button
+    // Calculate Button
     private var calculateButton: some View {
         Button {
             let fromTrim = from.trimmingCharacters(in: .whitespacesAndNewlines)
             let toTrim = to.trimmingCharacters(in: .whitespacesAndNewlines)
             
             guard !toTrim.isEmpty else { return }
+            
+            // Debug: Print selected options
+            print("CALCULATOR VIEW - User Selection:")
+            print("   Vehicle Type: \(selectedVehicleType.rawValue)")
+            print("   Fuel Type: \(selectedFuelType.rawValue)")
+            print("   Autopass: \(autopassOn ? "ON" : "OFF")")
+            print("   From: \(fromTrim)")
+            print("   To: \(toTrim)")
+            print("   DateTime: \(selectedDateTime)")
             
             onCalculate(fromTrim, toTrim, selectedVehicleType, selectedFuelType, selectedDateTime, autopassOn)
             dismiss()
@@ -348,7 +357,7 @@ struct CalculatorView: View {
         .opacity(to.isEmpty ? 0.5 : 1.0)
     }
     
-    // MARK: - Nearby Tolls Section
+// Nearby Tolls Section
     private var nearbyTollsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("NEARBY TOLLS")

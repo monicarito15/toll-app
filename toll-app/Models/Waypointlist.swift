@@ -56,8 +56,8 @@ struct WaypointResponse: Codable {
         let totalWithAutopass: Double?
         
         enum CodingKeys: String, CodingKey {
-            case totalPrice = "Totalprice"
-            case totalWithAutopass = "TotalwithAutopass"
+            case totalPrice = "Kostnad"
+            case totalWithAutopass = "Rabattert"
         }
     }
 }

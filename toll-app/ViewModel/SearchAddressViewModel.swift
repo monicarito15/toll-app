@@ -47,34 +47,41 @@ final class SearchAddressViewModel : ObservableObject {
     
     // Guarda una nueva busqueda - y que se solo guarden las 5 ultimas
     func saveSearch(_ name: String, address: String, using context: ModelContext) async {
-        guard !name.isEmpty else { return } // No guarda búsquedas vacías
-        recentSearches.removeAll { $0.name.lowercased() == name.lowercased() }
+        guard !name.isEmpty else { return }
         
-        // Evita duplicados
-        if recentSearches.contains(where: { $0.name == name && $0.address == address }) {
-            print("Duplicate search not saved: \(name) - \(address)") // Nuevo: print de depuración
-            return
+        // Buscar si ya existe en la base de datos
+        let descriptor = FetchDescriptor<RecentSearch>()
+        let allSearches = (try? context.fetch(descriptor)) ?? []
+        
+        // Eliminar duplicado existente si lo hay
+        if let existing = allSearches.first(where: {
+            $0.name.lowercased() == name.lowercased() &&
+            $0.address.lowercased() == address.lowercased() 
+        }) {
+            print("Removing existing search: \(name)")
+            context.delete(existing)
         }
         
-        // Crea y guarda el nuevo objeto
+        // Crear y guardar el nuevo objeto (siempre con fecha actual)
         let newSearch = RecentSearch(name: name, address: address)
         print("Inserting new search: \(name) - \(address)")
-     
-            context.insert(newSearch)
-      
-        // Guarda y recarga las 5 últimas
+        context.insert(newSearch)
+        
         do {
             try context.save()
-            //print("Saved new search in SwiftData")
             
-            await loadRecentSearch(using: context)// Recarga la lista desde la base
-
+            // Recargar y mantener solo las 5 más recientes
+            await loadRecentSearch(using: context)
             
-            // Si hay más de 5, elimina las más antiguas
-            if recentSearches.count > 5 {
-                let extras = recentSearches.dropFirst(5)
-                for oldSearch in extras {
-                    print("Deleting old search: \(oldSearch.name) - \(oldSearch.address)")
+            // Si después de recargar hay más de 5, eliminar las antiguas
+            let allAfterSave = (try? context.fetch(FetchDescriptor<RecentSearch>(
+                sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            ))) ?? []
+            
+            if allAfterSave.count > 5 {
+                let toDelete = Array(allAfterSave.dropFirst(5))
+                for oldSearch in toDelete {
+                    print("Deleting old search: \(oldSearch.name)")
                     context.delete(oldSearch)
                 }
                 try context.save()
@@ -86,22 +93,26 @@ final class SearchAddressViewModel : ObservableObject {
     }
     
     
-    // Carga las busquedas guardadas, las 5
+    // Carga las busquedas guardadas, las 5 más recientes
     func loadRecentSearch(using context: ModelContext) async {
-        
         do {
-            var descriptor = FetchDescriptor<RecentSearch>(
-                //sortBy: [SortDescriptor(\.createdAt, order: .reverse)],
-                
+            let descriptor = FetchDescriptor<RecentSearch>(
+                sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
             )
-            descriptor.fetchLimit = 5
+            
             let fetched = try context.fetch(descriptor)
-            //print("Fetched \(fetched.count) recent searches from SwiftData") 
-            recentSearches = fetched
+            
+            // Tomar solo las 5 más recientes y eliminar duplicados
+            var seen = Set<String>()
+            recentSearches = fetched.filter { search in
+                let key = "\(search.name.lowercased())|\(search.address.lowercased())"
+                return seen.insert(key).inserted
+            }.prefix(5).map { $0 }
+            
+            print("Loaded \(recentSearches.count) recent searches")
             
         } catch {
             print("Error fetching recent searches: \(error)")
         }
-        
     }
 }

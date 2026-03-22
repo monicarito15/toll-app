@@ -45,9 +45,33 @@ struct BompengerService {
             }
 
             do {
-                return try JSONDecoder().decode(WaypointResponse.self, from: data)
+                let response = try JSONDecoder().decode(WaypointResponse.self, from: data)
+                print("Decoded successfully")
+                print("   Tur count: \(response.tur?.count ?? 0)")
+                if let trip = response.tur?.first {
+                    print("   Total price: \(trip.totalPrice ?? 0)")
+                    print("   Total with autopass: \(trip.totalWithAutopass ?? 0)")
+                }
+                return response
             } catch {
-                print("Decoding error:", error)
+                print(" Decoding error:", error)
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .keyNotFound(let key, let context):
+                        print("   Missing key: \(key.stringValue)")
+                        print("   Context: \(context.debugDescription)")
+                    case .typeMismatch(let type, let context):
+                        print("   Type mismatch: \(type)")
+                        print("   Context: \(context.debugDescription)")
+                    case .valueNotFound(let type, let context):
+                        print("   Value not found: \(type)")
+                        print("   Context: \(context.debugDescription)")
+                    case .dataCorrupted(let context):
+                        print("   Data corrupted: \(context.debugDescription)")
+                    @unknown default:
+                        print("   Unknown decoding error")
+                    }
+                }
                 throw GHError.invalidData
             }
         }

@@ -13,6 +13,7 @@ final class FeeViewModel: ObservableObject {
     @Published var lastFeeUpdate: Date?
     @Published var hasAutoPassAgreement: Bool = false
     @Published var isLoadingPrices: Bool = false
+    @Published var isEstimatedPrice: Bool = false // Indica si el precio es estimado (fallback) o real (API)
     
     //Funcion para crear el KEY
     private func roundTo15Min(_ date: Date) -> Date {
@@ -61,6 +62,7 @@ final class FeeViewModel: ObservableObject {
             totalPrice = saved.total
             tollCharges = storage.decodeCharges(saved)
             lastFeeUpdate = saved.createdAt
+            isEstimatedPrice = false // Asumimos que caché = precio real
             print("FeeVM: Using cached prices: \(totalPrice) NOK")
             return
            
@@ -78,8 +80,6 @@ final class FeeViewModel: ObservableObject {
         
         Task { @MainActor in
             do {
-                print("FeeVM: Calling Bompenger API.")
-                
                 // Preparar request con TUS parámetros
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyyMMdd"
@@ -89,19 +89,80 @@ final class FeeViewModel: ObservableObject {
                 timeFormatter.dateFormat = "HHmm"
                 let timeString = timeFormatter.string(from: date)
                 
+                print("FeeVM: Calling Bompenger API")
+                print("   From: \(origin.latitude), \(origin.longitude)")
+                print("   To: \(destination.latitude), \(destination.longitude)")
+                print("   Date: \(dateString), Time: \(timeString)")
+                print("   Vehicle: \(vehicle.rawValue)")
+                print("   Fuel: \(fuel.rawValue)")
+                print("   Autopass: \(hasAutoPassAgreement ? "YES" : "NO")")
+                
+                // Mapeo correcto según API de Bompenger:
+                // bilsize: 1 = Small vehicle (car/motorcycle), 2 = Large vehicle (truck/van)
+                // litenbiltype: 1 = Fossil fuel (gas/diesel), 2 = Electric
+                //
+                // ⚠️ IMPORTANTE: Si los precios salen invertidos, podría ser que el API
+                // tenga la lógica al revés. En ese caso, cambia USE_INVERTED_LOGIC a true.
+                let USE_INVERTED_LOGIC = false
+                
+                let vehicleSize = 1 // Always 1 for car/motorcycle
+                
+                let fuelTypeCode: Int
+                if USE_INVERTED_LOGIC {
+                    // Lógica invertida (el API tiene los valores al revés)
+                    switch fuel {
+                    case .gas:
+                        fuelTypeCode = 2 // Gas → enviar código 2
+                        print("   Detected GAS -> API code: 2 (INVERTED)")
+                    case .electric:
+                        fuelTypeCode = 1 // Electric → enviar código 1
+                        print("   Detected ELECTRIC -> API code: 1 (INVERTED)")
+                    @unknown default:
+                        fuelTypeCode = 1
+                    }
+                } else {
+                    // Lógica normal (según documentación)
+                    switch fuel {
+                    case .gas:
+                        fuelTypeCode = 1 // Fossil fuel
+                        print("   Detected GAS -> API code: 1")
+                    case .electric:
+                        fuelTypeCode = 2 // Electric
+                        print("   Detected ELECTRIC -> API code: 2")
+                    @unknown default:
+                        fuelTypeCode = 1
+                        print("   Unknown fuel type, defaulting to GAS (1)")
+                    }
+                }
+                
+                print("   API Parameters:")
+                print("      bilsize = \(vehicleSize)")
+                print("      litenbiltype = \(fuelTypeCode)")
+                print("      autopass = \(hasAutoPassAgreement)")
+                
                 let waypointBody = WaypointRequest(
                     fra: Waypointlist(latitude: origin.latitude, longitude: origin.longitude, time: nil),
                     til: Waypointlist(latitude: destination.latitude, longitude: destination.longitude, time: nil),
                     dato_yyyymmdd: dateString,
                     tidspunkt_hhmm: timeString,
-                    bilsize: vehicle == .car ? 1 : 2,
-                    litenbiltype: fuel == .electric ? 2 : 1,
+                    bilsize: vehicleSize,
+                    litenbiltype: fuelTypeCode,
                     retur: 0,
                     tidsreferanser: 1
                 )
                 
                 // Llamar a TU servicio
                 let response = try await BompengerService.shared.getFeesByWaypoint(body: waypointBody)
+                
+                print("API Response received:")
+                print("   Tur array count: \(response.tur?.count ?? 0)")
+                
+                // Log AMBOS precios SIEMPRE para comparar
+                let prices = response.getPrices()
+                print("   API Prices:")
+                print("      WITHOUT autopass (Kostnad): \(prices.withoutAutopass ?? 0) NOK")
+                print("      WITH autopass (Rabattert): \(prices.withAutopass ?? 0) NOK")
+                print("   Your autopass setting: \(hasAutoPassAgreement ? "ON" : "OFF")")
                 
                 // Obtener el precio correcto según autopass
                 if let apiTotalPrice = response.getPrice(hasAutopass: hasAutoPassAgreement) {
@@ -116,32 +177,31 @@ final class FeeViewModel: ObservableObject {
                     tollCharges = charges
                     lastFeeUpdate = Date()
                     isLoadingPrices = false
+                    isEstimatedPrice = false // Precio real del API
                     
-                    print("FeeVM: Success, Got prices from API: \(apiTotalPrice) NOK (autopass: \(hasAutoPassAgreement))")
-                    
-                    // Log ambos precios para debugging
-                    let prices = response.getPrices()
-                    print("FeeVM: Without autopass: \(prices.withoutAutopass ?? 0) NOK")
-                    print("FeeVM: With autopass: \(prices.withAutopass ?? 0) NOK")
+                    print("SUCCESS - Selected price: \(apiTotalPrice) NOK")
+                    print("   (Toll count: \(tollsOnRoute.count), Per toll: \(String(format: "%.1f", pricePerToll)) NOK)")
+                    print("")
                     
                     // Guardar en cache por 24 horas
                     storage.save(using: modelContext, key: key, total: apiTotalPrice, charges: charges, ttlHours: 24)
                     
                 } else {
-                    print("FeeVM: API returned no price, using local calculation")
+                    print(" FeeVM: API returned no price, using local calculation")
                     isLoadingPrices = false
                     useFallbackCalculation(tollsOnRoute: tollsOnRoute, vehicle: vehicle, fuel: fuel, storage: storage, modelContext: modelContext, key: key)
                 }
                 
             } catch {
-                print("FeeVM: Error - API call failed: \(error.localizedDescription), using local calculation")
+                print("FeeVM: API call failed - \(error.localizedDescription)")
+                print("   Using local calculation as fallback")
                 isLoadingPrices = false
                 useFallbackCalculation(tollsOnRoute: tollsOnRoute, vehicle: vehicle, fuel: fuel, storage: storage, modelContext: modelContext, key: key)
             }
         }
     }
     
-    // MARK: - Fallback Local
+    //  Fallback Local
     
     // Usa cálculo local si la API no está disponible
     private func useFallbackCalculation(
@@ -167,6 +227,7 @@ final class FeeViewModel: ObservableObject {
         totalPrice = total
         tollCharges = charges
         lastFeeUpdate = Date()
+        isEstimatedPrice = true // Precio estimado (fallback local)
         
         print("FeeVM: Using local calculation (estimated): \(total) NOK")
         

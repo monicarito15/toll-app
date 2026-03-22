@@ -47,11 +47,12 @@ struct MapView: View {
                     
                     // tolls
                     ForEach(mapVM.tollsOnRoute) { vegobjekt in
+                       
+                        
                         if let coordinate = vegobjekt.lokasjon?.coordinates {
-                            let tollName = vegobjekt.egenskaper.first(where: { $0.navn == "Navn bomstasjon" })?.verdi
-                            ?? vegobjekt.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" })?.verdi
-                            ?? "Unknown"
-                            let labelText = "Toll #\(vegobjekt.id) - \(tollName)"
+                
+                            let labelText = "Toll #\(vegobjekt.id) - \(vegobjekt.displayName)"
+                            
                             Annotation(labelText, coordinate: coordinate) {
                                 Label(labelText, systemImage: "creditcard.fill")
                                     .labelStyle(.iconOnly)
@@ -78,16 +79,47 @@ struct MapView: View {
                 }
                 .mapStyle(.standard(elevation: .realistic))
                 
-                // UI normal: barrita abajo (Solo cuando hay resultado)
+                // UI: barrita arriba (Solo cuando hay resultado)
                 if mapVM.hasResult {
-                    TollSummaryBar(
-                        tollCount: mapVM.tollsOnRoute.count,
-                        total: feeVM.totalPrice
-                    ) {
-                    showDetailsSheet = true
+                    VStack {
+                        TollSummaryBar(
+                            tollCount: mapVM.tollsOnRoute.count,
+                            total: feeVM.totalPrice,
+                            isEstimated: feeVM.isEstimatedPrice,
+                            vehicleType: vehicleType,
+                            fuelType: fuelType,
+                            hasAutopass: hasAutopass,
+                            originCoordinate: mapVM.originCoordinate,
+                            destinationCoordinate: mapVM.destinationCoordinate,
+                            fromAddress: from,
+                            toAddress: to
+                        ) {
+                            showDetailsSheet = true
+                        }
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .padding(.top, 8)
+                        
+                        Spacer()
                     }
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .padding(.bottom, 8)
+                }
+                
+                // Botón flotante de navegación (abajo a la derecha)
+                if mapVM.hasResult {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            NavigationFloatingButton(
+                                originCoordinate: mapVM.originCoordinate,
+                                destinationCoordinate: mapVM.destinationCoordinate,
+                                fromAddress: from,
+                                toAddress: to
+                            )
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 16)
+                        }
+                    }
+                    .transition(.scale.combined(with: .opacity))
                 }
             }
             .animation(.easeInOut, value: mapVM.hasResult)

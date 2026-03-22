@@ -57,7 +57,7 @@ struct FromDirectionsView: View {
                 //UNA sola List con secciones
                 List {
                     // Search results
-                    if !viewModel.searchResults.isEmpty {
+                    if !viewModel.searchResults.isEmpty && !searchText.isEmpty {
                         Section {
                             ForEach(viewModel.searchResults, id: \.self) { item in
                                 VStack(alignment: .leading) {
@@ -72,6 +72,7 @@ struct FromDirectionsView: View {
                                     let name = item.name ?? "Unknown"
                                     let address = item.placemark.title ?? "No Address"
                                     searchText = name
+                                    dismiss()
 
                                     Task {
                                         await viewModel.saveSearch(name, address: address, using: modelContext)

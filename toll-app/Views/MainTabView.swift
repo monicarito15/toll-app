@@ -6,6 +6,8 @@ struct MainTabView: View {
     @State private var didAppearOnce = false // para saber si ya se abrio el sheet alguna vez
     
     @State private var currentDetent: PresentationDetent = .medium // padre del estado del tamano global
+    @State private var searchHistory: [SearchHistoryItem] = [] // historial de búsquedas
+    @State private var selectedHistoryItem: SearchHistoryItem? = nil // para rehacer una búsqueda
 
 
 
@@ -30,13 +32,21 @@ struct MainTabView: View {
             }
         )
         TabView(selection: tabBinding) {
-            TravelView(showSheet: $showSheet, currentDetent: $currentDetent)
+            TravelView(showSheet: $showSheet, currentDetent: $currentDetent, searchHistory: $searchHistory,
+                       selectedHistoryItem: $selectedHistoryItem
+            )
                 .tabItem {
                     Label("Travel", systemImage: "magnifyingglass.circle.fill")
                 }
             
                 .tag(0)
-            HistoryView()
+            HistoryView(
+                searchHistory: searchHistory,
+                onSelectSearch: { historyItem in
+                    selectedHistoryItem = historyItem
+                    selectedTab = 0
+                }
+            )
                 .tabItem {
                     Label("History", systemImage: "car.fill")
                 }

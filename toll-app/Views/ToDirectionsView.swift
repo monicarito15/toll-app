@@ -84,7 +84,7 @@ struct ToDirectionsView: View {
                     // Recent search (solo cuando el campo está vacío)
                     if !viewModel.recentSearches.isEmpty && searchText.isEmpty {
                         Section {
-                            ForEach(viewModel.recentSearches, id: \.self) { item in
+                            ForEach(viewModel.recentSearches) { item in
                                 VStack(alignment: .leading) {
                                     Text(item.name)
                                         .font(.headline)
@@ -95,16 +95,7 @@ struct ToDirectionsView: View {
                                 .contentShape(Rectangle())
                                 .onTapGesture {
                                     searchText = item.name
-                                    viewModel.searchAddresses(query: item.name)
-
-                                    Task {
-                                        await viewModel.saveSearch(item.name, address: item.address, using: modelContext)
-
-                                        DispatchQueue.main.async {
-                                            viewModel.searchResults = []
-                                            dismiss()
-                                        }
-                                    }
+                                    dismiss()
                                 }
                             }
                         } header: {
