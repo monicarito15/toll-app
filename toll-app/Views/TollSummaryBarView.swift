@@ -13,6 +13,7 @@ struct TollSummaryBar: View {
     let fromAddress: String
     let toAddress: String
     let onTap: () -> Void
+    
 
     var body: some View {
         Button(action: onTap) {
@@ -86,6 +87,7 @@ struct TollSummaryBar: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                
                     
                     Spacer()
                 }
@@ -103,7 +105,7 @@ struct TollSummaryBar: View {
     }
 }
 
-// MARK: - Floating Navigation Button
+//  Floating Navigation Button
 
 struct NavigationFloatingButton: View {
     let originCoordinate: CLLocationCoordinate2D?
@@ -147,7 +149,7 @@ struct NavigationFloatingButton: View {
         }
     }
     
-    // MARK: - Navigation Methods
+    // Navigation Methods
     
     private func openInAppleMaps() {
         guard let origin = originCoordinate, let destination = destinationCoordinate else {
@@ -197,7 +199,7 @@ struct NavigationFloatingButton: View {
     }
 }
 
-// MARK: - Previews
+
 
 #Preview("TollSummaryBar") {
     VStack {
@@ -213,6 +215,7 @@ struct NavigationFloatingButton: View {
             destinationCoordinate: CLLocationCoordinate2D(latitude: 60.3913, longitude: 5.3221),
             fromAddress: "Oslo",
             toAddress: "Bergen"
+            
         ) {
             print("Tapped details")
         }

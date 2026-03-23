@@ -3,7 +3,7 @@ import CoreLocation
 import _LocationEssentials
 
 struct CalculatorView: View {
-    // Add MapViewModel to use on nearbyTolls
+    
     @ObservedObject var mapVM: MapViewModel
     
     @State private var from = ""
@@ -41,6 +41,12 @@ struct CalculatorView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     routeAndTimeSection
+                    
+                    // Rush Hour Warning (if applicable)
+                    if selectedDateTime.isRushHour() {
+                        RushHourWarningView(date: selectedDateTime)
+                    }
+                    
                     vehicleDetailsSection
                     calculateButton
                     nearbyTollsSection
@@ -381,7 +387,7 @@ struct CalculatorView: View {
         }
     }
     
-    // MARK: - Helper Methods
+    
     private func handleTollSelection(_ selectedToll: Vegobjekt) {
         guard let tollCoords = selectedToll.lokasjon?.coordinates else { return }
         
