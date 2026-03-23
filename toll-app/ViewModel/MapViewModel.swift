@@ -92,45 +92,59 @@ final class MapViewModel: ObservableObject {
         }
     }
     // Helper mínimo: address -> coordinate
-        private func geocodeAddress(_ address: String, completion: @escaping (CLLocationCoordinate2D?) -> Void) {
-            let geocoder = CLGeocoder()
-            geocoder.geocodeAddressString(address) { placemarks, error in
-                if let error = error {
-                    print("Geocoder Error: \(error)")
-                    completion(nil)
-                    return
-                }
-                completion(placemarks?.first?.location?.coordinate)
+    private func geocodeAddress(_ address: String, completion: @escaping (CLLocationCoordinate2D?) -> Void) {
+        print("🔍 Geocoding address: '\(address)'")
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(address) { placemarks, error in
+            if let error = error {
+                print(" Geocoder Error for '\(address)': \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            if let coordinate = placemarks?.first?.location?.coordinate {
+                print("Geocoded '\(address)' → \(coordinate.latitude), \(coordinate.longitude)")
+                completion(coordinate)
+            } else {
+                print("No coordinate found for address: '\(address)'")
+                completion(nil)
             }
         }
+    }
     
     
     func getDirectionsFromAddresses(fromAddress: String, toAddress: String) async {
         
         let fromTrim = fromAddress.trimmingCharacters(in: .whitespacesAndNewlines)
-                let toTrim = toAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        let toTrim = toAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        
 
-                guard !toTrim.isEmpty else {
-                    print("Missing 'to' address")
-                    return
+        guard !toTrim.isEmpty else {
+            print("Missing 'to' address")
+            return
         }
+        
         // 1) Geocode TO
+        print(" Step 1: Geocoding destination '\(toTrim)'...")
         geocodeAddress(toTrim) { destination in
             guard let destination else {
                 print("No coordinate found for TO: \(toTrim)")
                 return
             }
+            print("Destination geocoded: \(destination.latitude), \(destination.longitude)")
             self.destinationCoordinate = destination
 
             // 2) Origin = userLocation o geocode FROM
             if fromTrim.isEmpty {
+                print("FROM is empty, using user location...")
                 // usa la ubicacion del usuario como origen
                 self.updateUserLocation()
                 guard let origin = self.userLocation else {
-                    print("No user location yet")
+                    print("No user location available yet")
                     return
                 }
-                // Publica el origen para que  la vista pueda mover la camara
+                print(" Using user location as origin: \(origin.latitude), \(origin.longitude)")
+                // Publica el origen para que la vista pueda mover la camara
                 self.originCoordinate = origin
 
                 Task { @MainActor in
@@ -138,12 +152,14 @@ final class MapViewModel: ObservableObject {
                 }
 
             } else {
+                print("Step 2: Geocoding origin '\(fromTrim)'...")
                 self.geocodeAddress(fromTrim) { origin in
                     guard let origin else {
-                        print ("No coordinate found for FROM: \(fromTrim)")
+                        print(" No coordinate found for FROM: \(fromTrim)")
                         return
                     }
-                    // Publica el origen para que  la vista pueda mover la camara
+                    print(" Origin geocoded: \(origin.latitude), \(origin.longitude)")
+                    // Publica el origen para que la vista pueda mover la camara
                     self.originCoordinate = origin
 
                     Task { @MainActor in

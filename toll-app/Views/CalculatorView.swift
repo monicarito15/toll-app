@@ -68,9 +68,14 @@ struct CalculatorView: View {
         }
         .onAppear {
             focus = .from
-            shouldApplyLocationToFrom = true
-            locationManager.requestLocation()
+            if from.isEmpty {
+                shouldApplyLocationToFrom = true
+                locationManager.requestLocation()
+            }
             
+            else {
+                shouldApplyLocationToFrom = false
+            }
             Task {
                 await mapVM.fetchTolls()
                 mapVM.updateUserLocation()
@@ -88,6 +93,11 @@ struct CalculatorView: View {
         }
     }
     
+    private var cardBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color(.white)
+    }
+    
+    
     // Route & Time Section
     private var routeAndTimeSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -97,6 +107,7 @@ struct CalculatorView: View {
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
             
+//            ZStack(alignment: .topTrailing) {
             VStack(spacing: 0) {
                 fromField
                 
@@ -110,14 +121,56 @@ struct CalculatorView: View {
                 
                 datePickerField
             }
+            
+//            swapButton
+//                .padding(.top,8)
+//                .padding(.trailing, 12)
+            
+//        }
+            .background(cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.gray.opacity(0.2), lineWidth: 1)
             )
+            .overlay(alignment: .trailing ) {
+                       swapButton
+                           .padding(.trailing, 12)
+                   }
+           
+            
             .padding(.horizontal, 16)
         }
     }
+    
+    private var swapButton: some View {
+        Button {
+            swapFromTo()
+        } label: {
+                Image(systemName: "arrow.up.arrow.down.circle.fill")
+                .font(.system(size:16, weight: .semibold))
+                    .foregroundStyle(Color(.systemBlue))
+                    .frame(width: 36, height: 36)
+                    .background( Color(UIColor.systemBlue).opacity(0.12))
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
+
+            }
+            .buttonStyle(.plain)
+        }
+        
+        private func swapFromTo() {
+            let tempFrom = from
+            from = to
+            to = tempFrom
+            
+            // Evita que la LocationManager sobrescriba from inmediatamente
+                shouldApplyLocationToFrom = false
+            
+            focus = .to
+            
+        }
+    
     
     private var fromField: some View {
         HStack(spacing: 12) {
@@ -128,6 +181,7 @@ struct CalculatorView: View {
             
             Button {
                 showFromDirections = true
+                // Important: When user manually selects address, stop auto-location
                 shouldApplyLocationToFrom = false
             } label: {
                 HStack {
@@ -199,6 +253,9 @@ struct CalculatorView: View {
         .background(colorScheme == .dark ? Color(.systemGray6) : .white)
         .focused($focus, equals: .to)
     }
+    
+    
+    
     
     private var datePickerField: some View {
         HStack(spacing: 12) {
