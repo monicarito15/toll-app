@@ -14,6 +14,7 @@ struct CalculatorView: View {
     @State var showFromDirections = false
     @State private var shouldApplyLocationToFrom = true
     @State private var isFromCurrentLocation: Bool = false
+    @State private var isToCurrentLocation: Bool = false
     @State private var autopassOn: Bool = true
     
     @Binding var currentDetent: PresentationDetent
@@ -86,7 +87,11 @@ struct CalculatorView: View {
             }
         }
         .sheet(isPresented: $showToDirections) {
-            ToDirectionsView(searchText: $to, currentDetent: $currentDetent, isFromCurrentLocation: $isFromCurrentLocation)
+            ToDirectionsView(
+                searchText: $to, 
+                currentDetent: $currentDetent, 
+                isFromCurrentLocation: $isToCurrentLocation
+            )
                 .presentationDetents([.medium, .large], selection: $currentDetent)
         }
         .sheet(isPresented: $showFromDirections) {
@@ -111,9 +116,14 @@ struct CalculatorView: View {
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
             
-//            ZStack(alignment: .topTrailing) {
             VStack(spacing: 0) {
-                fromField
+                // FROM field con swap button
+                ZStack(alignment: .trailing) {
+                    fromField
+                    
+                    swapButton
+                        .padding(.trailing, 12)
+                }
                 
                 Divider()
                     .padding(.leading, 56)
@@ -125,20 +135,12 @@ struct CalculatorView: View {
                 
                 datePickerField
             }
-            
-            
             .background(cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.gray.opacity(0.2), lineWidth: 1)
             )
-            .overlay(alignment: .trailing ) {
-                       swapButton
-                           .padding(.trailing, 12)
-                   }
-           
-            
             .padding(.horizontal, 16)
         }
     }
@@ -147,28 +149,31 @@ struct CalculatorView: View {
         Button {
             swapFromTo()
         } label: {
-                Image(systemName: "arrow.up.arrow.down.circle.fill")
-                .font(.system(size:16, weight: .semibold))
-                    .foregroundStyle(Color(.systemBlue))
-                    .frame(width: 36, height: 36)
-                    .background( Color(UIColor.systemBlue).opacity(0.12))
-                    .clipShape(Circle())
-                    .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
-
-            }
-            .buttonStyle(.plain)
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(Color.blue))
+                .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
         }
+        .buttonStyle(.plain)
+    }
         
         private func swapFromTo() {
+            // Intercambiar textos
             let tempFrom = from
             from = to
             to = tempFrom
             
+            // Intercambiar estados de ubicación actual
+            let tempIsFromCurrentLocation = isFromCurrentLocation
+            isFromCurrentLocation = isToCurrentLocation
+            isToCurrentLocation = tempIsFromCurrentLocation
+            
             // Evita que la LocationManager sobrescriba from inmediatamente
-                shouldApplyLocationToFrom = false
+            shouldApplyLocationToFrom = false
             
             focus = .to
-            
         }
     
     
@@ -257,9 +262,18 @@ struct CalculatorView: View {
                 showToDirections = true
             } label: {
                 HStack {
-                    Text(to.isEmpty ? "To" : to)
-                        .foregroundStyle(to.isEmpty ? .tertiary : .primary)
-                        .lineLimit(1)
+                    if isToCurrentLocation {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.blue)
+                        Text("Your location")
+                            .foregroundStyle(.blue)
+                            .lineLimit(1)
+                    } else {
+                        Text(to.isEmpty ? "To" : to)
+                            .foregroundStyle(to.isEmpty ? .tertiary : .primary)
+                            .lineLimit(1)
+                    }
                     Spacer()
                 }
             }
@@ -397,21 +411,36 @@ struct CalculatorView: View {
     // Calculate Button
     private var calculateButton: some View {
         Button {
-            let fromTrim = from.trimmingCharacters(in: .whitespacesAndNewlines)
-            let toTrim = to.trimmingCharacters(in: .whitespacesAndNewlines)
+            // Determinar la dirección "From" a usar
+            let fromAddress: String
+            if isFromCurrentLocation {
+                // Si es ubicación actual, usar la dirección del locationManager
+                fromAddress = locationManager.currentAddress ?? ""
+            } else {
+                fromAddress = from.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
             
-            guard !toTrim.isEmpty else { return }
+            // Determinar la dirección "To" a usar
+            let toAddress: String
+            if isToCurrentLocation {
+                // Si es ubicación actual, usar la dirección del locationManager
+                toAddress = locationManager.currentAddress ?? ""
+            } else {
+                toAddress = to.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            
+            guard !toAddress.isEmpty else { return }
             
             // Debug: Print selected options
             print("CALCULATOR VIEW - User Selection:")
             print("   Vehicle Type: \(selectedVehicleType.rawValue)")
             print("   Fuel Type: \(selectedFuelType.rawValue)")
             print("   Autopass: \(autopassOn ? "ON" : "OFF")")
-            print("   From: \(fromTrim)")
-            print("   To: \(toTrim)")
+            print("   From: \(fromAddress) (isCurrentLocation: \(isFromCurrentLocation))")
+            print("   To: \(toAddress) (isCurrentLocation: \(isToCurrentLocation))")
             print("   DateTime: \(selectedDateTime)")
             
-            onCalculate(fromTrim, toTrim, selectedVehicleType, selectedFuelType, selectedDateTime, autopassOn)
+            onCalculate(fromAddress, toAddress, selectedVehicleType, selectedFuelType, selectedDateTime, autopassOn)
             dismiss()
         } label: {
             HStack(spacing: 8) {
@@ -433,8 +462,8 @@ struct CalculatorView: View {
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 16)
-        .disabled(to.isEmpty)
-        .opacity(to.isEmpty ? 0.5 : 1.0)
+        .disabled(to.isEmpty && !isToCurrentLocation)
+        .opacity((to.isEmpty && !isToCurrentLocation) ? 0.5 : 1.0)
     }
     
 // Nearby Tolls Section
