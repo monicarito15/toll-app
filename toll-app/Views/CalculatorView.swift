@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import SwiftData
 import _LocationEssentials
 
 struct CalculatorView: View {
@@ -12,6 +13,7 @@ struct CalculatorView: View {
     
     @State private var showToDirections = false
     @State var showFromDirections = false
+    @State private var showHistory = false
     @State private var shouldApplyLocationToFrom = true
     @State private var isFromCurrentLocation: Bool = false
     @State private var isToCurrentLocation: Bool = false
@@ -21,6 +23,7 @@ struct CalculatorView: View {
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.modelContext) private var modelContext
     
     @FocusState private var focus: FormFieldFocus?
     
@@ -67,6 +70,8 @@ struct CalculatorView: View {
                         .font(.headline)
                         .fontWeight(.semibold)
                 }
+                
+                
             }
         }
         .onAppear {
@@ -440,6 +445,16 @@ struct CalculatorView: View {
             print("   To: \(toAddress) (isCurrentLocation: \(isToCurrentLocation))")
             print("   DateTime: \(selectedDateTime)")
             
+            // Guardar en el historial
+            saveToHistory(
+                fromAddress: fromAddress,
+                toAddress: toAddress,
+                vehicleType: selectedVehicleType.rawValue,
+                fuelType: selectedFuelType.rawValue,
+                hasAutopass: autopassOn,
+                dateTime: selectedDateTime
+            )
+            
             onCalculate(fromAddress, toAddress, selectedVehicleType, selectedFuelType, selectedDateTime, autopassOn)
             dismiss()
         } label: {
@@ -502,16 +517,49 @@ struct CalculatorView: View {
         CLGeocoder().reverseGeocodeLocation(location) { placemarks, error in
             let tollAddress = placemarks?.first?.name ?? "\(tollCoords.latitude), \(tollCoords.longitude)"
             
-            if let userLoc = mapVM.userLocation {
-                let userLocation = CLLocation(latitude: userLoc.latitude, longitude: userLoc.longitude)
-                CLGeocoder().reverseGeocodeLocation(userLocation) { placemarks, _ in
-                    let fromAddress = placemarks?.first?.name ?? locationManager.currentAddress ?? ""
-                    from = fromAddress
-                    to = tollAddress
+            // Si FROM está vacío y no es "Your location", poner la ubicación del usuario
+            if from.isEmpty && !isFromCurrentLocation {
+                if let userLoc = mapVM.userLocation {
+                    let userLocation = CLLocation(latitude: userLoc.latitude, longitude: userLoc.longitude)
+                    CLGeocoder().reverseGeocodeLocation(userLocation) { placemarks, _ in
+                        let fromAddress = placemarks?.first?.name ?? locationManager.currentAddress ?? ""
+                        from = fromAddress
+                        isFromCurrentLocation = false
+                    }
                 }
-            } else {
-                to = tollAddress
             }
+            
+            // Siempre poner el toll en TO
+            to = tollAddress
+            isToCurrentLocation = false
+        }
+    }
+    
+    // Save to History
+    private func saveToHistory(
+        fromAddress: String,
+        toAddress: String,
+        vehicleType: String,
+        fuelType: String,
+        hasAutopass: Bool,
+        dateTime: Date
+    ) {
+        let history = SearchHistoryItem(
+            fromAddress: fromAddress,
+            toAddress: toAddress,
+            vehicleType: VehicleType(rawValue: vehicleType) ?? .car,
+            fuelType: FuelType(rawValue: fuelType) ?? .gas,
+            dateTime: dateTime,
+            hasAutopass: hasAutopass
+        )
+        
+        modelContext.insert(history)
+        
+        do {
+            try modelContext.save()
+            print("Route saved to history")
+        } catch {
+            print("Error saving route: \(error.localizedDescription)")
         }
     }
     

@@ -1,9 +1,16 @@
 import SwiftUI
+import _SwiftData_SwiftUI
 
 struct HistoryView: View {
     
-    let searchHistory: [SearchHistoryItem]
-    let onSelectSearch: (SearchHistoryItem) -> Void
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
+    
+//    @Query(sort: \SearchHistoryItem.calculatedAt, order: .reverse)
+    
+    var searchHistory: [SearchHistoryItem]
+    var onSelectSearch: (SearchHistoryItem) -> Void
     
     var body: some View {
         NavigationView {
@@ -30,6 +37,7 @@ struct HistoryView: View {
                     // Lista de búsquedas
                     List {
                         ForEach(searchHistory) { historyItem in
+                            
                             Button(action: {
                                 onSelectSearch(historyItem)
                             }) {
