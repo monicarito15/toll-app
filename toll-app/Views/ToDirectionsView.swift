@@ -10,6 +10,9 @@ struct ToDirectionsView: View {
     @Binding var currentDetent: PresentationDetent
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    
+    @Binding var isFromCurrentLocation: Bool
+    @StateObject private var locationManager = LocationManager()
 
     var body: some View {
         NavigationView {
@@ -46,6 +49,56 @@ struct ToDirectionsView: View {
                 }
                 .padding(12)
                 .background(Color(.systemGray6))
+                
+                // Botón "Your location"
+                Button {
+                    // Marcar que queremos usar la ubicación actual
+                    isFromCurrentLocation = true
+                    
+                    // Actualizar el searchText con la dirección actual
+                    if let address = locationManager.currentAddress {
+                        searchText = address
+                    } else {
+                        // Si aún no tenemos dirección, usar coordenadas
+                        if let location = locationManager.userLocation {
+                            searchText = String(format: "%.4f, %.4f", location.latitude, location.longitude)
+                        }
+                        // Solicitar la ubicación si no la tenemos
+                        locationManager.requestLocation()
+                    }
+                    
+                    // Cerrar el sheet y volver a CalculatorView
+                    dismiss()
+                    
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.blue)
+                        
+                        Text("Your location")
+                            .foregroundStyle(.blue)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                        
+                        // Mostrar la dirección actual si está disponible
+                        if let address = locationManager.currentAddress {
+                            Text(address)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                }
+                .buttonStyle(.plain)
+                .background(Color(.systemGray6).opacity(0.5))
+                .cornerRadius(8)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+
 
                 //UNA sola List con secciones
                 List {
@@ -108,7 +161,7 @@ struct ToDirectionsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("Directions")
+                    Text("Destination")
                         .font(.system(size: 30, weight: .bold))
                         .foregroundColor(.gray)
                 }

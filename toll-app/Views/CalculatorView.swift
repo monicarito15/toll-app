@@ -11,8 +11,9 @@ struct CalculatorView: View {
     @State private var showMap = false
     
     @State private var showToDirections = false
-    @State private var showFromDirections = false
+    @State var showFromDirections = false
     @State private var shouldApplyLocationToFrom = true
+    @State private var isFromCurrentLocation: Bool = false
     @State private var autopassOn: Bool = true
     
     @Binding var currentDetent: PresentationDetent
@@ -27,6 +28,7 @@ struct CalculatorView: View {
     @State private var selectedDateTime = Date()
     
     @StateObject private var locationManager = LocationManager()
+    
     
     let fuelTypes: [FuelType] = [.gas, .electric]
     let vehicleTypes: [VehicleType] = [.car, .motorcycle]
@@ -70,11 +72,13 @@ struct CalculatorView: View {
             focus = .from
             if from.isEmpty {
                 shouldApplyLocationToFrom = true
+                isFromCurrentLocation = true
                 locationManager.requestLocation()
             }
             
             else {
                 shouldApplyLocationToFrom = false
+                isFromCurrentLocation = false
             }
             Task {
                 await mapVM.fetchTolls()
@@ -82,11 +86,11 @@ struct CalculatorView: View {
             }
         }
         .sheet(isPresented: $showToDirections) {
-            ToDirectionsView(searchText: $to, currentDetent: $currentDetent)
+            ToDirectionsView(searchText: $to, currentDetent: $currentDetent, isFromCurrentLocation: $isFromCurrentLocation)
                 .presentationDetents([.medium, .large], selection: $currentDetent)
         }
         .sheet(isPresented: $showFromDirections) {
-            FromDirectionsView(searchText: $from, currentDetent: $currentDetent)
+            FromDirectionsView(searchText: $from, currentDetent: $currentDetent, isFromCurrentLocation: $isFromCurrentLocation)
         }
         .onDisappear {
             shouldApplyLocationToFrom = false
@@ -122,11 +126,7 @@ struct CalculatorView: View {
                 datePickerField
             }
             
-//            swapButton
-//                .padding(.top,8)
-//                .padding(.trailing, 12)
             
-//        }
             .background(cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
@@ -183,39 +183,56 @@ struct CalculatorView: View {
                 showFromDirections = true
                 // Important: When user manually selects address, stop auto-location
                 shouldApplyLocationToFrom = false
+                isFromCurrentLocation = false
+                
             } label: {
                 HStack {
-                    Text(from.isEmpty ? "From" : from)
-                        .foregroundStyle(from.isEmpty ? .tertiary : .primary)
-                        .lineLimit(1)
+                    if isFromCurrentLocation {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.blue)
+                        Text("Your location")
+                            .foregroundStyle(.blue)
+                            .lineLimit(1)
+                    } else {
+                        
+                        Text(from.isEmpty ? "From" : from)
+                            .foregroundStyle(from.isEmpty ? .tertiary : .primary)
+                            .lineLimit(1)
+                    }
+                    
                     Spacer()
                 }
             }
             .buttonStyle(.plain)
             
-            Button {
-                shouldApplyLocationToFrom = true
-                
-                if locationManager.authorizationStatus == .notDetermined {
-                    locationManager.requestAuthorization()
-                    return
-                }
-                
-                if locationManager.authorizationStatus == .denied ||
-                    locationManager.authorizationStatus == .restricted {
-                    print("Location permission denied/restricted")
-                    return
-                }
-                
-                locationManager.requestLocation()
-            } label: {
-                Image(systemName: "location.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(.blue)
-                    .frame(width: 32, height: 32)
-                    .background(Color.blue.opacity(0.1), in: Circle())
-            }
-            .buttonStyle(.plain)
+//            Button {
+//                // El usuario pide usar su ubicación y mostramos "Your location" inmediatamente
+//                shouldApplyLocationToFrom = false
+//                isFromCurrentLocation = false
+//                
+//                if locationManager.authorizationStatus == .notDetermined {
+//                    locationManager.requestAuthorization()
+//                    return
+//                }
+//                
+//                if locationManager.authorizationStatus == .denied ||
+//                    locationManager.authorizationStatus == .restricted {
+//                    print("Location permission denied/restricted")
+//                    return
+//                }
+//                
+//                locationManager.requestLocation()
+//            } label: {
+//                HStack {
+//                    Image(systemName: "location.fill")
+//                        .font(.system(size: 16))
+//                        .foregroundStyle(.blue)
+//                        .frame(width: 32, height: 32)
+//                        .background(Color.blue.opacity(0.1), in: Circle())
+//                }
+//            }
+//            .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
