@@ -18,7 +18,7 @@ final class SearchAddressViewModel : ObservableObject {
     private var locationManager = LocationManager()
     
     
-    // funcion para buscar la direcciones
+    // funcion para buscar la direcciones, solo en Noruega
     func searchAddresses(query: String) {
         guard !query.isEmpty else {
             searchResults = []
@@ -27,18 +27,18 @@ final class SearchAddressViewModel : ObservableObject {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
         
-        //Centrar la busqueda en la ubicacion actual
-        if let userLocation = locationManager.userLocation{
-            request.region = MKCoordinateRegion(
-                center: userLocation,
-                span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-            )
-        }
+        // Región que cubre toda Noruega
+        let norwayCenter = CLLocationCoordinate2D(latitude: 64.5, longitude: 12.0)
+        let norwaySpan = MKCoordinateSpan(latitudeDelta: 20.0, longitudeDelta: 20.0)
+        request.region = MKCoordinateRegion(center: norwayCenter, span: norwaySpan)
         
         let search = MKLocalSearch(request: request)
         search.start { response, error in
             if let items = response?.mapItems {
-                self.searchResults = items
+                // Filtrar solo resultados en Noruega
+                self.searchResults = items.filter { item in
+                    item.placemark.countryCode == "NO"
+                }
             } else {
                 self.searchResults = []
             }
