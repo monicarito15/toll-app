@@ -7,7 +7,7 @@ struct HistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     
-//    @Query(sort: \SearchHistoryItem.calculatedAt, order: .reverse)
+@Query(sort: \SearchHistoryItem.searchDate, order: .reverse)
     
     var searchHistory: [SearchHistoryItem]
     var onSelectSearch: (SearchHistoryItem) -> Void
@@ -115,32 +115,32 @@ struct HistoryView: View {
     }
 }
 
-#Preview {
-    HistoryView(
-        searchHistory: [
-            SearchHistoryItem(
-                fromAddress: "Oslo",
-                toAddress: "Trondheim",
-                vehicleType: .car,
-                fuelType: .gas,
-                dateTime: Date(),
-                hasAutopass: true,
-                totalPrice: 450,
-                tollCount: 5
-            ),
-            SearchHistoryItem(
-                fromAddress: "Bergen",
-                toAddress: "Stavanger",
-                vehicleType: .car,
-                fuelType: .electric,
-                dateTime: Date().addingTimeInterval(-86400),
-                hasAutopass: false,
-                totalPrice: 320,
-                tollCount: 3
-            )
-        ],
-        onSelectSearch: { _ in }
-    )
-}
+//#Preview {
+//    HistoryView(
+//        searchHistory: [
+//            SearchHistoryItem(
+//                fromAddress: "Oslo",
+//                toAddress: "Trondheim",
+//                vehicleType: .car,
+//                fuelType: .gas,
+//                dateTime: Date(),
+//                hasAutopass: true,
+//                totalPrice: 450,
+//                tollCount: 5
+//            ),
+//            SearchHistoryItem(
+//                fromAddress: "Bergen",
+//                toAddress: "Stavanger",
+//                vehicleType: .car,
+//                fuelType: .electric,
+//                dateTime: Date().addingTimeInterval(-86400),
+//                hasAutopass: false,
+//                totalPrice: 320,
+//                tollCount: 3
+//            )
+//        ],
+//        onSelectSearch: { _ in }
+//    )
+//}
 
 

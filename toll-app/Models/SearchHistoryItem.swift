@@ -20,6 +20,7 @@ class SearchHistoryItem: Identifiable {
     var searchDate: Date // Cuándo se hizo la búsqueda
     var totalPrice: Double
     var tollCount: Int
+
     
     init(
         fromAddress: String,
@@ -29,7 +30,8 @@ class SearchHistoryItem: Identifiable {
         dateTime: Date,
         hasAutopass: Bool,
         totalPrice: Double = 0,
-        tollCount: Int = 0
+        tollCount: Int = 0,
+
     ) {
         self.id = UUID()
         self.fromAddress = fromAddress
@@ -41,6 +43,7 @@ class SearchHistoryItem: Identifiable {
         self.searchDate = Date()
         self.totalPrice = totalPrice
         self.tollCount = tollCount
+//      
     }
     
     

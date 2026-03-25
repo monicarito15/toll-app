@@ -9,14 +9,15 @@ struct toll_appApp: App {
         Egenskap.self,
         Lokasjon.self,
         Geometri.self,
-        RecentSearch.self
+        RecentSearch.self,
+        SearchHistoryItem.self
     )
-  
 
     var body: some Scene {
         WindowGroup {
             MainTabView()
-                .modelContainer(modelContainer) // inyecta el context en todas las vistas
+                .modelContainer(modelContainer)
+
                 
 
         }
