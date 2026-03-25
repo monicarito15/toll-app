@@ -32,6 +32,7 @@ struct MapView: View {
     @State private var cameraPosition: MapCameraPosition = .automatic
     
     @State private var showDetailsSheet = false
+    @State private var selectedToll: Vegobjekt?
 
    
     var body: some View {
@@ -45,23 +46,40 @@ struct MapView: View {
                         Marker("My location", coordinate: userLocation)
                     }
                     
-                    // tolls
+//                    // tolls
+//                    ForEach(mapVM.tollsOnRoute) { vegobjekt in
+//                        if let coordinate = vegobjekt.lokasjon?.coordinates {
+//                                            let labelText = "\(vegobjekt.displayName)"
+//                            Annotation(labelText, coordinate: coordinate) {
+//                                Label(labelText, systemImage: "creditcard.fill")
+//                                    .labelStyle(.iconOnly)
+//                                    .font(.system(size:18))
+//                                    .shadow(radius: 3)
+//                                    
+//                            }
+//                        }
+//                    }
                     ForEach(mapVM.tollsOnRoute) { vegobjekt in
-                       
-                        
                         if let coordinate = vegobjekt.lokasjon?.coordinates {
-                
-                            let labelText = "Toll #\(vegobjekt.id) - \(vegobjekt.displayName)"
-                            
-                            Annotation(labelText, coordinate: coordinate) {
-                                Label(labelText, systemImage: "creditcard.fill")
-                                    .labelStyle(.iconOnly)
-                                    .font(.system(size:18))
-                                    .shadow(radius: 3)
-                                    
+                            Annotation("", coordinate: coordinate) {
+                                Button {
+                                    selectedToll = vegobjekt
+                                } label: {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.orange)
+                                            .frame(width: 32, height: 32)
+                                            .shadow(color: .black.opacity(0.3), radius: 3)
+                                        
+                                        Image(systemName: "norwegiankronesign")
+                                            .font(.system(size: 14, weight: .bold))
+                                            .foregroundStyle(.white)
+                                    }
+                                }
                             }
                         }
                     }
+
                     
                     // la polilínea representa la ruta calculada entre `from` y `to`
                     // route line
@@ -121,6 +139,57 @@ struct MapView: View {
                     }
                     .transition(.scale.combined(with: .opacity))
                 }
+                
+                // Toll detail popup
+                if let toll = selectedToll {
+                    VStack {
+                        Spacer()
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+//                                Image(systemName: "norwegiankronesign")
+//                                    .font(.title3)
+//                                    .foregroundStyle(.orange)
+                                
+                                Text("Toll: \(toll.displayName)")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                Button {
+                                    selectedToll = nil
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            
+                            if let location = toll.location {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "mappin")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(location)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            
+//                            Text("Toll: \(toll.displayName)")
+//                                .font(.caption)
+//                                .foregroundStyle(.tertiary)
+                        }
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .shadow(radius: 8)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 80)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                    .animation(.easeInOut, value: selectedToll?.id)
+                }
+                
             }
             .animation(.easeInOut, value: mapVM.hasResult)
         }

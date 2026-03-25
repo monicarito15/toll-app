@@ -212,27 +212,46 @@ final class FeeViewModel: ObservableObject {
         modelContext: ModelContext,
         key: String
     ) {
-        let pricePerToll = TollPriceCalculator.calculateTollPrice(
-            vehicleType: vehicle,
-            fuelType: fuel,
-            hasAutopass: hasAutoPassAgreement
-        )
+        // Intentar cargar cache expirado
+        storage.loadExpired(using: modelContext, key: key)
         
-        let charges = tollsOnRoute.map { v in
-            let name = v.egenskaper.first(where: { $0.navn == "Navn bomstasjon"})?.verdi ?? "Ukjent"
-            return TollCharge(id: "\(v.id)", toll: name, price: pricePerToll)
+        if let expired = storage.calculation {
+            // Usar precio real antiguo (mejor que inventar)
+            totalPrice = expired.total
+            tollCharges = storage.decodeCharges(expired)
+            lastFeeUpdate = expired.createdAt
+            isEstimatedPrice = true
+            print("FeeVM: Using expired cache as fallback: \(totalPrice) NOK (from \(expired.createdAt))")
+        } else {
+            // No hay datos — mostrar precio no disponible
+            totalPrice = 0
+            tollCharges = []
+            lastFeeUpdate = nil
+            isEstimatedPrice = true
+            print("FeeVM: No cached data available, price unavailable")
         }
-        let total = charges.reduce(0) { $0 + $1.price }
         
-        totalPrice = total
-        tollCharges = charges
-        lastFeeUpdate = Date()
-        isEstimatedPrice = true // Precio estimado (fallback local)
+//        let pricePerToll = TollPriceCalculator.calculateTollPrice(
+//            vehicleType: vehicle,
+//            fuelType: fuel,
+//            hasAutopass: hasAutoPassAgreement
+//        )
+//        
+//        let charges = tollsOnRoute.map { v in
+//            let name = v.egenskaper.first(where: { $0.navn == "Navn bomstasjon"})?.verdi ?? "Ukjent"
+//            return TollCharge(id: "\(v.id)", toll: name, price: pricePerToll)
+//        }
+//        let total = charges.reduce(0) { $0 + $1.price }
+//        
+//        totalPrice = total
+//        tollCharges = charges
+//        lastFeeUpdate = Date()
+//        isEstimatedPrice = true // Precio estimado (fallback local)
+//        
+//        print("FeeVM: Using local calculation (estimated): \(total) NOK")
         
-        print("FeeVM: Using local calculation (estimated): \(total) NOK")
-        
-        // Guardar en cache
-        storage.save(using: modelContext, key: key, total: total, charges: charges, ttlHours: 24)
+//        // Guardar en cache
+//        storage.save(using: modelContext, key: key, total: total, charges: charges, ttlHours: 24)
     }
 }
 

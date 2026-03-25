@@ -25,17 +25,28 @@ struct TollSummaryBar: View {
                             .font(.headline)
 
                         HStack(spacing: 4) {
-                            Text("Total price: \(Int(total)) kr")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            
-                            if isEstimated {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.caption2)
+                            if total == 0 && isEstimated {
+                                Text("Price not available")
+                                    .font(.subheadline)
                                     .foregroundStyle(.orange)
-                                Text("est.")
-                                    .font(.caption2)
-                                    .foregroundStyle(.orange)
+                            }else if total == 0 {
+                                Text("You are lucky. Not toll charges on this route")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.blue)
+                                
+                            } else {
+                                Text("Total price: \(Int(total)) kr")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                
+                                if isEstimated {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .font(.caption2)
+                                        .foregroundStyle(.orange)
+                                    Text("est.")
+                                        .font(.caption2)
+                                        .foregroundStyle(.orange)
+                                }
                             }
                         }
                     }
