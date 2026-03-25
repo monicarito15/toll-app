@@ -7,8 +7,8 @@ struct CalculatorView: View {
     
     @ObservedObject var mapVM: MapViewModel
     
-    @State private var from = ""
-    @State private var to = ""
+    @Binding var from: String
+    @Binding var to: String
     @State private var showMap = false
     
     @State private var showToDirections = false
@@ -17,7 +17,7 @@ struct CalculatorView: View {
     @State private var shouldApplyLocationToFrom = true
     @State private var isFromCurrentLocation: Bool = false
     @State private var isToCurrentLocation: Bool = false
-    @State private var autopassOn: Bool = true
+    @Binding var autopassOn: Bool
     
     @Binding var currentDetent: PresentationDetent
     
@@ -27,9 +27,9 @@ struct CalculatorView: View {
     
     @FocusState private var focus: FormFieldFocus?
     
-    @State private var selectedFuelType: FuelType = .gas
-    @State private var selectedVehicleType: VehicleType = .car
-    @State private var selectedDateTime = Date()
+    @Binding var selectedFuelType: FuelType
+    @Binding var selectedVehicleType: VehicleType
+    @Binding var selectedDateTime: Date
     
     @StateObject private var locationManager = LocationManager()
     
@@ -39,8 +39,8 @@ struct CalculatorView: View {
 
     
     
-    // Callback: le manda from/to al mapa (vista padre) para calcular la ruta
-    let onCalculate: (_ _from: String, _ _to: String, _ _vehicle: VehicleType, _ fuel: FuelType, _ _date: Date, _ _hasAutopass: Bool ) -> Void
+    // Callback: le avisa al padre que calcule la ruta (los valores ya están compartidos via Binding)
+    let onCalculate: () -> Void
     
     var body: some View {
         NavigationView {
@@ -455,7 +455,11 @@ struct CalculatorView: View {
                 dateTime: selectedDateTime
             )
             
-            onCalculate(fromAddress, toAddress, selectedVehicleType, selectedFuelType, selectedDateTime, autopassOn)
+            // Actualizar los bindings con las direcciones resueltas
+            from = fromAddress
+            to = toAddress
+            
+            onCalculate()
             dismiss()
         } label: {
             HStack(spacing: 8) {
