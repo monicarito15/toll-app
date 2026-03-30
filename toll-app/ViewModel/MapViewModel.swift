@@ -10,45 +10,44 @@ import CoreLocation
 final class MapViewModel: ObservableObject {
     
     
-    @Published var route: MKRoute? // Ruta calculada.
-    @Published var toll: [Vegobjekt] = [] // Lista de tolls desde la API.
-    @Published var userLocation: CLLocationCoordinate2D? // Ubicación actual del usuario.
-    @Published var originCoordinate: CLLocationCoordinate2D? // From routa
-    @Published var destinationCoordinate: CLLocationCoordinate2D? // To routa
+    @Published var route: MKRoute?
+    @Published var toll: [Vegobjekt] = []
+    @Published var userLocation: CLLocationCoordinate2D?
+    @Published var originCoordinate: CLLocationCoordinate2D?
+    @Published var destinationCoordinate: CLLocationCoordinate2D?
     
     // Para la barrita + sheet
-        @Published var hasResult: Bool = false
-        @Published var totalPrice: Double = 0
-        @Published var tollsOnRoute: [Vegobjekt] = []
+    @Published var hasResult: Bool = false
+    @Published var totalPrice: Double = 0
+    @Published var tollsOnRoute: [Vegobjekt] = []
     
 
     
     private let locationManager = LocationManager()
     
     func resetResult() {
-            hasResult = false
-            totalPrice = 0
-            tollsOnRoute = []
-            route = nil
-            originCoordinate = nil
-            destinationCoordinate = nil
-        }
+        hasResult = false
+        totalPrice = 0
+        tollsOnRoute = []
+        route = nil
+        originCoordinate = nil
+        destinationCoordinate = nil
+    }
     
-    // Copia la ubicación del usuario desde locationManager.
     func updateUserLocation() {
         userLocation = locationManager.userLocation
     }
     
-    // Obtiene los tolls desde la API.
     func fetchTolls() async {
         do {
             toll = try await TollService.shared.getTolls()
         } catch {
-            print(" Error to fetch tolls: \(error)")
+            #if DEBUG
+            print("Error to fetch tolls: \(error)")
+            #endif
         }
     }
     
-    // Funcion que calcula la ruta entre dos coordenadas (from - to).
     func getDirections(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) async {
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: .init(coordinate: from))
@@ -58,26 +57,30 @@ final class MapViewModel: ObservableObject {
         do {
             let directions = try await MKDirections(request: request).calculate()
             if let firstRoute = directions.routes.first {
+                #if DEBUG
                 print("Distance: \(firstRoute.distance) m")
                 print("Estimated duration: \(firstRoute.expectedTravelTime) seconds")
+                #endif
                 route = firstRoute
             } else {
+                #if DEBUG
                 print("No route found.")
+                #endif
             }
         } catch {
+            #if DEBUG
             print("Error calculating directions: \(error)")
+            #endif
         }
     }
     
-    
-    
-    // Convierte la dirección textual del destino a coordenadas (Geocoding).
-    // Luego calcula la ruta desde la ubicación actual hacia esa dirección.
     func geocode(from: CLLocationCoordinate2D, toAddress: String) {
         let geocoder = CLGeocoder()
         geocoder.geocodeAddressString(toAddress) { placemarks, error in
             if let error = error {
+                #if DEBUG
                 print("Geocoder Error: \(error)")
+                #endif
                 return
             }
             if let destination = placemarks?.first?.location?.coordinate {
@@ -85,28 +88,36 @@ final class MapViewModel: ObservableObject {
                     await self.getDirections(from: from, to: destination)
                 }
             } else {
-                
-                
+                #if DEBUG
                 print("No coordinate found for address: \(toAddress)")
+                #endif
             }
         }
     }
-    // Helper mínimo: address -> coordinate
+
     private func geocodeAddress(_ address: String, completion: @escaping (CLLocationCoordinate2D?) -> Void) {
-        print("🔍 Geocoding address: '\(address)'")
+        #if DEBUG
+        print("Geocoding address: '\(address)'")
+        #endif
         let geocoder = CLGeocoder()
         geocoder.geocodeAddressString(address) { placemarks, error in
             if let error = error {
-                print(" Geocoder Error for '\(address)': \(error.localizedDescription)")
+                #if DEBUG
+                print("Geocoder Error for '\(address)': \(error.localizedDescription)")
+                #endif
                 completion(nil)
                 return
             }
             
             if let coordinate = placemarks?.first?.location?.coordinate {
+                #if DEBUG
                 print("Geocoded '\(address)' → \(coordinate.latitude), \(coordinate.longitude)")
+                #endif
                 completion(coordinate)
             } else {
+                #if DEBUG
                 print("No coordinate found for address: '\(address)'")
+                #endif
                 completion(nil)
             }
         }
@@ -118,33 +129,36 @@ final class MapViewModel: ObservableObject {
         let fromTrim = fromAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         let toTrim = toAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         
-
         guard !toTrim.isEmpty else {
+            #if DEBUG
             print("Missing 'to' address")
+            #endif
             return
         }
         
-        // 1) Geocode TO
-        print(" Step 1: Geocoding destination '\(toTrim)'...")
         geocodeAddress(toTrim) { destination in
             guard let destination else {
+                #if DEBUG
                 print("No coordinate found for TO: \(toTrim)")
+                #endif
                 return
             }
+            #if DEBUG
             print("Destination geocoded: \(destination.latitude), \(destination.longitude)")
+            #endif
             self.destinationCoordinate = destination
 
-            // 2) Origin = userLocation o geocode FROM
             if fromTrim.isEmpty {
+                #if DEBUG
                 print("FROM is empty, using user location...")
-                // usa la ubicacion del usuario como origen
+                #endif
                 self.updateUserLocation()
                 guard let origin = self.userLocation else {
+                    #if DEBUG
                     print("No user location available yet")
+                    #endif
                     return
                 }
-                print(" Using user location as origin: \(origin.latitude), \(origin.longitude)")
-                // Publica el origen para que la vista pueda mover la camara
                 self.originCoordinate = origin
 
                 Task { @MainActor in
@@ -152,14 +166,16 @@ final class MapViewModel: ObservableObject {
                 }
 
             } else {
-                print("Step 2: Geocoding origin '\(fromTrim)'...")
                 self.geocodeAddress(fromTrim) { origin in
                     guard let origin else {
-                        print(" No coordinate found for FROM: \(fromTrim)")
+                        #if DEBUG
+                        print("No coordinate found for FROM: \(fromTrim)")
+                        #endif
                         return
                     }
-                    print(" Origin geocoded: \(origin.latitude), \(origin.longitude)")
-                    // Publica el origen para que la vista pueda mover la camara
+                    #if DEBUG
+                    print("Origin geocoded: \(origin.latitude), \(origin.longitude)")
+                    #endif
                     self.originCoordinate = origin
 
                     Task { @MainActor in
@@ -171,19 +187,18 @@ final class MapViewModel: ObservableObject {
         }
     }
     
-    // detectar tolls en la ruta (precio por ahora 0)
-       func buildResultIfPossible(vehicle: VehicleType, fuel: FuelType, date: Date) {
-           guard let route else { return }
-           guard !toll.isEmpty else { return }
+    func buildResultIfPossible(vehicle: VehicleType, fuel: FuelType, date: Date) {
+        guard let route else { return }
+        guard !toll.isEmpty else { return }
 
-           tollsOnRoute = tollsNearRoute(route: route, tolls: toll, maxDistanceMeters: 350)
-           totalPrice = 0
-           hasResult = true
-       }
+        tollsOnRoute = tollsNearRoute(route: route, tolls: toll, maxDistanceMeters: 350)
+        totalPrice = 0
+        hasResult = true
+    }
     
     private func tollsNearRoute(route: MKRoute, tolls: [Vegobjekt], maxDistanceMeters: Double) -> [Vegobjekt] {
         let polyline = route.polyline
-        let routePoints = samplePolylinePoints(polyline, step: 25) // step más bajo = más exacto
+        let routePoints = samplePolylinePoints(polyline, step: 25)
 
         return tolls.filter { toll in
             guard let c = toll.lokasjon?.coordinates else { return false }
@@ -215,4 +230,3 @@ final class MapViewModel: ObservableObject {
     }
         
 }
-

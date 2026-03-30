@@ -11,33 +11,21 @@ import CoreLocation
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     // MARK: - CoreLocation objects
-    private let manager = CLLocationManager()   // el manager real que pide permisos y ubicación
-    private let geocoder = CLGeocoder()         // convierte coordenadas  dirección (texto)
+    private let manager = CLLocationManager()
+    private let geocoder = CLGeocoder()
 
-    // MARK: - Published state (SwiftUI escucha estos cambios)
-    @Published var userLocation: CLLocationCoordinate2D?         // coordenadas actuales del usuario
-    @Published var authorizationStatus: CLAuthorizationStatus?   // estado de permisos (puede ser nil al inicio)
-    @Published var currentAddress: String?                      // dirección actual (texto)
+    // MARK: - Published state
+    @Published var userLocation: CLLocationCoordinate2D?
+    @Published var authorizationStatus: CLAuthorizationStatus?
+    @Published var currentAddress: String?
 
     // MARK: - Init
     override init() {
         super.init()
-
-        // 1) conectamos el delegate para recibir callbacks (didUpdate/didFail/authorization)
         manager.delegate = self
-
-        // 2) precisión (puedes cambiar a .nearestTenMeters si quieres menos batería)
         manager.desiredAccuracy = kCLLocationAccuracyBest
-
-        // guardar el estado de permisos desde el inicio
-        // (esto ayuda porque authorizationStatus es opcional y a veces queda nil hasta que cambie)
         self.authorizationStatus = manager.authorizationStatus
-
-        // 3) pedir permisos cuando se crea el LocationManager
         manager.requestWhenInUseAuthorization()
-
-        // 4) empezar a recibir ubicaciones continuamente (streaming)
-        // Nota: esto NO es lo mismo que requestLocation() que pide solo una vez
         manager.startUpdatingLocation()
     }
 
@@ -45,89 +33,77 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.last {
             DispatchQueue.main.async {
-
-                // Guarda coordenadas
                 self.userLocation = location.coordinate
-
-                //prints para debug (para saber si realmente llega ubicación)
+                #if DEBUG
                 print("didUpdateLocations -> \(location.coordinate.latitude), \(location.coordinate.longitude)")
-
-                
-                self.reverseGeocode(location: location) // convertir coordenadas para mostar direccion d la locacion
+                #endif
+                self.reverseGeocode(location: location)
             }
         }
     }
 
-    // MARK: - Public: requestLocation (una sola vez)
+    // MARK: - Public: requestLocation
     func requestLocation() {
-
-        // lee el status real del manager (más confiable que el @Published opcional)
         let status = manager.authorizationStatus
 
-        // print para ver el estado al tocar el botón
+        #if DEBUG
         print("requestLocation() tapped. authStatus = \(status.rawValue)")
+        #endif
 
-        // si todavía no se decidió permiso, primero lo pedimos
         if status == .notDetermined {
             requestAuthorization()
             return
         }
 
-        // si el permiso está denegado/restringido, requestLocation no va a funcionar
         if status == .denied || status == .restricted {
+            #if DEBUG
             print("Location permission denied/restricted")
+            #endif
             return
         }
 
-        // Tu línea original (pero ahora solo se ejecuta cuando realmente tiene sentido):
         manager.requestLocation()
     }
 
     // MARK: - Delegate: didFailWithError
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        #if DEBUG
         DispatchQueue.main.async {
-
-          
             print("Location error: \(error.localizedDescription)")
-
         }
+        #endif
     }
 
     // MARK: - Public: requestAuthorization
     func requestAuthorization() {
-        // print para saber cuándo se está pidiendo permiso
+        #if DEBUG
         print("Requesting WhenInUse authorization...")
-
-        // Tu línea original:
+        #endif
         manager.requestWhenInUseAuthorization()
     }
 
     // MARK: - Delegate: authorization changed
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         DispatchQueue.main.async {
-
-            // Tu asignación original:
             self.authorizationStatus = manager.authorizationStatus
-
-            // print para confirmar el cambio de permisos
+            #if DEBUG
             print("Authorization changed -> \(manager.authorizationStatus.rawValue)")
+            #endif
         }
     }
 
-    // MARK: - reverseGeocoding - convertir coordenadas a direccion
+    // MARK: - reverseGeocoding
     func reverseGeocode(location: CLLocation) {
         geocoder.reverseGeocodeLocation(location) { placemark, error in
-
-            //si falla el reverse geocode, ahora lo vas a ver en consola
             if let error = error {
+                #if DEBUG
                 print("ReverseGeocode error: \(error.localizedDescription)")
+                #endif
                 return
             }
 
             if let placemark = placemark?.first {
                 DispatchQueue.main.async {
-
-                   
                     self.currentAddress = [
                         placemark.name,
                         placemark.locality,
@@ -136,15 +112,15 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     .compactMap { $0 }
                     .joined(separator: " , ")
 
-                    // print para confirmar que sí se setea currentAddress
+                    #if DEBUG
                     print("currentAddress set -> \(self.currentAddress ?? "nil")")
+                    #endif
                 }
-
             } else {
-                //si no hay placemark, también lo verás
+                #if DEBUG
                 print("ReverseGeocode: no placemark found")
+                #endif
             }
         }
     }
 }
-

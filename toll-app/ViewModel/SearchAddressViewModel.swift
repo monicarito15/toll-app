@@ -18,7 +18,6 @@ final class SearchAddressViewModel : ObservableObject {
     private var locationManager = LocationManager()
     
     
-    // funcion para buscar la direcciones, solo en Noruega
     func searchAddresses(query: String) {
         guard !query.isEmpty else {
             searchResults = []
@@ -35,7 +34,6 @@ final class SearchAddressViewModel : ObservableObject {
         let search = MKLocalSearch(request: request)
         search.start { response, error in
             if let items = response?.mapItems {
-                // Filtrar solo resultados en Noruega
                 self.searchResults = items.filter { item in
                     item.placemark.countryCode == "NO"
                 }
@@ -45,35 +43,27 @@ final class SearchAddressViewModel : ObservableObject {
         }
     }
     
-    // Guarda una nueva busqueda - y que se solo guarden las 5 ultimas
     func saveSearch(_ name: String, address: String, using context: ModelContext) async {
         guard !name.isEmpty else { return }
         
-        // Buscar si ya existe en la base de datos
         let descriptor = FetchDescriptor<RecentSearch>()
         let allSearches = (try? context.fetch(descriptor)) ?? []
         
-        // Eliminar duplicado existente si lo hay
         if let existing = allSearches.first(where: {
             $0.name.lowercased() == name.lowercased() &&
             $0.address.lowercased() == address.lowercased() 
         }) {
-            print("Removing existing search: \(name)")
             context.delete(existing)
         }
         
-        // Crear y guardar el nuevo objeto (siempre con fecha actual)
         let newSearch = RecentSearch(name: name, address: address)
-        print("Inserting new search: \(name) - \(address)")
         context.insert(newSearch)
         
         do {
             try context.save()
             
-            // Recargar y mantener solo las 5 más recientes
             await loadRecentSearch(using: context)
             
-            // Si después de recargar hay más de 5, eliminar las antiguas
             let allAfterSave = (try? context.fetch(FetchDescriptor<RecentSearch>(
                 sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
             ))) ?? []
@@ -81,19 +71,19 @@ final class SearchAddressViewModel : ObservableObject {
             if allAfterSave.count > 5 {
                 let toDelete = Array(allAfterSave.dropFirst(5))
                 for oldSearch in toDelete {
-                    print("Deleting old search: \(oldSearch.name)")
                     context.delete(oldSearch)
                 }
                 try context.save()
                 await loadRecentSearch(using: context)
             }
         } catch {
+            #if DEBUG
             print("Error saving search: \(error)")
+            #endif
         }
     }
     
     
-    // Carga las busquedas guardadas, las 5 más recientes
     func loadRecentSearch(using context: ModelContext) async {
         do {
             let descriptor = FetchDescriptor<RecentSearch>(
@@ -102,17 +92,16 @@ final class SearchAddressViewModel : ObservableObject {
             
             let fetched = try context.fetch(descriptor)
             
-            // Tomar solo las 5 más recientes y eliminar duplicados
             var seen = Set<String>()
             recentSearches = fetched.filter { search in
                 let key = "\(search.name.lowercased())|\(search.address.lowercased())"
                 return seen.insert(key).inserted
             }.prefix(5).map { $0 }
             
-            print("Loaded \(recentSearches.count) recent searches")
-            
         } catch {
+            #if DEBUG
             print("Error fetching recent searches: \(error)")
+            #endif
         }
     }
 }
