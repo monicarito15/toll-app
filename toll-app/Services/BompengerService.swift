@@ -34,7 +34,7 @@ struct BompengerService {
             print("Bompenger status: \(http.statusCode)")
         }
         if let bodyString = String(data: data, encoding: .utf8) {
-            print("Bompenger body (first 800 chars): \(bodyString.prefix(800))")
+            print("Bompenger FULL body: \(bodyString)")
         }
         #endif
 

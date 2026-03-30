@@ -14,6 +14,8 @@ struct TravelView: View {
     
     @State private var from = ""
     @State private var to = ""
+    @State private var fromCoordinate: CLLocationCoordinate2D?
+    @State private var toCoordinate: CLLocationCoordinate2D?
     @State private var vehicleType: VehicleType = .car
     @State private var fuelType: FuelType = .gas
     @State private var dateTime: Date = Date()
@@ -25,6 +27,8 @@ struct TravelView: View {
         MapView(
             from: from,
             to: to,
+            fromCoordinate: fromCoordinate,
+            toCoordinate: toCoordinate,
             vehicleType: vehicleType,
             fuelType: fuelType,
             dateTime: dateTime,
@@ -38,6 +42,8 @@ struct TravelView: View {
                     mapVM: vm,
                     from: $from,
                     to: $to,
+                    fromCoordinate: $fromCoordinate,
+                    toCoordinate: $toCoordinate,
                     autopassOn: $hasAutopass,
                     currentDetent: $currentDetent,
                     selectedFuelType: $fuelType,
@@ -45,7 +51,12 @@ struct TravelView: View {
                     selectedDateTime: $dateTime,
                     onCalculate: {
                         Task { @MainActor in
-                            await vm.getDirectionsFromAddresses(fromAddress: from, toAddress: to)
+                            await vm.getDirectionsFromAddresses(
+                                fromAddress: from,
+                                toAddress: to,
+                                fromCoordinate: fromCoordinate,
+                                toCoordinate: toCoordinate
+                            )
                         }
                     }
                 )

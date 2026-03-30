@@ -21,7 +21,9 @@ struct toll_appApp: App {
             modelContainer = try ModelContainer(for: schema)
         } catch {
             // If the database is corrupted, delete it and try again
-            print("SwiftData failed to load: \(error). Attempting to reset...")
+            #if DEBUG
+            print("SwiftData failed to load: \(error). Attempting to reset.")
+            #endif
             let config = ModelConfiguration(isStoredInMemoryOnly: false)
             do {
                 modelContainer = try ModelContainer(for: schema, configurations: config)
@@ -38,3 +40,4 @@ struct toll_appApp: App {
         }
     }
 }
+

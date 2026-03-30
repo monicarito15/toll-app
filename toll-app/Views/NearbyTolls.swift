@@ -16,6 +16,11 @@ struct NearbyTolls: View {
     // Callback cuando se toca un peaje
     var onTollTapped: ((Vegobjekt) -> Void)?
     
+    // Propiedad para saber si hay peajes (para usar en el padre)
+    var hasNearbyTolls: Bool {
+        !nearbyTolls.isEmpty
+    }
+    
     // Computed property para obtener los peajes cercanos basados en la ubicación del usuario
     private var nearbyTolls: [Vegobjekt] {
         guard let userLocation = mapVm.userLocation else { return [] }
@@ -40,21 +45,6 @@ struct NearbyTolls: View {
         }
     }
     
-//    // Helper para obtener el nombre del peaje desde sus propiedades
-//    private func getTollName(_ toll: Vegobjekt) -> String {
-//        // Buscar la propiedad "Navn bomstasjon" primero
-//        if let navnProp = toll.egenskaper.first(where: { $0.navn == "Navn bomstasjon" }),
-//           let navn = navnProp.verdi {
-//            return navn
-//        }
-//        // Si no existe, buscar "Navn bompengeanlegg (fra CS)"
-//        if let navnProp = toll.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" }),
-//           let navn = navnProp.verdi {
-//            return navn
-//        }
-//        // Si tampoco existe, mostrar "Unknown Toll"
-//        return "Unknown Toll"
-//    }
     
     // Helper para calcular distancia en formato legible
     private func getDistance(to toll: Vegobjekt) -> String {
@@ -63,45 +53,44 @@ struct NearbyTolls: View {
     }
     
     var body: some View {
-        Group {
-            if nearbyTolls.isEmpty {
-                // Estado vacío
-                VStack(spacing: 12) {
-                    Image(systemName: "location.slash.fill")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.secondary)
-                    
-                    Text("No nearby tolls")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
-                    Text(mapVm.userLocation == nil ? "Location not available" : "No tolls within 50 km")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 150)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(nearbyTolls.prefix(10)) { toll in
-                            Button {
-                                onTollTapped?(toll)
-                            } label: {
-                                TollCard(
-                                    name: toll.displayName,
-                                    distance: getDistance(to: toll),
-                                    colorScheme: colorScheme
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                }
-                .scrollBounceBehavior(.basedOnSize)
+        if nearbyTolls.isEmpty {
+            // Estado vacío - sin card de fondo
+            VStack(spacing: 12) {
+                Image(systemName: "location.slash.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.secondary)
+                
+                Text("No nearby tolls")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                
+                Text(mapVm.userLocation == nil ? "Location not available" : "No tolls within 50 km")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 32)
+        } else {
+            // Hay peajes - mostrar con scroll horizontal
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(nearbyTolls.prefix(10)) { toll in
+                        Button {
+                            onTollTapped?(toll)
+                        } label: {
+                            TollCard(
+                                name: toll.displayName,
+                                distance: getDistance(to: toll),
+                                colorScheme: colorScheme
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+            .scrollBounceBehavior(.basedOnSize)
         }
     }
 }
@@ -145,15 +134,11 @@ private struct TollCard: View {
                     .foregroundStyle(.blue)
             }
         }
-        .padding(12)
+        .padding(14)
         .frame(width: 180, height: 120)
-        .background(colorScheme == .dark ? Color(.systemGray5) : Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+        .background(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 6, x: 0, y: 2)
     }
 }
                     

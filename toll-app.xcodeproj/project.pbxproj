@@ -7,10 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6AE2BFBC2F7A80A200A53CBB /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 6AE2BFBB2F7A809C00A53CBB /* Secrets.xcconfig */; };
 		A235F7152E8401C5000D9452 /* ArcGIS in Frameworks */ = {isa = PBXBuildFile; productRef = A235F7142E8401C5000D9452 /* ArcGIS */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6AE2BFBB2F7A809C00A53CBB /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		A26BAE452E6EF0D600B45F61 /* toll-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "toll-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -52,6 +54,7 @@
 			children = (
 				A26BAE472E6EF0D600B45F61 /* toll-app */,
 				A26BAE462E6EF0D600B45F61 /* Products */,
+				6AE2BFBB2F7A809C00A53CBB /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -131,6 +134,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6AE2BFBC2F7A80A200A53CBB /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -149,6 +153,7 @@
 /* Begin XCBuildConfiguration section */
 		A26BAE4E2E6EF0D900B45F61 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6AE2BFBB2F7A809C00A53CBB /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -213,6 +218,7 @@
 		};
 		A26BAE4F2E6EF0D900B45F61 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6AE2BFBB2F7A809C00A53CBB /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;

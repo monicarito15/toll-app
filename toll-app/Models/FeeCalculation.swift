@@ -26,7 +26,7 @@ final class FeeCalculation {
     init(key: String, currency: String = "NOK",total:Double, chargesJSON: Data, createdAt: Date, validUntil: Date) {
         self.key = key
         self.currency = currency
-        self.total = 0.0
+        self.total = total
         self.chargesJSON = chargesJSON
         self.createdAt = createdAt
         self.validUntil = validUntil

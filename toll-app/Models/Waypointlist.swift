@@ -27,7 +27,7 @@ struct WaypointRequest: Codable {
     let til: Waypointlist
     let dato_yyyymmdd: String
     let tidspunkt_hhmm: String
-    let bilsize: Int // car, truck, moto etc.
+    let bilsize: Int // car, truck, moto.
     let litenbiltype: Int // fuel type for small vehicles
     let retur: Int
     let tidsreferanser: Int?
@@ -51,13 +51,27 @@ struct WaypointResponse: Codable {
      case tur = "Tur"
     }
     
+    struct TollStation: Codable {
+        let name: String?
+        let price: Double?
+        let discountedPrice: Double?
+        
+        enum CodingKeys: String, CodingKey {
+            case name = "Navn"
+            case price = "Kostnad"
+            case discountedPrice = "Rabattert"
+        }
+    }
+    
     struct Trip: Codable {
         let totalPrice: Double?
         let totalWithAutopass: Double?
+        let tollStations: [TollStation]?
         
         enum CodingKeys: String, CodingKey {
             case totalPrice = "Kostnad"
             case totalWithAutopass = "Rabattert"
+            case tollStations = "Bomstasjoner"
         }
     }
 }
@@ -79,6 +93,20 @@ extension WaypointResponse {
     func getPrices() -> (withoutAutopass: Double?, withAutopass: Double?) {
         guard let trip = tur?.first else { return (nil, nil) }
         return (trip.totalPrice, trip.totalWithAutopass)
+    }
+    
+    // Gets individual toll stations with prices
+    func getTollCharges(hasAutopass: Bool) -> [TollCharge] {
+        guard let stations = tur?.first?.tollStations else { return [] }
+        
+        return stations.enumerated().map { index, station in
+            let price = hasAutopass ? (station.discountedPrice ?? station.price ?? 0) : (station.price ?? 0)
+            return TollCharge(
+                id: "\(index)",
+                toll: station.name ?? "Unknown",
+                price: price
+            )
+        }
     }
 }
 

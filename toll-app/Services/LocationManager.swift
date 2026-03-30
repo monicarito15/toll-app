@@ -10,16 +10,16 @@ import CoreLocation
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
-    // MARK: - CoreLocation objects
+
     private let manager = CLLocationManager()
     private let geocoder = CLGeocoder()
 
-    // MARK: - Published state
+
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var authorizationStatus: CLAuthorizationStatus?
     @Published var currentAddress: String?
 
-    // MARK: - Init
+   
     override init() {
         super.init()
         manager.delegate = self
@@ -29,7 +29,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         manager.startUpdatingLocation()
     }
 
-    // MARK: - Delegate: didUpdateLocations
+
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.last {
             DispatchQueue.main.async {
@@ -42,7 +42,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 
-    // MARK: - Public: requestLocation
+  
     func requestLocation() {
         let status = manager.authorizationStatus
 
@@ -65,7 +65,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         manager.requestLocation()
     }
 
-    // MARK: - Delegate: didFailWithError
+
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         #if DEBUG
         DispatchQueue.main.async {
@@ -74,7 +74,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         #endif
     }
 
-    // MARK: - Public: requestAuthorization
+   
     func requestAuthorization() {
         #if DEBUG
         print("Requesting WhenInUse authorization...")
@@ -82,7 +82,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         manager.requestWhenInUseAuthorization()
     }
 
-    // MARK: - Delegate: authorization changed
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         DispatchQueue.main.async {
             self.authorizationStatus = manager.authorizationStatus
@@ -92,7 +91,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 
-    // MARK: - reverseGeocoding
+  
     func reverseGeocode(location: CLLocation) {
         geocoder.reverseGeocodeLocation(location) { placemark, error in
             if let error = error {

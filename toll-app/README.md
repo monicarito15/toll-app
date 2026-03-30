@@ -67,11 +67,6 @@ The app calculates routes using MapKit and identifies toll stations within 350 m
 
 ---
 
-## Screenshots
-
-*Screenshots will be added in a future update*
-
----
 
 ## Architecture
 
@@ -175,7 +170,7 @@ On first launch, the app will:
 
 ---
 
-## Usage
+
 
 ### Calculating a Route
 

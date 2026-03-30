@@ -14,15 +14,35 @@ final class SearchAddressViewModel : ObservableObject {
         
     @Published var searchResults: [MKMapItem] = []
     @Published var recentSearches: [RecentSearch] = []
+    @Published var searchQuery: String = ""
     
     private var locationManager = LocationManager()
+    private var searchTask: Task<Void, Never>?
     
     
     func searchAddresses(query: String) {
+        searchQuery = query
+        
+        // Cancel any previous debounced search
+        searchTask?.cancel()
+        
         guard !query.isEmpty else {
             searchResults = []
             return
         }
+        
+        // Debounce: wait 300ms before searching
+        searchTask = Task {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            
+            // Check if cancelled (user typed another character)
+            guard !Task.isCancelled else { return }
+            
+            await performSearch(query: query)
+        }
+    }
+    
+    private func performSearch(query: String) async {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
         
@@ -32,14 +52,19 @@ final class SearchAddressViewModel : ObservableObject {
         request.region = MKCoordinateRegion(center: norwayCenter, span: norwaySpan)
         
         let search = MKLocalSearch(request: request)
-        search.start { response, error in
-            if let items = response?.mapItems {
-                self.searchResults = items.filter { item in
-                    item.placemark.countryCode == "NO"
-                }
-            } else {
-                self.searchResults = []
+        
+        do {
+            let response = try await search.start()
+            
+            // Only update if this query is still the current one
+            guard !Task.isCancelled, searchQuery == query else { return }
+            
+            searchResults = response.mapItems.filter { item in
+                item.placemark.countryCode == "NO"
             }
+        } catch {
+            guard !Task.isCancelled else { return }
+            searchResults = []
         }
     }
     

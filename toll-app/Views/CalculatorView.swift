@@ -1,7 +1,7 @@
 import SwiftUI
 import CoreLocation
 import SwiftData
-import _LocationEssentials
+import CoreLocation
 
 struct CalculatorView: View {
     
@@ -9,6 +9,8 @@ struct CalculatorView: View {
     
     @Binding var from: String
     @Binding var to: String
+    @Binding var fromCoordinate: CLLocationCoordinate2D?
+    @Binding var toCoordinate: CLLocationCoordinate2D?
     @State private var showMap = false
     
     @State private var showToDirections = false
@@ -93,14 +95,15 @@ struct CalculatorView: View {
         }
         .sheet(isPresented: $showToDirections) {
             ToDirectionsView(
-                searchText: $to, 
+                searchText: $to,
+                selectedCoordinate: $toCoordinate,
                 currentDetent: $currentDetent, 
                 isFromCurrentLocation: $isToCurrentLocation
             )
                 .presentationDetents([.medium, .large], selection: $currentDetent)
         }
         .sheet(isPresented: $showFromDirections) {
-            FromDirectionsView(searchText: $from, currentDetent: $currentDetent, isFromCurrentLocation: $isFromCurrentLocation)
+            FromDirectionsView(searchText: $from, selectedCoordinate: $fromCoordinate, currentDetent: $currentDetent, isFromCurrentLocation: $isFromCurrentLocation)
         }
         .onDisappear {
             shouldApplyLocationToFrom = false
@@ -170,6 +173,11 @@ struct CalculatorView: View {
             from = to
             to = tempFrom
             
+            // Intercambiar coordenadas
+            let tempFromCoord = fromCoordinate
+            fromCoordinate = toCoordinate
+            toCoordinate = tempFromCoord
+            
             // Intercambiar estados de ubicación actual
             let tempIsFromCurrentLocation = isFromCurrentLocation
             isFromCurrentLocation = isToCurrentLocation
@@ -216,33 +224,6 @@ struct CalculatorView: View {
             }
             .buttonStyle(.plain)
             
-//            Button {
-//                // El usuario pide usar su ubicación y mostramos "Your location" inmediatamente
-//                shouldApplyLocationToFrom = false
-//                isFromCurrentLocation = false
-//                
-//                if locationManager.authorizationStatus == .notDetermined {
-//                    locationManager.requestAuthorization()
-//                    return
-//                }
-//                
-//                if locationManager.authorizationStatus == .denied ||
-//                    locationManager.authorizationStatus == .restricted {
-//                    print("Location permission denied/restricted")
-//                    return
-//                }
-//                
-//                locationManager.requestLocation()
-//            } label: {
-//                HStack {
-//                    Image(systemName: "location.fill")
-//                        .font(.system(size: 16))
-//                        .foregroundStyle(.blue)
-//                        .frame(width: 32, height: 32)
-//                        .background(Color.blue.opacity(0.1), in: Circle())
-//                }
-//            }
-//            .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -348,9 +329,10 @@ struct CalculatorView: View {
     
     private var vehicleTypePicker: some View {
         HStack(spacing: 12) {
-            Image(systemName: selectedVehicleType == .car ? "car.fill" : "figure.walk")
+            Image(systemName: selectedVehicleType == .car ? "car.fill" : "motorcycle.fill")
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
+                .foregroundStyle(Color.blue)
             
             Text("Vehicle Type")
                 .foregroundStyle(.primary)
@@ -373,8 +355,9 @@ struct CalculatorView: View {
     private var fuelTypePicker: some View {
         HStack(spacing: 12) {
             Image(systemName: selectedFuelType == .gas ? "fuelpump.fill" : "bolt.fill")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(selectedFuelType == .gas ? Color.orange : Color.yellow)
                 .frame(width: 24)
+                
             
             Text("Fuel Type")
                 .foregroundStyle(.primary)
@@ -436,15 +419,6 @@ struct CalculatorView: View {
             
             guard !toAddress.isEmpty else { return }
             
-            // Debug: Print selected options
-            print("CALCULATOR VIEW - User Selection:")
-            print("   Vehicle Type: \(selectedVehicleType.rawValue)")
-            print("   Fuel Type: \(selectedFuelType.rawValue)")
-            print("   Autopass: \(autopassOn ? "ON" : "OFF")")
-            print("   From: \(fromAddress) (isCurrentLocation: \(isFromCurrentLocation))")
-            print("   To: \(toAddress) (isCurrentLocation: \(isToCurrentLocation))")
-            print("   DateTime: \(selectedDateTime)")
-            
             // Guardar en el historial
             saveToHistory(
                 fromAddress: fromAddress,
@@ -494,28 +468,59 @@ struct CalculatorView: View {
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
             
-            VStack(spacing: 0) {
-                NearbyTolls(mapVm: mapVM) { selectedToll in
-                    handleTollSelection(selectedToll)
+            // Crear una instancia para verificar si hay peajes
+            let nearbyTollsView = NearbyTolls(mapVm: mapVM) { selectedToll in
+                handleTollSelection(selectedToll)
+            }
+            
+            // Solo aplicar el card si hay peajes cercanos
+            let content = VStack(spacing: 0) {
+                nearbyTollsView
+            }
+            
+            // Aplicar card solo si hay peajes
+            Group {
+                if hasNearbyTollsInRange {
+                    cardStyle(content)
+                        .padding(.horizontal, 16)
+                } else {
+                    content
+                        .padding(.horizontal, 16)
                 }
             }
-            .background(colorScheme == .dark ? Color(.systemGray6) : .white)
+        }
+    }
+    
+    // Helper para verificar si hay peajes cercanos
+    private var hasNearbyTollsInRange: Bool {
+        guard let userLocation = mapVM.userLocation else { return false }
+        let userCLLocation = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
+        let maxDistance: Double = 50_000
+        
+        return mapVM.toll.contains { toll in
+            guard let coordinates = toll.lokasjon?.coordinates else { return false }
+            let tollLocation = CLLocation(latitude: coordinates.latitude, longitude: coordinates.longitude)
+            let distance = userCLLocation.distance(from: tollLocation)
+            return distance <= maxDistance
+        }
+    }
+    
+    // Helper function to apply card styling
+    private func cardStyle<Content: View>(_ content: Content) -> some View {
+        content
+            .background(cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.gray.opacity(0.2), lineWidth: 1)
             )
-            .padding(.horizontal, 16)
-        }
     }
     
     
     private func handleTollSelection(_ selectedToll: Vegobjekt) {
         guard let tollCoords = selectedToll.lokasjon?.coordinates else { return }
         
-        let tollName = selectedToll.egenskaper.first(where: { $0.navn == "Navn bomstasjon" })?.verdi
-            ?? selectedToll.egenskaper.first(where: { $0.navn == "Navn bompengeanlegg (fra CS)" })?.verdi
-            ?? "Toll \(selectedToll.id)"
+        _ = selectedToll.displayName
         
         let location = CLLocation(latitude: tollCoords.latitude, longitude: tollCoords.longitude)
         CLGeocoder().reverseGeocodeLocation(location) { placemarks, error in
@@ -561,9 +566,10 @@ struct CalculatorView: View {
         
         do {
             try modelContext.save()
-            print("Route saved to history")
         } catch {
+            #if DEBUG
             print("Error saving route: \(error.localizedDescription)")
+            #endif
         }
     }
     

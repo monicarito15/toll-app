@@ -20,7 +20,9 @@ final class FeeStorageViewModel: ObservableObject {
             )
             calculation = try modelContext.fetch(descriptor).first
         } catch {
+            #if DEBUG
             print("Error loading FeeCalculation:", error)
+            #endif
             calculation = nil
         }
     }
@@ -67,7 +69,9 @@ final class FeeStorageViewModel: ObservableObject {
 
             try modelContext.save()
         } catch {
+            #if DEBUG
             print("Error saving FeeCalculation:", error)
+            #endif
         }
     }
     
@@ -78,7 +82,9 @@ final class FeeStorageViewModel: ObservableObject {
             )
             calculation = try modelContext.fetch(descriptor).first
         } catch {
+            #if DEBUG
             print("Error loading expired FeeCalculation:", error)
+            #endif
             calculation = nil
         }
     }

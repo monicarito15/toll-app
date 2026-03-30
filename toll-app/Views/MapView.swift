@@ -13,6 +13,8 @@ struct MapView: View {
     
     let from: String
     let to: String
+    let fromCoordinate: CLLocationCoordinate2D?
+    let toCoordinate: CLLocationCoordinate2D?
     let vehicleType: VehicleType
     let fuelType: FuelType
     let dateTime: Date
@@ -45,20 +47,7 @@ struct MapView: View {
                         // Center map on user location
                         Marker("My location", coordinate: userLocation)
                     }
-                    
-//                    // tolls
-//                    ForEach(mapVM.tollsOnRoute) { vegobjekt in
-//                        if let coordinate = vegobjekt.lokasjon?.coordinates {
-//                                            let labelText = "\(vegobjekt.displayName)"
-//                            Annotation(labelText, coordinate: coordinate) {
-//                                Label(labelText, systemImage: "creditcard.fill")
-//                                    .labelStyle(.iconOnly)
-//                                    .font(.system(size:18))
-//                                    .shadow(radius: 3)
-//                                    
-//                            }
-//                        }
-//                    }
+
                     ForEach(mapVM.tollsOnRoute) { vegobjekt in
                         if let coordinate = vegobjekt.lokasjon?.coordinates {
                             Annotation("", coordinate: coordinate) {
@@ -101,7 +90,7 @@ struct MapView: View {
                 if mapVM.hasResult {
                     VStack {
                         TollSummaryBar(
-                            tollCount: mapVM.tollsOnRoute.count,
+                            tollCount: feeVM.tollCharges.isEmpty ? mapVM.tollsOnRoute.count : feeVM.tollCharges.count,
                             total: feeVM.totalPrice,
                             isEstimated: feeVM.isEstimatedPrice,
                             vehicleType: vehicleType,
@@ -110,7 +99,8 @@ struct MapView: View {
                             originCoordinate: mapVM.originCoordinate,
                             destinationCoordinate: mapVM.destinationCoordinate,
                             fromAddress: from,
-                            toAddress: to
+                            toAddress: to,
+                            route: mapVM.route
                         ) {
                             showDetailsSheet = true
                         }
@@ -147,10 +137,6 @@ struct MapView: View {
                         
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-//                                Image(systemName: "norwegiankronesign")
-//                                    .font(.title3)
-//                                    .foregroundStyle(.orange)
-                                
                                 Text("Toll: \(toll.displayName)")
                                     .font(.headline)
                                 
@@ -175,9 +161,6 @@ struct MapView: View {
                                 }
                             }
                             
-//                            Text("Toll: \(toll.displayName)")
-//                                .font(.caption)
-//                                .foregroundStyle(.tertiary)
                         }
                         .padding()
                         .background(.ultraThinMaterial)
@@ -202,7 +185,12 @@ struct MapView: View {
             
             // Si hay direcciones válidas, calcula la ruta entre `from` y `to`
             Task { @MainActor in
-                await mapVM.getDirectionsFromAddresses(fromAddress: from, toAddress: to)
+                await mapVM.getDirectionsFromAddresses(
+                    fromAddress: from,
+                    toAddress: to,
+                    fromCoordinate: fromCoordinate,
+                    toCoordinate: toCoordinate
+                )
             }
                
             Task {
@@ -268,7 +256,12 @@ struct MapView: View {
 
         
         .sheet(isPresented: $showDetailsSheet) {
-            TollPassedListView(tolls: mapVM.tollsOnRoute)
+            TollPassedListView(
+                tollCharges: feeVM.tollCharges,
+                route: mapVM.route,
+                fromAddress: from,
+                toAddress: to
+            )
                 .presentationDetents([.medium, .large])
         }
 

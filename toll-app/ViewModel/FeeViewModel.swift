@@ -131,12 +131,32 @@ final class FeeViewModel: ObservableObject {
                 print("FeeVM: API Prices - Without autopass: \(prices.withoutAutopass ?? 0), With autopass: \(prices.withAutopass ?? 0)")
                 #endif
                 
-                if let apiTotalPrice = response.getPrice(hasAutopass: hasAutoPassAgreement) {
-                    let pricePerToll = apiTotalPrice / Double(tollsOnRoute.count)
+                // Try to get individual toll charges from API
+                let apiCharges = response.getTollCharges(hasAutopass: hasAutoPassAgreement)
+                
+                if !apiCharges.isEmpty {
+                    let apiTotalPrice = response.getPrice(hasAutopass: hasAutoPassAgreement) ?? apiCharges.reduce(0) { $0 + $1.price }
                     
+                    totalPrice = apiTotalPrice
+                    tollCharges = apiCharges
+                    lastFeeUpdate = Date()
+                    isLoadingPrices = false
+                    isEstimatedPrice = false
+                    
+                    #if DEBUG
+                    print("FeeVM: SUCCESS - \(apiTotalPrice) NOK (\(apiCharges.count) tolls from API)")
+                    for charge in apiCharges {
+                        print("   \(charge.toll): \(charge.price) kr")
+                    }
+                    #endif
+                    
+                    storage.save(using: modelContext, key: key, total: apiTotalPrice, charges: apiCharges, ttlHours: 24)
+                    
+                } else if let apiTotalPrice = response.getPrice(hasAutopass: hasAutoPassAgreement) {
+                    // Fallback: API has total but no individual stations
                     let charges = tollsOnRoute.map { v in
                         let name = v.egenskaper.first(where: { $0.navn == "Navn bomstasjon"})?.verdi ?? "Ukjent"
-                        return TollCharge(id: "\(v.id)", toll: name, price: pricePerToll)
+                        return TollCharge(id: "\(v.id)", toll: name, price: apiTotalPrice / Double(tollsOnRoute.count))
                     }
                     
                     totalPrice = apiTotalPrice
@@ -144,10 +164,6 @@ final class FeeViewModel: ObservableObject {
                     lastFeeUpdate = Date()
                     isLoadingPrices = false
                     isEstimatedPrice = false
-                    
-                    #if DEBUG
-                    print("FeeVM: SUCCESS - \(apiTotalPrice) NOK (\(tollsOnRoute.count) tolls)")
-                    #endif
                     
                     storage.save(using: modelContext, key: key, total: apiTotalPrice, charges: charges, ttlHours: 24)
                     

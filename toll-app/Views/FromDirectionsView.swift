@@ -16,6 +16,7 @@ struct FromDirectionsView: View {
     @StateObject private var viewModel = SearchAddressViewModel()
 
     @Binding var searchText: String
+    @Binding var selectedCoordinate: CLLocationCoordinate2D?
     @Binding var currentDetent: PresentationDetent
     @Binding var isFromCurrentLocation: Bool
     
@@ -40,6 +41,8 @@ struct FromDirectionsView: View {
                             if let first = viewModel.searchResults.first {
                                 let name = first.name ?? searchText
                                 let address = first.placemark.title ?? searchText
+                                searchText = address
+                                selectedCoordinate = first.placemark.coordinate
 
                                 Task {
                                     await viewModel.saveSearch(name, address: address, using: modelContext)
@@ -51,15 +54,15 @@ struct FromDirectionsView: View {
                                 }
                             }
                         }
-                        .onChange(of: searchText) { value, _ in
-                            viewModel.searchAddresses(query: value)
+                        .onChange(of: searchText) { _, newValue in
+                            viewModel.searchAddresses(query: newValue)
                         }
                         .padding()
                         .cornerRadius(5)
                 }
                 .padding(12)
                 .background(Color(.systemGray6))
-                
+            
                 // Botón "Your location"
                 Button {
                     // Marcar que queremos usar la ubicación actual
@@ -126,7 +129,8 @@ struct FromDirectionsView: View {
                                 .onTapGesture {
                                     let name = item.name ?? "Unknown"
                                     let address = item.placemark.title ?? "No Address"
-                                    searchText = name
+                                    searchText = address
+                                    selectedCoordinate = item.placemark.coordinate
                                     dismiss()
 
                                     Task {
@@ -157,8 +161,7 @@ struct FromDirectionsView: View {
                                 }
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    searchText = item.name
-                                    viewModel.searchAddresses(query: item.name)
+                                    searchText = item.address
 
                                     Task {
                                         await viewModel.saveSearch(item.name, address: item.address, using: modelContext)

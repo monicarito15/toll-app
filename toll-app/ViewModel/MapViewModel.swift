@@ -124,66 +124,89 @@ final class MapViewModel: ObservableObject {
     }
     
     
-    func getDirectionsFromAddresses(fromAddress: String, toAddress: String) async {
+    func getDirectionsFromAddresses(
+        fromAddress: String,
+        toAddress: String,
+        fromCoordinate: CLLocationCoordinate2D? = nil,
+        toCoordinate: CLLocationCoordinate2D? = nil
+    ) async {
         
         let fromTrim = fromAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         let toTrim = toAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        guard !toTrim.isEmpty else {
+        guard !toTrim.isEmpty || toCoordinate != nil else {
             #if DEBUG
             print("Missing 'to' address")
             #endif
             return
         }
         
-        geocodeAddress(toTrim) { destination in
-            guard let destination else {
+        // Resolve destination coordinate
+        let destination: CLLocationCoordinate2D
+        if let toCoordinate {
+            destination = toCoordinate
+        } else {
+            guard let geocoded = await geocodeAddressAsync(toTrim) else {
                 #if DEBUG
                 print("No coordinate found for TO: \(toTrim)")
                 #endif
                 return
             }
+            destination = geocoded
+        }
+        
+        #if DEBUG
+        print("Destination: \(destination.latitude), \(destination.longitude)")
+        #endif
+        destinationCoordinate = destination
+        
+        // Resolve origin coordinate
+        let origin: CLLocationCoordinate2D
+        if let fromCoordinate {
+            origin = fromCoordinate
+        } else if fromTrim.isEmpty {
             #if DEBUG
-            print("Destination geocoded: \(destination.latitude), \(destination.longitude)")
+            print("FROM is empty, using user location...")
             #endif
-            self.destinationCoordinate = destination
-
-            if fromTrim.isEmpty {
+            updateUserLocation()
+            guard let userLoc = userLocation else {
                 #if DEBUG
-                print("FROM is empty, using user location...")
+                print("No user location available yet")
                 #endif
-                self.updateUserLocation()
-                guard let origin = self.userLocation else {
-                    #if DEBUG
-                    print("No user location available yet")
-                    #endif
-                    return
-                }
-                self.originCoordinate = origin
-
-                Task { @MainActor in
-                    await self.getDirections(from: origin, to: destination)
-                }
-
-            } else {
-                self.geocodeAddress(fromTrim) { origin in
-                    guard let origin else {
-                        #if DEBUG
-                        print("No coordinate found for FROM: \(fromTrim)")
-                        #endif
-                        return
-                    }
-                    #if DEBUG
-                    print("Origin geocoded: \(origin.latitude), \(origin.longitude)")
-                    #endif
-                    self.originCoordinate = origin
-
-                    Task { @MainActor in
-                        await self.getDirections(from: origin, to: destination)
-                    }
-                }
+                return
             }
-
+            origin = userLoc
+        } else {
+            guard let geocoded = await geocodeAddressAsync(fromTrim) else {
+                #if DEBUG
+                print("No coordinate found for FROM: \(fromTrim)")
+                #endif
+                return
+            }
+            origin = geocoded
+        }
+        
+        #if DEBUG
+        print("Origin: \(origin.latitude), \(origin.longitude)")
+        #endif
+        originCoordinate = origin
+        
+        await getDirections(from: origin, to: destination)
+    }
+    
+    private func geocodeAddressAsync(_ address: String) async -> CLLocationCoordinate2D? {
+        #if DEBUG
+        print("Geocoding address: '\(address)'")
+        #endif
+        let geocoder = CLGeocoder()
+        do {
+            let placemarks = try await geocoder.geocodeAddressString(address)
+            return placemarks.first?.location?.coordinate
+        } catch {
+            #if DEBUG
+            print("Geocoder Error for '\(address)': \(error.localizedDescription)")
+            #endif
+            return nil
         }
     }
     
@@ -191,25 +214,42 @@ final class MapViewModel: ObservableObject {
         guard let route else { return }
         guard !toll.isEmpty else { return }
 
-        tollsOnRoute = tollsNearRoute(route: route, tolls: toll, maxDistanceMeters: 350)
+        tollsOnRoute = tollsNearRoute(route: route, tolls: toll, maxDistanceMeters: 150) // Reduci la distancia para tener puntos mas cercanos
         totalPrice = 0
         hasResult = true
     }
     
     private func tollsNearRoute(route: MKRoute, tolls: [Vegobjekt], maxDistanceMeters: Double) -> [Vegobjekt] {
         let polyline = route.polyline
-        let routePoints = samplePolylinePoints(polyline, step: 25)
+        let routePoints = samplePolylinePoints(polyline, step: 10)
 
-        return tolls.filter { toll in
-            guard let c = toll.lokasjon?.coordinates else { return false }
+        // Find tolls near route and track which route point index they're closest to
+        var tollsWithPosition: [(toll: Vegobjekt, routeIndex: Int)] = []
+        
+        for toll in tolls {
+            guard let c = toll.lokasjon?.coordinates else { continue }
             let tollLoc = CLLocation(latitude: c.latitude, longitude: c.longitude)
-
-            for p in routePoints {
+            
+            var closestIndex = -1
+            var closestDistance = Double.greatestFiniteMagnitude
+            
+            for (index, p) in routePoints.enumerated() {
                 let d = tollLoc.distance(from: CLLocation(latitude: p.latitude, longitude: p.longitude))
-                if d <= maxDistanceMeters { return true }
+                if d < closestDistance {
+                    closestDistance = d
+                    closestIndex = index
+                }
             }
-            return false
+            
+            if closestDistance <= maxDistanceMeters {
+                tollsWithPosition.append((toll: toll, routeIndex: closestIndex))
+            }
         }
+        
+        // Sort by position along the route
+        return tollsWithPosition
+            .sorted { $0.routeIndex < $1.routeIndex }
+            .map { $0.toll }
     }
 
     private func samplePolylinePoints(_ polyline: MKPolyline, step: Int) -> [CLLocationCoordinate2D] {

@@ -1,5 +1,5 @@
 import SwiftUI
-import _SwiftData_SwiftUI
+import SwiftData
 
 struct HistoryView: View {
     
@@ -7,20 +7,63 @@ struct HistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     
-@Query(sort: \SearchHistoryItem.searchDate, order: .reverse)
-    
+    @Query(sort: \SearchHistoryItem.searchDate, order: .reverse)
     var searchHistory: [SearchHistoryItem]
     var onSelectSearch: (SearchHistoryItem) -> Void
     
+    private var cardBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color(.white)
+    }
+    
+    // Agrupar historial por período de tiempo
+    private var groupedHistory: [(String, [SearchHistoryItem])] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        var groups: [String: [SearchHistoryItem]] = [:]
+        
+        for item in searchHistory {
+            let sectionTitle = getSectionTitle(for: item.searchDate, relativeTo: now, calendar: calendar)
+            groups[sectionTitle, default: []].append(item)
+        }
+        
+        // Ordenar las secciones por fecha más reciente
+        return groups.sorted { first, second in
+            let firstDate = first.value.first?.searchDate ?? Date.distantPast
+            let secondDate = second.value.first?.searchDate ?? Date.distantPast
+            return firstDate > secondDate
+        }
+    }
+    
+    // Determinar el título de la sección basado en la fecha
+    private func getSectionTitle(for date: Date, relativeTo now: Date, calendar: Calendar) -> String {
+        let daysDifference = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: now)).day ?? 0
+        
+        if daysDifference == 0 {
+            return "Today"
+        } else if daysDifference == 1 {
+            return "Yesterday"
+        } else if daysDifference <= 7 {
+            return "Last Week"
+        } else if daysDifference <= 30 {
+            return "Last Month"
+        } else {
+            // Para fechas más antiguas, mostrar el mes y año
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMMM yyyy"
+            return formatter.string(from: date)
+        }
+    }
+    
     var body: some View {
         NavigationView {
-            Group {
+            ScrollView {
                 if searchHistory.isEmpty {
-                    // Vista cuando no hay historial
+                    // Empty state
                     VStack(spacing: 16) {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 60))
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
                         
                         Text("No History")
                             .font(.title2)
@@ -28,90 +71,144 @@ struct HistoryView: View {
                         
                         Text("Your recent searches will appear here")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
                     .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    // Lista de búsquedas
-                    List {
-                        ForEach(searchHistory) { historyItem in
-                            
-                            Button(action: {
-                                onSelectSearch(historyItem)
-                            }) {
-                                HStack(spacing: 12) {
-                                    // Icono de la ruta
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.blue.opacity(0.1))
-                                            .frame(width: 44, height: 44)
-                                        
-                                        Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
-                                            .font(.title3)
-                                            .foregroundColor(.blue)
-                                    }
-                                    
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        // Ruta: Origen → Destino
-                                        Text(historyItem.routeDescription)
-                                            .font(.headline)
-                                            .foregroundColor(.primary)
-                                            .lineLimit(2)
-                                        
-                                        // Información adicional
-                                        HStack(spacing: 8) {
-                                            // Tolls encontrados
-                                            if historyItem.tollCount > 0 {
-                                                Label("\(historyItem.tollCount) toll\(historyItem.tollCount == 1 ? "" : "s")",
-                                                      systemImage: "mappin.circle.fill")
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                            
-                                            // Precio total
-                                            if historyItem.totalPrice > 0 {
-                                                Text("•")
-                                                    .foregroundColor(.secondary)
-                                                Text(String(format: "%.0f kr", historyItem.totalPrice))
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
+                    // History items grouped by section
+                    VStack(alignment: .leading, spacing: 20) {
+                        ForEach(groupedHistory, id: \.0) { section in
+                            VStack(alignment: .leading, spacing: 8) {
+                                // Section header
+                                Text(section.0.uppercased())
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, section.0 == groupedHistory.first?.0 ? 0 : 8)
+                                
+                                // Section items
+                                VStack(spacing: 0) {
+                                    ForEach(Array(section.1.enumerated()), id: \.element.id) { index, historyItem in
+                                        Button {
+                                            onSelectSearch(historyItem)
+                                        } label: {
+                                            historyItemRow(historyItem)
                                         }
+                                        .buttonStyle(.plain)
                                         
-                                        // Cuándo se hizo la búsqueda
-                                        Text(historyItem.timeAgo)
-                                            .font(.caption2)
-                                            .foregroundColor(.secondary)
+                                        if index < section.1.count - 1 {
+                                            Divider()
+                                                .padding(.leading, 56)
+                                        }
                                     }
-                                    
-                                    Spacer()
-                                    
-                                    // Indicador de que es clickeable
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
                                 }
-                                .padding(.vertical, 8)
+                                .background(cardBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                )
+                                .padding(.horizontal, 16)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
-                    .listStyle(.insetGrouped)
+                    .padding(.vertical, 20)
                 }
             }
+            .background(
+                Color(colorScheme == .dark ? .black : .systemGroupedBackground)
+                    .ignoresSafeArea()
+            )
             .navigationTitle("History")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if !searchHistory.isEmpty {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Text("\(searchHistory.count) search\(searchHistory.count == 1 ? "" : "es")")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
         }
+    }
+    
+    // MARK: - History Item Row
+    @ViewBuilder
+    private func historyItemRow(_ historyItem: SearchHistoryItem) -> some View {
+        HStack(spacing: 12) {
+            // Icon
+            Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
+                .font(.system(size: 24))
+                .foregroundStyle(.blue)
+                .frame(width: 32)
+            
+            // Content
+            VStack(alignment: .leading, spacing: 6) {
+                // Route description
+                Text(historyItem.routeDescription)
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                
+                // Details
+                HStack(spacing: 8) {
+                    // Vehicle & Fuel icons
+                    HStack(spacing: 4) {
+                        Image(systemName: historyItem.vehicleTypeEnum == .car ? "car.fill" : "motorcycle.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        
+                        Image(systemName: historyItem.fuelTypeEnum == .gas ? "fuelpump.fill" : "bolt.fill")
+                            .font(.caption2)
+                            .foregroundStyle(historyItem.fuelTypeEnum == .gas ? .orange : .yellow)
+                    }
+                    
+                    // Toll count
+                    if historyItem.tollCount > 0 {
+                        Text("•")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        
+                        Text("\(historyItem.tollCount) toll\(historyItem.tollCount == 1 ? "" : "s")")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // Price
+                    if historyItem.totalPrice > 0 {
+                        Text("•")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        
+                        Text(String(format: "%.0f kr", historyItem.totalPrice))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                // Time ago
+                Text(historyItem.timeAgo)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            
+            Spacer()
+            
+            // Chevron
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
 }
 
