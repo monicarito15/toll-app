@@ -34,7 +34,7 @@ struct MapView: View {
     @State private var cameraPosition: MapCameraPosition = .automatic
     
     @State private var showDetailsSheet = false
-    @State private var selectedToll: Vegobjekt?
+    @State private var selectedToll: TollCharge?
 
    
     var body: some View {
@@ -158,11 +158,11 @@ struct MapView: View {
                 Marker("My location", coordinate: userLocation)
             }
             
-            ForEach(mapVM.tollsOnRoute) { vegobjekt in
-                if let coordinate = vegobjekt.lokasjon?.coordinates {
-                    Annotation("", coordinate: coordinate) {
+            ForEach(feeVM.tollCharges) { charge in
+                if let lat = charge.latitude, let lon = charge.longitude {
+                    Annotation("", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
                         Button {
-                            selectedToll = vegobjekt
+                            selectedToll = charge
                         } label: {
                             ZStack {
                                 Circle()
@@ -248,26 +248,19 @@ struct MapView: View {
                 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Toll: \(toll.displayName)")
+                        Text(toll.toll)
                             .font(.headline)
                         
                         Spacer()
+                        
+                        Text(String(format: "%.2f kr", toll.price))
+                            .font(.headline)
+                            .foregroundStyle(.orange)
                         
                         Button {
                             selectedToll = nil
                         } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    
-                    if let location = toll.location {
-                        HStack(spacing: 4) {
-                            Image(systemName: "mappin")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(location)
-                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                     }

@@ -64,10 +64,14 @@ struct WaypointResponse: Codable {
     struct TollStation: Codable {
         let name: String?
         let fees: [TollFee]?
+        let latitude: String?
+        let longitude: String?
         
         enum CodingKeys: String, CodingKey {
             case name = "Navn"
             case fees = "Avgifter"
+            case latitude = "Latitude"
+            case longitude = "Longitude"
         }
     }
     
@@ -137,7 +141,9 @@ extension WaypointResponse {
             charges.append(TollCharge(
                 id: "\(index)-\(station.name ?? "unknown")",
                 toll: station.name ?? "Unknown",
-                price: finalPrice
+                price: finalPrice,
+                latitude: Double(station.latitude ?? ""),
+                longitude: Double(station.longitude ?? "")
             ))
         }
         

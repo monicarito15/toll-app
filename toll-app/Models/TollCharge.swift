@@ -13,5 +13,7 @@ struct TollCharge: Codable, Identifiable {
     var id: String
     var toll: String
     var price: Double
+    var latitude: Double?
+    var longitude: Double?
 }
 
