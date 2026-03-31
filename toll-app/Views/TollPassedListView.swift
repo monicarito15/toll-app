@@ -7,8 +7,11 @@ struct TollPassedListView: View {
     let route: MKRoute?
     let fromAddress: String
     let toAddress: String
+    let vehicleType: VehicleType
+    let isEstimatedPrice: Bool = false // Default value for backward compatibility
     
     @Environment(\.colorScheme) private var colorScheme
+    var onSelectSearch: (SearchHistoryItem) -> Void = { _ in }
     
     private var displayFrom: String {
         fromAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Unknown origin" : fromAddress
@@ -42,6 +45,8 @@ struct TollPassedListView: View {
     private var cardBackground: Color {
         colorScheme == .dark ? Color(.systemGray6) : Color(.white)
     }
+    
+
 
     var body: some View {
         NavigationStack {
@@ -81,52 +86,77 @@ struct TollPassedListView: View {
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
             
-            VStack(spacing: 0) {
+            VStack(spacing: 12) {
                 // From
-                HStack(spacing: 12) {
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.green)
-                        .frame(width: 24)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("From")
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "location.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.green)
+                        
+                        Text("Origin")
                             .font(.caption)
+                            .fontWeight(.semibold)
                             .foregroundStyle(.secondary)
-                        Text(displayFrom)
-                            .font(.body)
-                            .lineLimit(2)
                     }
                     
+                    Text(displayFrom)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.green.opacity(0.08))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Color.green.opacity(0.2), lineWidth: 1)
+                )
+                
+                // Arrow indicator
+                HStack {
+                    Spacer()
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.tertiary)
                     Spacer()
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                
-                Divider()
-                    .padding(.leading, 56)
                 
                 // To
-                HStack(spacing: 12) {
-                    Image(systemName: "mappin.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.red)
-                        .frame(width: 24)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("To")
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.red)
+                        
+                        Text("Destination")
                             .font(.caption)
+                            .fontWeight(.semibold)
                             .foregroundStyle(.secondary)
-                        Text(displayTo)
-                            .font(.body)
-                            .lineLimit(2)
                     }
                     
-                    Spacer()
+                    Text(displayTo)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.red.opacity(0.08))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Color.red.opacity(0.2), lineWidth: 1)
+                )
             }
+            .padding(16)
             .background(cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
@@ -198,7 +228,7 @@ struct TollPassedListView: View {
         }
     }
     
-    // MARK: - Toll Stations Section
+    // Toll Stations Section
     private var tollStationsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("TOLL STATIONS")
@@ -208,9 +238,29 @@ struct TollPassedListView: View {
                 .padding(.horizontal, 20)
             
             VStack(spacing: 0) {
+                // Warning banner if prices are estimated
+                if isEstimatedPrice {
+                    HStack(spacing: 8) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.orange)
+                        
+                        Text("Individual prices are estimated. Total is accurate.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.orange.opacity(0.08))
+                    
+                    Divider()
+                }
+                
                 ForEach(Array(tollCharges.enumerated()), id: \.element.id) { index, charge in
                     HStack(spacing: 12) {
-                        Image(systemName: "tram.fill.tunnel")
+                        Image(systemName: vehicleType == .car ? "car.fill" : "motorcycle.fill")
                             .font(.system(size: 16))
                             .foregroundStyle(.purple)
                             .frame(width: 24)
@@ -220,10 +270,17 @@ struct TollPassedListView: View {
                         
                         Spacer()
                         
-                        Text(String(format: "kr. %.2f", charge.price))
-                            .font(.body)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 4) {
+                            if isEstimatedPrice {
+                                Text("~")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                            Text(String(format: "kr. %.2f", charge.price))
+                                .font(.body)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
@@ -244,7 +301,7 @@ struct TollPassedListView: View {
         }
     }
     
-    // MARK: - Total Section
+    //Total Section
     private var totalSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("SUMMARY")

@@ -137,7 +137,7 @@ struct HistoryView: View {
         }
     }
     
-    // MARK: - History Item Row
+    // History Item Row
     @ViewBuilder
     private func historyItemRow(_ historyItem: SearchHistoryItem) -> some View {
         HStack(spacing: 12) {

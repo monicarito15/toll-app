@@ -51,15 +51,23 @@ struct WaypointResponse: Codable {
      case tur = "Tur"
     }
     
-    struct TollStation: Codable {
-        let name: String?
+    struct TollFee: Codable {
         let price: Double?
         let discountedPrice: Double?
         
         enum CodingKeys: String, CodingKey {
+            case price = "Pris"
+            case discountedPrice = "PrisRabbattert"
+        }
+    }
+    
+    struct TollStation: Codable {
+        let name: String?
+        let fees: [TollFee]?
+        
+        enum CodingKeys: String, CodingKey {
             case name = "Navn"
-            case price = "Kostnad"
-            case discountedPrice = "Rabattert"
+            case fees = "Avgifter"
         }
     }
     
@@ -71,7 +79,7 @@ struct WaypointResponse: Codable {
         enum CodingKeys: String, CodingKey {
             case totalPrice = "Kostnad"
             case totalWithAutopass = "Rabattert"
-            case tollStations = "Bomstasjoner"
+            case tollStations = "AvgiftsPunkter"
         }
     }
 }
@@ -95,18 +103,55 @@ extension WaypointResponse {
         return (trip.totalPrice, trip.totalWithAutopass)
     }
     
-    // Gets individual toll stations with prices
+    // Gets individual toll stations with prices from AvgiftsPunkter → Avgifter
+    // Uses only the first trip (trips are alternative routes, not segments)
     func getTollCharges(hasAutopass: Bool) -> [TollCharge] {
-        guard let stations = tur?.first?.tollStations else { return [] }
-        
-        return stations.enumerated().map { index, station in
-            let price = hasAutopass ? (station.discountedPrice ?? station.price ?? 0) : (station.price ?? 0)
-            return TollCharge(
-                id: "\(index)",
-                toll: station.name ?? "Unknown",
-                price: price
-            )
+        guard let stations = tur?.first?.tollStations, !stations.isEmpty else {
+            #if DEBUG
+            print("getTollCharges: No toll stations found in first trip")
+            print("   tur count: \(tur?.count ?? 0)")
+            print("   first trip tollStations: \(tur?.first?.tollStations?.count ?? -1)")
+            #endif
+            return []
         }
+        
+        var charges: [TollCharge] = []
+        
+        for (index, station) in stations.enumerated() {
+            guard let fee = station.fees?.first else {
+                #if DEBUG
+                print("Skipping station '\(station.name ?? "Unknown")' - no fee data (fees: \(station.fees?.count ?? -1))")
+                #endif
+                continue
+            }
+            
+            let price = hasAutopass ? (fee.discountedPrice ?? fee.price) : fee.price
+            
+            guard let finalPrice = price, finalPrice > 0 else {
+                #if DEBUG
+                print("Skipping station '\(station.name ?? "Unknown")' - price is zero or nil")
+                #endif
+                continue
+            }
+            
+            charges.append(TollCharge(
+                id: "\(index)-\(station.name ?? "unknown")",
+                toll: station.name ?? "Unknown",
+                price: finalPrice
+            ))
+        }
+        
+        #if DEBUG
+        print("getTollCharges: Found \(charges.count) stations with prices out of \(stations.count)")
+        #endif
+        
+        return charges
+    }
+    
+    // Gets station names from first trip only
+    func getTollStationNames() -> [String] {
+        guard let stations = tur?.first?.tollStations else { return [] }
+        return stations.compactMap { $0.name }
     }
 }
 

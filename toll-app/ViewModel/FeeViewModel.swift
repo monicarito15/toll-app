@@ -28,7 +28,8 @@ final class FeeViewModel: ObservableObject {
         date: Date
     ) -> String {
         let rounded = roundTo15Min(date)
-        return "\(from)|\(to)|\(vehicle)|\(fuel)|\(rounded.timeIntervalSince1970)|autopass:\(hasAutoPassAgreement)"
+        // v3: invalidates old cache after fixing first-trip-only parsing
+        return "v3|\(from)|\(to)|\(vehicle)|\(fuel)|\(rounded.timeIntervalSince1970)|autopass:\(hasAutoPassAgreement)"
     }
     
     
@@ -133,43 +134,79 @@ final class FeeViewModel: ObservableObject {
                 
                 // Try to get individual toll charges from API
                 let apiCharges = response.getTollCharges(hasAutopass: hasAutoPassAgreement)
+                let apiTotalPrice = response.getPrice(hasAutopass: hasAutoPassAgreement)
                 
                 if !apiCharges.isEmpty {
-                    let apiTotalPrice = response.getPrice(hasAutopass: hasAutoPassAgreement) ?? apiCharges.reduce(0) { $0 + $1.price }
+                    // Best case: API returned individual prices
+                    let calculatedTotal = apiCharges.reduce(0) { $0 + $1.price }
+                    let finalTotal = apiTotalPrice ?? calculatedTotal
                     
-                    totalPrice = apiTotalPrice
+                    totalPrice = finalTotal
                     tollCharges = apiCharges
                     lastFeeUpdate = Date()
                     isLoadingPrices = false
                     isEstimatedPrice = false
                     
                     #if DEBUG
-                    print("FeeVM: SUCCESS - \(apiTotalPrice) NOK (\(apiCharges.count) tolls from API)")
+                    print("FeeVM: ✅ SUCCESS - \(finalTotal) NOK (\(apiCharges.count) tolls with individual prices)")
                     for charge in apiCharges {
-                        print("   \(charge.toll): \(charge.price) kr")
+                        print("   • \(charge.toll): \(charge.price) kr")
                     }
                     #endif
                     
-                    storage.save(using: modelContext, key: key, total: apiTotalPrice, charges: apiCharges, ttlHours: 24)
+                    storage.save(using: modelContext, key: key, total: finalTotal, charges: apiCharges, ttlHours: 24)
                     
-                } else if let apiTotalPrice = response.getPrice(hasAutopass: hasAutoPassAgreement) {
-                    // Fallback: API has total but no individual stations
-                    let charges = tollsOnRoute.map { v in
-                        let name = v.egenskaper.first(where: { $0.navn == "Navn bomstasjon"})?.verdi ?? "Ukjent"
-                        return TollCharge(id: "\(v.id)", toll: name, price: apiTotalPrice / Double(tollsOnRoute.count))
+                } else if let apiTotalPrice = apiTotalPrice {
+                    // Fallback: API has total but no individual prices
+                    // Use API station names if available, otherwise use local toll names
+                    let apiStationNames = response.getTollStationNames()
+                    
+                    #if DEBUG
+                    print("FeeVM: API returned total (\(apiTotalPrice) NOK) but no individual prices")
+                    print("   API station names: \(apiStationNames.count)")
+                    print("   Local tolls on route: \(tollsOnRoute.count)")
+                    #endif
+                    
+                    let charges: [TollCharge]
+                    
+                    if !apiStationNames.isEmpty {
+                        // Use API station names
+                        charges = apiStationNames.enumerated().map { index, name in
+                            TollCharge(
+                                id: "\(index)-\(name)",
+                                toll: name,
+                                price: apiTotalPrice / Double(apiStationNames.count)
+                            )
+                        }
+                        #if DEBUG
+                        print("   Using \(charges.count) API station names (estimated equal price: \(String(format: "%.2f", apiTotalPrice / Double(apiStationNames.count))) kr each)")
+                        #endif
+                    } else {
+                        // Use local toll names as last resort
+                        charges = tollsOnRoute.map { v in
+                            let name = v.egenskaper.first(where: { $0.navn == "Navn bomstasjon"})?.verdi ?? "Ukjent"
+                            return TollCharge(
+                                id: "\(v.id)",
+                                toll: name,
+                                price: apiTotalPrice / Double(tollsOnRoute.count)
+                            )
+                        }
+                        #if DEBUG
+                        print("   Using \(charges.count) local toll names (estimated equal price: \(String(format: "%.2f", apiTotalPrice / Double(tollsOnRoute.count))) kr each)")
+                        #endif
                     }
                     
                     totalPrice = apiTotalPrice
                     tollCharges = charges
                     lastFeeUpdate = Date()
                     isLoadingPrices = false
-                    isEstimatedPrice = false
+                    isEstimatedPrice = true // Mark as estimated since prices are divided equally
                     
                     storage.save(using: modelContext, key: key, total: apiTotalPrice, charges: charges, ttlHours: 24)
                     
                 } else {
                     #if DEBUG
-                    print("FeeVM: API returned no price, using fallback")
+                    print("FeeVM: ❌ API returned no price at all, using local fallback")
                     #endif
                     isLoadingPrices = false
                     useFallbackCalculation(tollsOnRoute: tollsOnRoute, vehicle: vehicle, fuel: fuel, storage: storage, modelContext: modelContext, key: key)
