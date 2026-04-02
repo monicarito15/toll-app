@@ -11,125 +11,158 @@ struct ToDirectionsView: View {
     @Binding var currentDetent: PresentationDetent
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
     
     @Binding var isFromCurrentLocation: Bool
     @StateObject private var locationManager = LocationManager()
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading) {
-
-                // Search bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-
-                    TextField("Search", text: $searchText)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .onSubmit {
-                            // Si hay resultados, toma el primero y cierra
-                            if let first = viewModel.searchResults.first {
-                                let name = first.name ?? searchText
-                                let address = first.placemark.title ?? searchText
-                                searchText = address
-                                selectedCoordinate = first.placemark.coordinate
-
-                                Task {
-                                    await viewModel.saveSearch(name, address: address, using: modelContext)
-
-                                    DispatchQueue.main.async {
-                                        viewModel.searchResults = []
-                                        dismiss()
-                                    }
-                                }
-                            }
-                        }
-                        .onChange(of: searchText) { _, newValue in
-                            viewModel.searchAddresses(query: newValue)
-                        }
-                        .padding()
-                        .cornerRadius(5)
-                }
-                .padding(12)
-                .background(Color(.systemGray6))
+            VStack(spacing: 0) {
+                searchBar
                 
-
-                //List con secciones
                 List {
-                    // Search results
                     if !viewModel.searchResults.isEmpty {
                         Section {
                             ForEach(viewModel.searchResults, id: \.self) { item in
-                                VStack(alignment: .leading) {
-                                    Text(item.name ?? "Unknown")
-                                        .font(.headline)
-                                    Text(item.placemark.title ?? "No Address")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                }
-                                .contentShape(Rectangle()) // hace todo el row clickeable
-                                .onTapGesture {
-                                    let name = item.name ?? "Unknown"
-                                    let address = item.placemark.title ?? "No Address"
-                                    searchText = address
-                                    selectedCoordinate = item.placemark.coordinate
-
-                                    Task {
-                                        await viewModel.saveSearch(name, address: address, using: modelContext)
-
-                                        DispatchQueue.main.async {
-                                            viewModel.searchResults = []
-                                            dismiss()
-                                        }
-                                    }
-                                }
+                                searchResultRow(item)
                             }
                         } header: {
-                            Text("Search results")
+                            Text("RESULTS")
+                                .font(.caption)
+                                .fontWeight(.semibold)
                         }
                     }
 
-                    // Recent search (solo cuando el campo está vacío)
                     if !viewModel.recentSearches.isEmpty && searchText.isEmpty {
                         Section {
                             ForEach(viewModel.recentSearches) { item in
-                                VStack(alignment: .leading) {
-                                    Text(item.name)
-                                        .font(.headline)
-                                    Text(item.address)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.gray)
-                                }
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    searchText = item.address
-                                    dismiss()
-                                }
+                                recentRow(item)
                             }
                         } header: {
-                            Text("Recent search")
+                            Text("RECENT")
+                                .font(.caption)
+                                .fontWeight(.semibold)
                         }
                     }
                 }
-                .listStyle(.plain)
+                .listStyle(.insetGrouped)
             }
+            .background(Color(colorScheme == .dark ? .black : .systemGroupedBackground))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Destination")
-                        .font(.system(size: 30, weight: .bold))
-                        .foregroundColor(.gray)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
                 }
             }
             .presentationDetents([.medium, .large], selection: $currentDetent)
             .onAppear {
                 currentDetent = .large
                 searchText = ""
+                isSearchFocused = true
             }
             .task {
                 await viewModel.loadRecentSearch(using: modelContext)
             }
         }
     }
-}
+    
+    // MARK: - Search Bar
+    private var searchBar: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            
+            TextField("Search destination...", text: $searchText)
+                .focused($isSearchFocused)
+                .onSubmit {
+                    if let first = viewModel.searchResults.first {
+                        selectMapItem(first)
+                    }
+                }
+                .onChange(of: searchText) { _, newValue in
+                    viewModel.searchAddresses(query: newValue)
+                }
+            
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.tertiary)
+                }
+            }
+        }
+        .padding(12)
+        .background(colorScheme == .dark ? Color(.systemGray5) : .white)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+    }
+    
+    // MARK: - Rows
+    private func searchResultRow(_ item: MKMapItem) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "mappin.circle.fill")
+                .foregroundStyle(.red)
+                .font(.title3)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name ?? "Unknown")
+                    .font(.subheadline.weight(.medium))
+                Text(item.placemark.title ?? "No Address")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectMapItem(item)
+        }
+    }
+    
+    private func recentRow(_ item: RecentSearch) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "clock.fill")
+                .foregroundStyle(.secondary)
+                .font(.title3)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name)
+                    .font(.subheadline.weight(.medium))
+                Text(item.address)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            searchText = item.address
+            dismiss()
+        }
+    }
+    
+    // MARK: - Actions
+    private func selectMapItem(_ item: MKMapItem) {
+        let name = item.name ?? searchText
+        let address = item.placemark.title ?? searchText
+        searchText = address
+        selectedCoordinate = item.placemark.coordinate
 
+        Task {
+            await viewModel.saveSearch(name, address: address, using: modelContext)
+            await MainActor.run {
+                viewModel.searchResults = []
+                dismiss()
+            }
+        }
+    }
+}
