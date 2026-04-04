@@ -50,7 +50,7 @@ struct MapView: View {
                 
                 // Toll detail popup
                 if selectedToll != nil {
-                    tollDetailPopup
+                    TollDetailPopup(selectedToll: $selectedToll)
                 }
             }
             .animation(.easeInOut, value: mapVM.hasResult)
@@ -150,7 +150,7 @@ struct MapView: View {
 
     }
     
-    // MARK: - Map Content
+    // Map Content
     private var mapContent: some View {
         Map(position: $cameraPosition) {
             // user location
@@ -195,7 +195,7 @@ struct MapView: View {
         .mapStyle(.standard(elevation: .realistic))
     }
     
-    // MARK: - Summary Overlay
+    //  Summary Overlay
     private var summaryOverlay: some View {
         VStack {
             TollSummaryBar(
@@ -220,7 +220,7 @@ struct MapView: View {
         }
     }
     
-    // MARK: - Navigation Button Overlay
+    // Navigation Button Overlay
     private var navigationButtonOverlay: some View {
         VStack {
             Spacer()
@@ -239,43 +239,6 @@ struct MapView: View {
         .transition(.scale.combined(with: .opacity))
     }
     
-    // MARK: - Toll Detail Popup
-    @ViewBuilder
-    private var tollDetailPopup: some View {
-        if let toll = selectedToll {
-            VStack {
-                Spacer()
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text(toll.toll)
-                            .font(.headline)
-                        
-                        Spacer()
-                        
-                        Text(String(format: "%.2f kr", toll.price))
-                            .font(.headline)
-                            .foregroundStyle(.orange)
-                        
-                        Button {
-                            selectedToll = nil
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .shadow(radius: 8)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 80)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-            .animation(.easeInOut, value: selectedToll?.id)
-        }
-    }
 }
 
 

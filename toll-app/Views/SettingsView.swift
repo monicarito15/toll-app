@@ -48,7 +48,7 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - Appearance
+    // Appearance
     private var appearanceSection: some View {
         Section {
             ForEach(AppAppearance.allCases) { option in
@@ -80,7 +80,7 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - Defaults
+    // Defaults
     private var defaultsSection: some View {
         Section {
             // Vehicle
@@ -138,7 +138,7 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - About
+    //  About
     private var aboutSection: some View {
         Section {
             HStack(spacing: 12) {

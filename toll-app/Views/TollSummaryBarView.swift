@@ -122,7 +122,7 @@ struct TollSummaryBar: View {
                     HStack(spacing: 4) {
                         Image(systemName: fuelType == .electric ? "bolt.fill" : "fuelpump.fill")
                             .font(.caption)
-                            .foregroundStyle(fuelType == .electric ? .green : .orange)
+                            .foregroundStyle(fuelType == .electric ? .green : fuelType == .diesel ? .gray : .orange)
                         Text(fuelType.rawValue.capitalized)
                             .font(.caption)
                             .foregroundStyle(.secondary)

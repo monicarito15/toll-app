@@ -50,11 +50,11 @@ struct MainTabView: View {
                     Label("History", systemImage: "car.fill")
                 }
                 .tag(1)
-            /*ProfileView()
+            SettingsView()
                 .tabItem{
-                    Label("profile", systemImage: "person.fill")
+                    Label("settings", systemImage: "person.fill")
                 }
-                .tag(2)*/
+                .tag(2)
             
         }
        

@@ -98,8 +98,11 @@ final class FeeViewModel: ObservableObject {
                 switch fuel {
                 case .gas:
                     fuelTypeCode = 1
-                case .electric:
+                case .diesel:
                     fuelTypeCode = 2
+                case .electric:
+                    fuelTypeCode = 3
+                
                 @unknown default:
                     fuelTypeCode = 1
                 }

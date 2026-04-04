@@ -36,7 +36,7 @@ struct CalculatorView: View {
     @StateObject private var locationManager = LocationManager()
     
     
-    let fuelTypes: [FuelType] = [.gas, .electric]
+    let fuelTypes: [FuelType] = [.gas, .electric, .diesel]
     let vehicleTypes: [VehicleType] = [.car, .motorcycle]
 
     
@@ -354,8 +354,8 @@ struct CalculatorView: View {
     
     private var fuelTypePicker: some View {
         HStack(spacing: 12) {
-            Image(systemName: selectedFuelType == .gas ? "fuelpump.fill" : "bolt.fill")
-                .foregroundStyle(selectedFuelType == .gas ? Color.orange : Color.yellow)
+            Image(systemName: selectedFuelType == .electric ? "bolt.fill" : "fuelpump.fill")
+                .foregroundStyle(selectedFuelType == .electric ? Color.green : selectedFuelType == .diesel ? Color.gray : Color.orange)
                 .frame(width: 24)
                 
             

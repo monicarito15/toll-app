@@ -16,6 +16,7 @@ enum VehicleType: String, Codable, CaseIterable, Identifiable {
 
 enum FuelType: String, Codable, CaseIterable, Identifiable {
     case electric
+    case diesel
     case gas
     var id: String {rawValue}
 }
