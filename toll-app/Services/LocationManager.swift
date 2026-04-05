@@ -25,8 +25,12 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
         self.authorizationStatus = manager.authorizationStatus
-        manager.requestWhenInUseAuthorization()
-        manager.startUpdatingLocation()
+        // Solo arrancamos si ya hay permiso (relanzamientos de la app).
+        // En el primer uso, el permiso se pide desde requestLocation() cuando el usuario lo necesita.
+        let current = manager.authorizationStatus
+        if current == .authorizedWhenInUse || current == .authorizedAlways {
+            manager.startUpdatingLocation()
+        }
     }
 
 
@@ -88,6 +92,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             #if DEBUG
             print("Authorization changed -> \(manager.authorizationStatus.rawValue)")
             #endif
+            // Arrancamos el tracking en cuanto el usuario concede el permiso
+            if manager.authorizationStatus == .authorizedWhenInUse ||
+               manager.authorizationStatus == .authorizedAlways {
+                manager.startUpdatingLocation()
+            }
         }
     }
 

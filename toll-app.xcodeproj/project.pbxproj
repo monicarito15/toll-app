@@ -11,7 +11,18 @@
 		A235F7152E8401C5000D9452 /* ArcGIS in Frameworks */ = {isa = PBXBuildFile; productRef = A235F7142E8401C5000D9452 /* ArcGIS */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		6A9DF5F22F82885D003D090B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A26BAE3D2E6EF0D600B45F61 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A26BAE442E6EF0D600B45F61;
+			remoteInfo = "toll-app";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		6A9DF5EE2F82885D003D090B /* toll-appTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "toll-appTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6AE2BFBB2F7A809C00A53CBB /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		A26BAE452E6EF0D600B45F61 /* toll-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "toll-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -27,6 +38,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		6A9DF5EF2F82885D003D090B /* toll-appTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "toll-appTests";
+			sourceTree = "<group>";
+		};
 		A26BAE472E6EF0D600B45F61 /* toll-app */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -38,6 +54,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		6A9DF5EB2F82885D003D090B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A26BAE422E6EF0D600B45F61 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -53,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				A26BAE472E6EF0D600B45F61 /* toll-app */,
+				6A9DF5EF2F82885D003D090B /* toll-appTests */,
 				A26BAE462E6EF0D600B45F61 /* Products */,
 				6AE2BFBB2F7A809C00A53CBB /* Secrets.xcconfig */,
 			);
@@ -62,6 +86,7 @@
 			isa = PBXGroup;
 			children = (
 				A26BAE452E6EF0D600B45F61 /* toll-app.app */,
+				6A9DF5EE2F82885D003D090B /* toll-appTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -69,6 +94,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		6A9DF5ED2F82885D003D090B /* toll-appTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6A9DF5F42F82885D003D090B /* Build configuration list for PBXNativeTarget "toll-appTests" */;
+			buildPhases = (
+				6A9DF5EA2F82885D003D090B /* Sources */,
+				6A9DF5EB2F82885D003D090B /* Frameworks */,
+				6A9DF5EC2F82885D003D090B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6A9DF5F32F82885D003D090B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				6A9DF5EF2F82885D003D090B /* toll-appTests */,
+			);
+			name = "toll-appTests";
+			packageProductDependencies = (
+			);
+			productName = "toll-appTests";
+			productReference = 6A9DF5EE2F82885D003D090B /* toll-appTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		A26BAE442E6EF0D600B45F61 /* toll-app */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A26BAE502E6EF0D900B45F61 /* Build configuration list for PBXNativeTarget "toll-app" */;
@@ -99,9 +147,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1640;
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
+					6A9DF5ED2F82885D003D090B = {
+						CreatedOnToolsVersion = 26.4;
+						TestTargetID = A26BAE442E6EF0D600B45F61;
+					};
 					A26BAE442E6EF0D600B45F61 = {
 						CreatedOnToolsVersion = 16.4;
 					};
@@ -125,11 +177,19 @@
 			projectRoot = "";
 			targets = (
 				A26BAE442E6EF0D600B45F61 /* toll-app */,
+				6A9DF5ED2F82885D003D090B /* toll-appTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		6A9DF5EC2F82885D003D090B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A26BAE432E6EF0D600B45F61 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -141,6 +201,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		6A9DF5EA2F82885D003D090B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A26BAE412E6EF0D600B45F61 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -150,7 +217,57 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		6A9DF5F32F82885D003D090B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A26BAE442E6EF0D600B45F61 /* toll-app */;
+			targetProxy = 6A9DF5F22F82885D003D090B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		6A9DF5F52F82885D003D090B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "carolinamera.toll-appTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/toll-app.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/toll-app";
+			};
+			name = Debug;
+		};
+		6A9DF5F62F82885D003D090B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "carolinamera.toll-appTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/toll-app.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/toll-app";
+			};
+			name = Release;
+		};
 		A26BAE4E2E6EF0D900B45F61 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 6AE2BFBB2F7A809C00A53CBB /* Secrets.xcconfig */;
@@ -335,6 +452,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		6A9DF5F42F82885D003D090B /* Build configuration list for PBXNativeTarget "toll-appTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6A9DF5F52F82885D003D090B /* Debug */,
+				6A9DF5F62F82885D003D090B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A26BAE402E6EF0D600B45F61 /* Build configuration list for PBXProject "toll-app" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

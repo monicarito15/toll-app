@@ -58,5 +58,5 @@ MainTabView (TabView)
 - Third-party: ArcGIS SDK (coordinate transformation)
 
 ## Build
-- Min iOS 17.0, Bundle ID: `no.carolina.toll-app`
+- Min iOS 18.5, Bundle ID: `no.carolina.toll-app`
 - API key stored in `Secrets.xcconfig` (gitignored)

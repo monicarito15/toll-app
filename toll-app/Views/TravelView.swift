@@ -16,10 +16,15 @@ struct TravelView: View {
     @State private var to = ""
     @State private var fromCoordinate: CLLocationCoordinate2D?
     @State private var toCoordinate: CLLocationCoordinate2D?
-    @State private var vehicleType: VehicleType = .car
-    @State private var fuelType: FuelType = .gas
+    
+    @AppStorage("defaultVehicle") private var defaultVehicle: String = VehicleType.car.rawValue
+    @AppStorage("defaultFuel") private var defaultFuel: String = FuelType.gas.rawValue
+    @AppStorage("defaultAutopass") private var defaultAutopass: Bool = false
+
+    @State private var vehicleType: VehicleType = VehicleType(rawValue: UserDefaults.standard.string(forKey: "defaultVehicle") ?? "") ?? .car
+    @State private var fuelType: FuelType = FuelType(rawValue: UserDefaults.standard.string(forKey: "defaultFuel") ?? "") ?? .gas
     @State private var dateTime: Date = Date()
-    @State private var hasAutopass: Bool = true
+    @State private var hasAutopass: Bool = UserDefaults.standard.bool(forKey: "defaultAutopass")
     
  
     
@@ -64,6 +69,21 @@ struct TravelView: View {
             .presentationDetents([.medium, .large], selection: $currentDetent)
             .onAppear {
                 currentDetent = .medium // Asegura que el sheet siempre se abra medium
+            }
+        } // estos onchange muestran el userDefault - sin transcribir la ruta activa
+        .onChange(of: defaultVehicle) { _, newValue in
+            if from.isEmpty && to.isEmpty {
+                vehicleType = VehicleType(rawValue: newValue) ?? .car
+            }
+        }
+        .onChange(of: defaultFuel) { _, newValue in
+            if from.isEmpty && to.isEmpty {
+                fuelType = FuelType(rawValue: newValue) ?? .gas
+            }
+        }
+        .onChange(of: defaultAutopass) { _, newValue in
+            if from.isEmpty && to.isEmpty {
+                hasAutopass = newValue
             }
         }
         .onChange(of: selectedHistoryItem) { oldValue, newValue in

@@ -88,7 +88,7 @@ final class TollStorageViewModel : ObservableObject {
     
     func shouldUpdateFromAPI() -> Bool {
         let lastUpdate = UserDefaults.standard.object(forKey: "lastTollUpdate") as? Date ?? .distantPast
-        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date())!
+        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
         return lastUpdate < oneMonthAgo
     }
 

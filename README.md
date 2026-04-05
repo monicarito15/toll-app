@@ -111,9 +111,9 @@ Services and Data Layer
 
 ### Requirements
 
-- iOS 17.0 or later
-- Xcode 15.0 or later
-- Swift 5.9 or later
+- iOS 18.5 or later
+- Xcode 16.0 or later
+- Swift 6.0 or later
 - Active internet connection (first launch and price updates)
 
 ### Configuration

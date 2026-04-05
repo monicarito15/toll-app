@@ -37,34 +37,34 @@ struct TollSummaryBar: View {
             VStack(spacing: 8) {
                 // Top line: toll count and price
                 HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Total tolls: \(tollCount)")
-                            .font(.headline)
-
-                        HStack(spacing: 4) {
-                            if total == 0 && isEstimated {
-                                Text("Price not available")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.orange)
-                            } else if total == 0 {
-                                Text("No toll charges on this route")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.blue)
-                            } else {
-                                Text(String(format: "Total: %.2f kr", total))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        if total == 0 && isEstimated {
+                            Text("Price not available")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(.orange)
+                        } else if total == 0 {
+                            Text("No toll charges")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(.blue)
+                        } else {
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text(String(format: "%.2f kr", total))
+                                    .font(.title2.weight(.bold))
                                 
                                 if isEstimated {
                                     Image(systemName: "exclamationmark.triangle.fill")
-                                        .font(.caption2)
+                                        .font(.caption)
                                         .foregroundStyle(.orange)
                                     Text("est.")
-                                        .font(.caption2)
+                                        .font(.caption)
                                         .foregroundStyle(.orange)
                                 }
                             }
                         }
+
+                        Text("\(tollCount) tolls")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
 
                     Spacer()

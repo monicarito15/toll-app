@@ -8,6 +8,9 @@ struct MainTabView: View {
     @State private var currentDetent: PresentationDetent = .medium // padre del estado del tamano global
    
     @State private var selectedHistoryItem: SearchHistoryItem? = nil // para rehacer una búsqueda
+    
+    @AppStorage("appAppearance") private var appearance: String = AppAppearance.automatic.rawValue
+
 
 
 
@@ -52,12 +55,12 @@ struct MainTabView: View {
                 .tag(1)
             SettingsView()
                 .tabItem{
-                    Label("settings", systemImage: "person.fill")
+                    Label("settings", systemImage: "gearshape.fill")
                 }
                 .tag(2)
             
         }
-       
+        .preferredColorScheme(AppAppearance(rawValue: appearance)?.colorScheme)
     }
 }
 #Preview {

@@ -1,0 +1,6 @@
+# API Keys - never commit
+Secrets.xcconfig
+*.xcconfig
+
+# macOS
+.DS_Store
