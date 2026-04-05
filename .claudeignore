@@ -1,0 +1,19 @@
+# Xcode project files
+*.xcodeproj/
+*.xcworkspace/
+*.xcuserstate
+*.xcuserdata/
+
+# Build products
+Products/
+DerivedData/
+build/
+
+# Assets (images, icons)
+*.xcassets/
+
+# Secrets
+Secrets.xcconfig
+
+# OS files
+.DS_Store
