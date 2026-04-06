@@ -83,8 +83,10 @@ struct MapView: View {
         
         // este onChange: mueve cámara + buildResult "Solo se ejecuta cuando cambia la ruta"
         .onChange(of: mapVM.route) { _, route in
+            selectedToll = nil
+
             guard let route else { return }
-            
+
             var rect = route.polyline.boundingMapRect// Calcula el rectángulo que contiene toda la ruta
 
             //Añade padding para que la ruta no quede pegada a los bordes
