@@ -523,12 +523,13 @@ struct CalculatorView: View {
         _ = selectedToll.displayName
         
         let location = CLLocation(latitude: tollCoords.latitude, longitude: tollCoords.longitude)
+        let capturedUserLocation = mapVM.userLocation
         CLGeocoder().reverseGeocodeLocation(location) { placemarks, error in
             let tollAddress = placemarks?.first?.name ?? "\(tollCoords.latitude), \(tollCoords.longitude)"
-            
+
             // Si FROM está vacío y no es "Your location", poner la ubicación del usuario
             if from.isEmpty && !isFromCurrentLocation {
-                if let userLoc = mapVM.userLocation {
+                if let userLoc = capturedUserLocation {
                     let userLocation = CLLocation(latitude: userLoc.latitude, longitude: userLoc.longitude)
                     CLGeocoder().reverseGeocodeLocation(userLocation) { placemarks, _ in
                         let fromAddress = placemarks?.first?.name ?? locationManager.currentAddress ?? ""
