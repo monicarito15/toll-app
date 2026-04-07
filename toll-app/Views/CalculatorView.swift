@@ -125,17 +125,15 @@ struct CalculatorView: View {
                 .padding(.horizontal, 20)
             
             VStack(spacing: 0) {
-                // FROM field con swap button
+                fromField
+
                 ZStack(alignment: .trailing) {
-                    fromField
-                    
+                    Divider()
+                        .padding(.leading, 56)
                     swapButton
                         .padding(.trailing, 12)
                 }
-                
-                Divider()
-                    .padding(.leading, 56)
-                
+
                 toField
                 
                 Divider()
@@ -228,7 +226,6 @@ struct CalculatorView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(colorScheme == .dark ? Color(.systemGray6) : .white)
-        .focused($focus, equals: .from)
         .onReceive(locationManager.$currentAddress) { address in
             guard let address, !address.isEmpty,
                   shouldApplyLocationToFrom else { return }
@@ -268,7 +265,6 @@ struct CalculatorView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(colorScheme == .dark ? Color(.systemGray6) : .white)
-        .focused($focus, equals: .to)
     }
     
     

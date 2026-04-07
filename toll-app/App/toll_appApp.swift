@@ -3,8 +3,9 @@ import SwiftData
 
 @main
 struct toll_appApp: App {
-    
+
     let modelContainer: ModelContainer
+    @StateObject private var purchaseManager = PurchaseManager()
     
     init() {
         let schema = Schema([
@@ -37,6 +38,7 @@ struct toll_appApp: App {
         WindowGroup {
             MainTabView()
                 .modelContainer(modelContainer)
+                .environmentObject(purchaseManager)
         }
     }
 }

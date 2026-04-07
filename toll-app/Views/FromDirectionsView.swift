@@ -153,7 +153,7 @@ struct FromDirectionsView: View {
             Image(systemName: "mappin.circle.fill")
                 .foregroundStyle(.red)
                 .font(.title3)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.name ?? "Unknown")
                     .font(.subheadline.weight(.medium))
@@ -165,6 +165,7 @@ struct FromDirectionsView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
+            isSearchFocused = false
             selectMapItem(item)
         }
     }
@@ -174,7 +175,7 @@ struct FromDirectionsView: View {
             Image(systemName: "clock.fill")
                 .foregroundStyle(.secondary)
                 .font(.title3)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.name)
                     .font(.subheadline.weight(.medium))
@@ -186,8 +187,9 @@ struct FromDirectionsView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
+            isSearchFocused = false
             searchText = item.address
-            
+
             Task {
                 await viewModel.saveSearch(item.name, address: item.address, using: modelContext)
                 await MainActor.run {

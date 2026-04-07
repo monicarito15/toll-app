@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6AE2BFBC2F7A80A200A53CBB /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 6AE2BFBB2F7A809C00A53CBB /* Secrets.xcconfig */; };
 		A235F7152E8401C5000D9452 /* ArcGIS in Frameworks */ = {isa = PBXBuildFile; productRef = A235F7142E8401C5000D9452 /* ArcGIS */; };
 /* End PBXBuildFile section */
 
@@ -148,7 +147,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2640;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					6A9DF5ED2F82885D003D090B = {
 						CreatedOnToolsVersion = 26.4;
@@ -194,7 +193,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6AE2BFBC2F7A80A200A53CBB /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -398,6 +396,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AG92ANRBCG;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				"INFOPLIST_FILE[sdk=*]" = "toll-app/Info.plist";
@@ -427,6 +426,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AG92ANRBCG;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				"INFOPLIST_FILE[sdk=*]" = "toll-app/Info.plist";

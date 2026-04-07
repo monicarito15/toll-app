@@ -1,0 +1,25 @@
+{
+  "identifier" : "TollTrack",
+  "nonConsumableProducts" : [
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "no.carolina.toll-app.unlimited",
+      "localizations" : [
+        {
+          "description" : "Unlock unlimited route searches in TollTrack.",
+          "displayName" : "Unlimited Searches",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "no.carolina.toll-app.unlimited",
+      "referenceName" : "Unlimited Searches",
+      "type" : "NonConsumable"
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0,
+    "patch" : 0
+  }
+}

@@ -187,7 +187,7 @@ struct MapView: View {
                     .stroke(.blue, lineWidth: 5)
             }
         }
-        .tint(.red)
+        .tint(.blue)
         .mapControls {
             MapUserLocationButton()
             MapCompass()

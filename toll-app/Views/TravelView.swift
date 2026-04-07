@@ -4,13 +4,15 @@ import SwiftUI
 import MapKit
 
 struct TravelView: View {
-    
+
     @Binding var showSheet: Bool
     @Binding var currentDetent : PresentationDetent
-    
+
     @Binding var selectedHistoryItem: SearchHistoryItem?
-    
+
     @StateObject private var vm = MapViewModel()
+    @EnvironmentObject var purchaseManager: PurchaseManager
+    @State private var showPaywall = false
     
     @State private var from = ""
     @State private var to = ""
@@ -55,6 +57,11 @@ struct TravelView: View {
                     selectedVehicleType: $vehicleType,
                     selectedDateTime: $dateTime,
                     onCalculate: {
+                        guard purchaseManager.canSearch else {
+                            showPaywall = true
+                            return
+                        }
+                        purchaseManager.recordSearch()
                         Task { @MainActor in
                             await vm.getDirectionsFromAddresses(
                                 fromAddress: from,
@@ -71,6 +78,10 @@ struct TravelView: View {
                 currentDetent = .medium // Asegura que el sheet siempre se abra medium
             }
         } // estos onchange muestran el userDefault - sin transcribir la ruta activa
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+                .environmentObject(purchaseManager)
+        }
         .onChange(of: defaultVehicle) { _, newValue in
             if from.isEmpty && to.isEmpty {
                 vehicleType = VehicleType(rawValue: newValue) ?? .car
