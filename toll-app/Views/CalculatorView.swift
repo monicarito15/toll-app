@@ -516,12 +516,12 @@ struct CalculatorView: View {
     private func handleTollSelection(_ selectedToll: Vegobjekt) {
         guard let tollCoords = selectedToll.lokasjon?.coordinates else { return }
         
-        _ = selectedToll.displayName
-        
+        let tollDisplayName = selectedToll.displayName
+
         let location = CLLocation(latitude: tollCoords.latitude, longitude: tollCoords.longitude)
         let capturedUserLocation = mapVM.userLocation
-        CLGeocoder().reverseGeocodeLocation(location) { placemarks, error in
-            let tollAddress = placemarks?.first?.name ?? "\(tollCoords.latitude), \(tollCoords.longitude)"
+        CLGeocoder().reverseGeocodeLocation(location) { placemarks, _ in
+            let tollAddress = placemarks?.first?.name ?? tollDisplayName
 
             // Si FROM está vacío y no es "Your location", poner la ubicación del usuario
             if from.isEmpty && !isFromCurrentLocation {
@@ -541,7 +541,7 @@ struct CalculatorView: View {
         }
     }
     
-    // Save to History
+    // Save to History — deduplicates same route on the same day
     private func saveToHistory(
         fromAddress: String,
         toAddress: String,
@@ -550,17 +550,31 @@ struct CalculatorView: View {
         hasAutopass: Bool,
         dateTime: Date
     ) {
-        let history = SearchHistoryItem(
-            fromAddress: fromAddress,
-            toAddress: toAddress,
-            vehicleType: VehicleType(rawValue: vehicleType) ?? .car,
-            fuelType: FuelType(rawValue: fuelType) ?? .gas,
-            dateTime: dateTime,
-            hasAutopass: hasAutopass
-        )
-        
-        modelContext.insert(history)
-        
+        let existing = (try? modelContext.fetch(FetchDescriptor<SearchHistoryItem>())) ?? []
+        let calendar = Calendar.current
+
+        if let duplicate = existing.first(where: {
+            $0.fromAddress == fromAddress &&
+            $0.toAddress == toAddress &&
+            calendar.isDateInToday($0.searchDate)
+        }) {
+            duplicate.searchDate = Date()
+            duplicate.vehicleType = vehicleType
+            duplicate.fuelType = fuelType
+            duplicate.hasAutopass = hasAutopass
+            duplicate.dateTime = dateTime
+        } else {
+            let history = SearchHistoryItem(
+                fromAddress: fromAddress,
+                toAddress: toAddress,
+                vehicleType: VehicleType(rawValue: vehicleType) ?? .car,
+                fuelType: FuelType(rawValue: fuelType) ?? .gas,
+                dateTime: dateTime,
+                hasAutopass: hasAutopass
+            )
+            modelContext.insert(history)
+        }
+
         do {
             try modelContext.save()
         } catch {
