@@ -49,13 +49,13 @@ struct CalculatorView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     routeAndTimeSection
-                    
+
                     // Rush Hour Warning (if applicable)
                     if selectedDateTime.isRushHour() {
                         RushHourWarningView(date: selectedDateTime)
                     }
-                    
-                    vehicleDetailsSection
+
+                    autopassSection
                     calculateButton
                     nearbyTollsSection
                 }
@@ -292,26 +292,116 @@ struct CalculatorView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
+    // Chips Section
+    private var selectionChipsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Vehicle row
+            HStack(spacing: 8) {
+                Image(systemName: "car.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20)
+
+                chip(icon: "car.fill", label: "Car", isSelected: selectedVehicleType == .car) {
+                    selectedVehicleType = .car
+                }
+                chip(icon: "motorcycle.fill", label: "Motorcycle", isSelected: selectedVehicleType == .motorcycle) {
+                    selectedVehicleType = .motorcycle
+                }
+            }
+            .padding(.horizontal, 16)
+
+            // Fuel row
+            HStack(spacing: 8) {
+                Image(systemName: "fuelpump.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20)
+
+                chip(icon: "fuelpump.fill", label: "Gas", isSelected: selectedFuelType == .gas) {
+                    selectedFuelType = .gas
+                }
+                chip(icon: "bolt.fill", label: "Electric", isSelected: selectedFuelType == .electric) {
+                    selectedFuelType = .electric
+                }
+                chip(icon: "fuelpump.fill", label: "Diesel", isSelected: selectedFuelType == .diesel) {
+                    selectedFuelType = .diesel
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
+    private func chip(icon: String, label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .medium))
+                Text(label)
+                    .font(.system(size: 14, weight: .medium))
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.blue : Color(.systemGray5))
+            .foregroundStyle(isSelected ? .white : .primary)
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
     // Vehicle Details Section
-    private var vehicleDetailsSection: some View {
+    private var autopassSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("VEHICLE DETAILS")
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
-            
+
             VStack(spacing: 0) {
-                vehicleTypePicker
-                
+                // Vehicle chips row
+                HStack(spacing: 8) {
+                    Image(systemName: "car.fill")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 24)
+                    chip(icon: "car.fill", label: "Car", isSelected: selectedVehicleType == .car) {
+                        selectedVehicleType = .car
+                    }
+                    chip(icon: "motorcycle.fill", label: "Motorcycle", isSelected: selectedVehicleType == .motorcycle) {
+                        selectedVehicleType = .motorcycle
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(colorScheme == .dark ? Color(.systemGray6) : .white)
+
                 Divider()
                     .padding(.leading, 56)
-                
-                fuelTypePicker
-                
+
+                // Fuel chips row
+                HStack(spacing: 8) {
+                    Image(systemName: "fuelpump.fill")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 24)
+                    chip(icon: "fuelpump.fill", label: "Gas", isSelected: selectedFuelType == .gas) {
+                        selectedFuelType = .gas
+                    }
+                    chip(icon: "bolt.fill", label: "Electric", isSelected: selectedFuelType == .electric) {
+                        selectedFuelType = .electric
+                    }
+                    chip(icon: "fuelpump.fill", label: "Diesel", isSelected: selectedFuelType == .diesel) {
+                        selectedFuelType = .diesel
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(colorScheme == .dark ? Color(.systemGray6) : .white)
+
                 Divider()
                     .padding(.leading, 56)
-                
+
                 autopassToggle
             }
             .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -322,57 +412,7 @@ struct CalculatorView: View {
             .padding(.horizontal, 16)
         }
     }
-    
-    private var vehicleTypePicker: some View {
-        HStack(spacing: 12) {
-            Image(systemName: selectedVehicleType == .car ? "car.fill" : "motorcycle.fill")
-                .foregroundStyle(.secondary)
-                .frame(width: 24)
-                .foregroundStyle(Color.blue)
-            
-            Text("Vehicle Type")
-                .foregroundStyle(.primary)
-            
-            Spacer()
-            
-            Picker("Vehicle Type", selection: $selectedVehicleType) {
-                ForEach(vehicleTypes) { type in
-                    Text(type.rawValue.capitalized).tag(type)
-                }
-            }
-            .pickerStyle(.menu)
-            .labelsHidden()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(colorScheme == .dark ? Color(.systemGray6) : .white)
-    }
-    
-    private var fuelTypePicker: some View {
-        HStack(spacing: 12) {
-            Image(systemName: selectedFuelType == .electric ? "bolt.fill" : "fuelpump.fill")
-                .foregroundStyle(selectedFuelType == .electric ? Color.green : selectedFuelType == .diesel ? Color.gray : Color.orange)
-                .frame(width: 24)
-                
-            
-            Text("Fuel Type")
-                .foregroundStyle(.primary)
-            
-            Spacer()
-            
-            Picker("Fuel Type", selection: $selectedFuelType) {
-                ForEach(fuelTypes) { type in
-                    Text(type.rawValue.capitalized).tag(type)
-                }
-            }
-            .pickerStyle(.menu)
-            .labelsHidden()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(colorScheme == .dark ? Color(.systemGray6) : .white)
-    }
-    
+
     private var autopassToggle: some View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.shield.fill")
