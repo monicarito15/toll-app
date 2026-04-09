@@ -45,9 +45,9 @@ struct CalculatorView: View {
     let onCalculate: () -> Void
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 12) {
                     routeAndTimeSection
 
                     // Rush Hour Warning (if applicable)
@@ -59,7 +59,9 @@ struct CalculatorView: View {
                     calculateButton
                     nearbyTollsSection
                 }
-                .padding(.vertical, 20)
+                .padding(.top, 10)
+                .padding(.bottom, 30)
+                .frame(maxWidth: .infinity)
             }
             .background(
                 Color(colorScheme == .dark ? .black : .systemGroupedBackground)
@@ -224,7 +226,7 @@ struct CalculatorView: View {
             
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .background(colorScheme == .dark ? Color(.systemGray6) : .white)
         .onReceive(locationManager.$currentAddress) { address in
             guard let address, !address.isEmpty,
@@ -263,13 +265,13 @@ struct CalculatorView: View {
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .background(colorScheme == .dark ? Color(.systemGray6) : .white)
     }
-    
-    
-    
-    
+
+
+
+
     private var datePickerField: some View {
         HStack(spacing: 12) {
             Image(systemName: "calendar")
@@ -287,7 +289,7 @@ struct CalculatorView: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .background(colorScheme == .dark ? Color(.systemGray6) : .white)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -373,7 +375,7 @@ struct CalculatorView: View {
                     Spacer()
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.vertical, 10)
                 .background(colorScheme == .dark ? Color(.systemGray6) : .white)
 
                 Divider()
@@ -428,10 +430,10 @@ struct CalculatorView: View {
                 .labelsHidden()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .background(colorScheme == .dark ? Color(.systemGray6) : .white)
     }
-    
+
     // Calculate Button
     private var calculateButton: some View {
         Button {
@@ -478,15 +480,9 @@ struct CalculatorView: View {
                     .fontWeight(.semibold)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(.vertical, 14)
             .foregroundStyle(.white)
-            .background(
-                LinearGradient(
-                    colors: [Color.blue, Color.blue.opacity(0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
+            .background(Color.blue)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)

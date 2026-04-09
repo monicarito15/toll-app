@@ -73,9 +73,10 @@ struct TravelView: View {
                     }
                 )
         }
-            .presentationDetents([.medium, .large], selection: $currentDetent)
+            .presentationDetents([.height(520), .large], selection: $currentDetent)
+            .presentationDragIndicator(.visible)
             .onAppear {
-                currentDetent = .medium // Asegura que el sheet siempre se abra medium
+                currentDetent = .height(520)
             }
         } // estos onchange muestran el userDefault - sin transcribir la ruta activa
         .sheet(isPresented: $showPaywall) {

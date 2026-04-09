@@ -5,7 +5,7 @@ struct MainTabView: View {
     @State private var selectedTab = 0
     @State private var didAppearOnce = false // para saber si ya se abrio el sheet alguna vez
     
-    @State private var currentDetent: PresentationDetent = .medium // padre del estado del tamano global
+    @State private var currentDetent: PresentationDetent = .height(460) // padre del estado del tamano global
    
     @State private var selectedHistoryItem: SearchHistoryItem? = nil // para rehacer una búsqueda
     

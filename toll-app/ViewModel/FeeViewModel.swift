@@ -136,14 +136,37 @@ final class FeeViewModel: ObservableObject {
                 #endif
                 
                 // Try to get individual toll charges from API
-                let apiCharges = response.getTollCharges(hasAutopass: hasAutoPassAgreement)
-                let apiTotalPrice = response.getPrice(hasAutopass: hasAutoPassAgreement)
-                
+                let allApiCharges = response.getTollCharges(hasAutopass: hasAutoPassAgreement)
+
+                // Filter out ferry stations — they appear as AvgiftsPunkter but are not road tolls
+                let ferryKeywords = ["ferje", "ferge", "ferry"]
+                let apiCharges = allApiCharges.filter { charge in
+                    let name = charge.toll.lowercased()
+                    return !ferryKeywords.contains { name.contains($0) }
+                }
+                let ferryCharges = allApiCharges.filter { charge in
+                    let name = charge.toll.lowercased()
+                    return ferryKeywords.contains { name.contains($0) }
+                }
+
+                #if DEBUG
+                if !ferryCharges.isEmpty {
+                    print("FeeVM: Excluded \(ferryCharges.count) ferry station(s) from toll total:")
+                    for f in ferryCharges { print("   ⛴ \(f.toll): \(f.price) kr") }
+                }
+                #endif
+
+                let apiTotalPrice: Double? = {
+                    guard let raw = response.getPrice(hasAutopass: hasAutoPassAgreement) else { return nil }
+                    let ferryTotal = ferryCharges.reduce(0.0) { $0 + $1.price }
+                    return raw - ferryTotal
+                }()
+
                 if !apiCharges.isEmpty {
                     // Best case: API returned individual prices
                     let calculatedTotal = apiCharges.reduce(0) { $0 + $1.price }
                     let finalTotal = apiTotalPrice ?? calculatedTotal
-                    
+
                     totalPrice = finalTotal
                     tollCharges = apiCharges
                     lastFeeUpdate = Date()

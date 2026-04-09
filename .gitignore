@@ -4,3 +4,8 @@ Secrets.xcconfig
 
 # macOS
 .DS_Store
+
+# Xcode user state (personal UI settings, not code)
+*.xcuserstate
+xcuserdata/
+**/*.xcworkspace/xcuserdata/

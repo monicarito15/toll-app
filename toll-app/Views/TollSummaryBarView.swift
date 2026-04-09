@@ -5,6 +5,7 @@ struct TollSummaryBar: View {
     let tollCount: Int
     let total: Double
     let isEstimated: Bool
+    let isLoadingPrices: Bool
     let vehicleType: VehicleType
     let fuelType: FuelType
     let hasAutopass: Bool
@@ -32,13 +33,29 @@ struct TollSummaryBar: View {
         return "\(minutes) min"
     }
 
+    private var hasFerry: Bool {
+        guard let route else { return false }
+        return route.steps.contains { step in
+            let inst = step.instructions.lowercased()
+            return inst.contains("ferry") || inst.contains("ferje") || inst.contains("ferge")
+        }
+    }
+
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 8) {
                 // Top line: toll count and price
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
-                        if total == 0 && isEstimated {
+                        if isLoadingPrices {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                Text("Calculating...")
+                                    .font(.title3.weight(.bold))
+                                    .foregroundStyle(.secondary)
+                            }
+                        } else if total == 0 && isEstimated {
                             Text("Price not available")
                                 .font(.title3.weight(.bold))
                                 .foregroundStyle(.orange)
@@ -105,6 +122,19 @@ struct TollSummaryBar: View {
                     }
                 }
                 
+                // Ferry warning
+                if hasFerry {
+                    HStack(spacing: 6) {
+                        Image(systemName: "ferry.fill")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                        Text("Ferry prices not included")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                }
+
                 // Bottom line: vehicle details
                 HStack(spacing: 12) {
                     HStack(spacing: 4) {
@@ -166,6 +196,7 @@ struct TollSummaryBar: View {
             tollCount: 8,
             total: 191.20,
             isEstimated: false,
+            isLoadingPrices: false,
             vehicleType: .car,
             fuelType: .electric,
             hasAutopass: true,

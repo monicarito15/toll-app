@@ -204,6 +204,7 @@ struct MapView: View {
                 tollCount: feeVM.tollCharges.isEmpty ? mapVM.tollsOnRoute.count : feeVM.tollCharges.count,
                 total: feeVM.totalPrice,
                 isEstimated: feeVM.isEstimatedPrice,
+                isLoadingPrices: feeVM.isLoadingPrices,
                 vehicleType: vehicleType,
                 fuelType: fuelType,
                 hasAutopass: hasAutopass,
