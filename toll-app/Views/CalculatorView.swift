@@ -509,21 +509,8 @@ struct CalculatorView: View {
                 handleTollSelection(selectedToll)
             }
             
-            // Solo aplicar el card si hay peajes cercanos
-            let content = VStack(spacing: 0) {
-                nearbyTollsView
-            }
-            
-            // Aplicar card solo si hay peajes
-            Group {
-                if hasNearbyTollsInRange {
-                    cardStyle(content)
-                        .padding(.horizontal, 16)
-                } else {
-                    content
-                        .padding(.horizontal, 16)
-                }
-            }
+            nearbyTollsView
+                .padding(.horizontal, 16)
         }
     }
     
