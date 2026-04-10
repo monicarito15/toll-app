@@ -6,7 +6,7 @@
 //
 //  Define los modelos temporales (structs) para decodificar la respuesta JSON de la API de peajes.
 //  Se usan structs con sufijo API para separar los datos que vienen de la API de los modelos principales de la app (que suelen ser clases y usan SwiftData).
-//  Así, puedes adaptar fácilmente los datos de la API antes de guardarlos en tu base de datos local.
+//  Así, se puede adaptar fácilmente los datos de la API antes de guardarlos en la base de datos local.
 
 import Foundation
 
