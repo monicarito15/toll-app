@@ -1,5 +1,5 @@
 
-// Este ViewModel contiene: key - leer SwiftData (24h)- si no hay (llamar API → guardar) - exponer totalPrice, tollCharges, lastFeeUpdate
+// FeeViewModel: cache check → calculate from NVDB egenskaper → expose totalPrice, tollCharges
 
 import SwiftUI
 import SwiftData
@@ -7,14 +7,14 @@ import CoreLocation
 
 @MainActor
 final class FeeViewModel: ObservableObject {
-    
+
     @Published var tollCharges: [TollCharge] = []
     @Published var totalPrice: Double = 0
     @Published var lastFeeUpdate: Date?
     @Published var hasAutoPassAgreement: Bool = false
     @Published var isLoadingPrices: Bool = false
     @Published var isEstimatedPrice: Bool = false
-    
+
     private func roundTo15Min(_ date: Date) -> Date {
         let t = date.timeIntervalSince1970
         return Date(timeIntervalSince1970: floor(t / 900) * 900)
@@ -28,11 +28,10 @@ final class FeeViewModel: ObservableObject {
         date: Date
     ) -> String {
         let rounded = roundTo15Min(date)
-        // v3: invalidates old cache after fixing first-trip-only parsing
-        return "v3|\(from)|\(to)|\(vehicle)|\(fuel)|\(rounded.timeIntervalSince1970)|autopass:\(hasAutoPassAgreement)"
+        // v4: NVDB-based pricing (no external API)
+        return "v4|\(from)|\(to)|\(vehicle)|\(fuel)|\(rounded.timeIntervalSince1970)|autopass:\(hasAutoPassAgreement)"
     }
-    
-    
+
     func loadOrCalculateFees(
         tollsOnRoute: [Vegobjekt],
         from: String,
@@ -51,12 +50,11 @@ final class FeeViewModel: ObservableObject {
             lastFeeUpdate = nil
             return
         }
-        
+
         let key = feeCalculationKey(from: from, to: to, vehicle: vehicle, fuel: fuel, date: date)
-        
-        // 1. Verificar cache primero
+
+        // 1. Check cache
         storage.load(using: modelContext, key: key)
-        
         if let saved = storage.calculation, storage.isValid(saved) {
             totalPrice = saved.total
             tollCharges = storage.decodeCharges(saved)
@@ -67,213 +65,49 @@ final class FeeViewModel: ObservableObject {
             #endif
             return
         }
-        
-        // 2. No hay cache válido, llamar a la API
-        guard let origin = originCoordinate, let destination = destinationCoordinate else {
-            #if DEBUG
-            print("FeeVM: Warning - Missing coordinates for API call, using local calculation")
-            #endif
-            useFallbackCalculation(tollsOnRoute: tollsOnRoute, vehicle: vehicle, fuel: fuel, storage: storage, modelContext: modelContext, key: key)
-            return
-        }
-        
-        // 3. Llamar a BompengerService (API)
+
+        // 2. Calculate directly from NVDB egenskaper
         isLoadingPrices = true
-        
-        Task { @MainActor in
-            do {
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyyMMdd"
-                let dateString = dateFormatter.string(from: date)
-                
-                let timeFormatter = DateFormatter()
-                timeFormatter.dateFormat = "HHmm"
-                let timeString = timeFormatter.string(from: date)
-                
-                // bilsize: 1 = Small vehicle (car/motorcycle), 2 = Large vehicle (truck/van)
-                // litenbiltype: 1 = Fossil fuel (gas/diesel), 2 = Electric
-                let vehicleSize = 1
-                
-                let fuelTypeCode: Int
-                switch fuel {
-                case .gas:
-                    fuelTypeCode = 1
-                case .diesel:
-                    fuelTypeCode = 2
-                case .electric:
-                    fuelTypeCode = 3
-                
-                @unknown default:
-                    fuelTypeCode = 1
-                }
-                
+
+        var charges: [TollCharge] = []
+        var hasAnyMissingPrice = false
+
+        for toll in tollsOnRoute {
+            guard var price = toll.price(vehicle: vehicle, fuel: fuel, date: date) else {
+                hasAnyMissingPrice = true
                 #if DEBUG
-                print("FeeVM: Calling Bompenger API")
-                print("   From: \(origin.latitude), \(origin.longitude)")
-                print("   To: \(destination.latitude), \(destination.longitude)")
-                print("   Date: \(dateString), Time: \(timeString)")
-                print("   Vehicle: \(vehicle.rawValue), Fuel: \(fuel.rawValue)")
-                print("   Autopass: \(hasAutoPassAgreement ? "YES" : "NO")")
-                print("   bilsize=\(vehicleSize), litenbiltype=\(fuelTypeCode)")
+                print("FeeVM: No price data for '\(toll.stationName)' — skipped")
                 #endif
-                
-                let waypointBody = WaypointRequest(
-                    fra: Waypointlist(latitude: origin.latitude, longitude: origin.longitude, time: nil),
-                    til: Waypointlist(latitude: destination.latitude, longitude: destination.longitude, time: nil),
-                    dato_yyyymmdd: dateString,
-                    tidspunkt_hhmm: timeString,
-                    bilsize: vehicleSize,
-                    litenbiltype: fuelTypeCode,
-                    retur: 0,
-                    tidsreferanser: 1
-                )
-                
-                let response = try await BompengerService.shared.getFeesByWaypoint(body: waypointBody)
-                
-                #if DEBUG
-                let prices = response.getPrices()
-                print("FeeVM: API Prices - Without autopass: \(prices.withoutAutopass ?? 0), With autopass: \(prices.withAutopass ?? 0)")
-                #endif
-                
-                // Try to get individual toll charges from API
-                let allApiCharges = response.getTollCharges(hasAutopass: hasAutoPassAgreement)
-
-                // Filter out ferry stations — they appear as AvgiftsPunkter but are not road tolls
-                let ferryKeywords = ["ferje", "ferge", "ferry"]
-                let apiCharges = allApiCharges.filter { charge in
-                    let name = charge.toll.lowercased()
-                    return !ferryKeywords.contains { name.contains($0) }
-                }
-                let ferryCharges = allApiCharges.filter { charge in
-                    let name = charge.toll.lowercased()
-                    return ferryKeywords.contains { name.contains($0) }
-                }
-
-                #if DEBUG
-                if !ferryCharges.isEmpty {
-                    print("FeeVM: Excluded \(ferryCharges.count) ferry station(s) from toll total:")
-                    for f in ferryCharges { print("   ⛴ \(f.toll): \(f.price) kr") }
-                }
-                #endif
-
-                let apiTotalPrice: Double? = {
-                    guard let raw = response.getPrice(hasAutopass: hasAutoPassAgreement) else { return nil }
-                    let ferryTotal = ferryCharges.reduce(0.0) { $0 + $1.price }
-                    return raw - ferryTotal
-                }()
-
-                if !apiCharges.isEmpty {
-                    // Best case: API returned individual prices
-                    let calculatedTotal = apiCharges.reduce(0) { $0 + $1.price }
-                    let finalTotal = apiTotalPrice ?? calculatedTotal
-
-                    totalPrice = finalTotal
-                    tollCharges = apiCharges
-                    lastFeeUpdate = Date()
-                    isLoadingPrices = false
-                    isEstimatedPrice = false
-                    
-                    #if DEBUG
-                    print("FeeVM: ✅ SUCCESS - \(finalTotal) NOK (\(apiCharges.count) tolls with individual prices)")
-                    for charge in apiCharges {
-                        print("   • \(charge.toll): \(charge.price) kr")
-                    }
-                    #endif
-                    
-                    storage.save(using: modelContext, key: key, total: finalTotal, charges: apiCharges, ttlHours: 24)
-                    
-                } else if let apiTotalPrice = apiTotalPrice {
-                    // Fallback: API has total but no individual prices
-                    // Use API station names if available, otherwise use local toll names
-                    let apiStationNames = response.getTollStationNames()
-                    
-                    #if DEBUG
-                    print("FeeVM: API returned total (\(apiTotalPrice) NOK) but no individual prices")
-                    print("   API station names: \(apiStationNames.count)")
-                    print("   Local tolls on route: \(tollsOnRoute.count)")
-                    #endif
-                    
-                    let charges: [TollCharge]
-                    
-                    if !apiStationNames.isEmpty {
-                        // Use API station names
-                        charges = apiStationNames.enumerated().map { index, name in
-                            TollCharge(
-                                id: "\(index)-\(name)",
-                                toll: name,
-                                price: apiTotalPrice / Double(apiStationNames.count)
-                            )
-                        }
-                        #if DEBUG
-                        print("   Using \(charges.count) API station names (estimated equal price: \(String(format: "%.2f", apiTotalPrice / Double(apiStationNames.count))) kr each)")
-                        #endif
-                    } else {
-                        // Use local toll names as last resort
-                        charges = tollsOnRoute.map { v in
-                            let name = v.egenskaper.first(where: { $0.navn == "Navn bomstasjon"})?.verdi ?? "Ukjent"
-                            return TollCharge(
-                                id: "\(v.id)",
-                                toll: name,
-                                price: apiTotalPrice / Double(tollsOnRoute.count)
-                            )
-                        }
-                        #if DEBUG
-                        print("   Using \(charges.count) local toll names (estimated equal price: \(String(format: "%.2f", apiTotalPrice / Double(tollsOnRoute.count))) kr each)")
-                        #endif
-                    }
-                    
-                    totalPrice = apiTotalPrice
-                    tollCharges = charges
-                    lastFeeUpdate = Date()
-                    isLoadingPrices = false
-                    isEstimatedPrice = true // Mark as estimated since prices are divided equally
-                    
-                    storage.save(using: modelContext, key: key, total: apiTotalPrice, charges: charges, ttlHours: 24)
-                    
-                } else {
-                    #if DEBUG
-                    print("FeeVM: ❌ API returned no price at all, using local fallback")
-                    #endif
-                    isLoadingPrices = false
-                    useFallbackCalculation(tollsOnRoute: tollsOnRoute, vehicle: vehicle, fuel: fuel, storage: storage, modelContext: modelContext, key: key)
-                }
-                
-            } catch {
-                #if DEBUG
-                print("FeeVM: API call failed - \(error.localizedDescription)")
-                #endif
-                isLoadingPrices = false
-                useFallbackCalculation(tollsOnRoute: tollsOnRoute, vehicle: vehicle, fuel: fuel, storage: storage, modelContext: modelContext, key: key)
+                continue
             }
+
+            if hasAutoPassAgreement {
+                price *= 0.8 // standard 20% autopass discount
+            }
+
+            charges.append(TollCharge(
+                id: "\(toll.id)",
+                toll: toll.stationName,
+                price: price
+            ))
         }
-    }
-    
-    private func useFallbackCalculation(
-        tollsOnRoute: [Vegobjekt],
-        vehicle: VehicleType,
-        fuel: FuelType,
-        storage: FeeStorageViewModel,
-        modelContext: ModelContext,
-        key: String
-    ) {
-        storage.loadExpired(using: modelContext, key: key)
-        
-        if let expired = storage.calculation {
-            totalPrice = expired.total
-            tollCharges = storage.decodeCharges(expired)
-            lastFeeUpdate = expired.createdAt
-            isEstimatedPrice = true
-            #if DEBUG
-            print("FeeVM: Using expired cache as fallback: \(totalPrice) NOK")
-            #endif
-        } else {
-            totalPrice = 0
-            tollCharges = []
-            lastFeeUpdate = nil
-            isEstimatedPrice = true
-            #if DEBUG
-            print("FeeVM: No cached data available, price unavailable")
-            #endif
+
+        let total = charges.reduce(0) { $0 + $1.price }
+
+        totalPrice = total
+        tollCharges = charges
+        lastFeeUpdate = Date()
+        isLoadingPrices = false
+        isEstimatedPrice = hasAnyMissingPrice
+
+        #if DEBUG
+        print("FeeVM: NVDB prices - \(total) NOK (\(charges.count) tolls)")
+        for charge in charges { print("\(charge.toll): \(charge.price) kr") }
+        if hasAnyMissingPrice { print("FeeVM: Some stations had no price data") }
+        #endif
+
+        if !charges.isEmpty {
+            storage.save(using: modelContext, key: key, total: total, charges: charges, ttlHours: 24)
         }
     }
 }
