@@ -85,10 +85,13 @@ final class FeeViewModel: ObservableObject {
                 price *= 0.8 // standard 20% autopass discount
             }
 
+            let coord = toll.lokasjon?.coordinates
             charges.append(TollCharge(
                 id: "\(toll.id)",
                 toll: toll.stationName,
-                price: price
+                price: price,
+                latitude: coord?.latitude,
+                longitude: coord?.longitude
             ))
         }
 
@@ -102,8 +105,8 @@ final class FeeViewModel: ObservableObject {
 
         #if DEBUG
         print("FeeVM: NVDB prices - \(total) NOK (\(charges.count) tolls)")
-        for charge in charges { print("\(charge.toll): \(charge.price) kr") }
-        if hasAnyMissingPrice { print("FeeVM: Some stations had no price data") }
+        for charge in charges { print("   • \(charge.toll): \(charge.price) kr") }
+        if hasAnyMissingPrice { print("FeeVM:Some stations had no price data") }
         #endif
 
         if !charges.isEmpty {

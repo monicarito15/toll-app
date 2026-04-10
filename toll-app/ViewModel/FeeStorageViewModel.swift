@@ -75,19 +75,6 @@ final class FeeStorageViewModel: ObservableObject {
         }
     }
     
-    func loadExpired(using modelContext: ModelContext, key: String) {
-        do {
-            let descriptor = FetchDescriptor<FeeCalculation> (
-                predicate: #Predicate {$0.key == key }
-            )
-            calculation = try modelContext.fetch(descriptor).first
-        } catch {
-            #if DEBUG
-            print("Error loading expired FeeCalculation:", error)
-            #endif
-            calculation = nil
-        }
-    }
 }
 
 

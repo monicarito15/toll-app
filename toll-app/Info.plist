@@ -4,8 +4,6 @@
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to show nearby tolls and calculate routes.</string>
-<key>OCP_APIM_SUBSCRIPTION_KEY</key>
-	<string>$(OCP_APIM_SUBSCRIPTION_KEY)</string>
 <key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

@@ -64,19 +64,8 @@ struct TollSummaryBar: View {
                                 .font(.title3.weight(.bold))
                                 .foregroundStyle(.blue)
                         } else {
-                            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                Text(String(format: "%.2f kr", total))
-                                    .font(.title2.weight(.bold))
-                                
-                                if isEstimated {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .font(.caption)
-                                        .foregroundStyle(.orange)
-                                    Text("est.")
-                                        .font(.caption)
-                                        .foregroundStyle(.orange)
-                                }
-                            }
+                            Text(String(format: "%.2f kr", total))
+                                .font(.title2.weight(.bold))
                         }
 
                         Text("\(tollCount) tolls")

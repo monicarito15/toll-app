@@ -40,7 +40,7 @@ class Vegobjekt: Identifiable {
           egenskaper.first(where: { $0.navn == "Tidsdifferensiert takst" })?.verdi == "Ja"
       }
     var stationName: String {
-        egenskaper.first(where: { $0.navn == "Navn bomstasjon"})?.verdi ?? "Ukjent"
+        egenskaper.first(where: { $0.navn == "Navn bomstasjon"})?.verdi ?? "No name toll"
     }
                                                                                                                                                                                                              
       func price(vehicle: VehicleType, fuel: FuelType, date: Date) -> Double? {
