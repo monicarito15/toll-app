@@ -10,16 +10,22 @@ import CoreLocation
 final class MapViewModel: ObservableObject {
     
     
-    @Published var route: MKRoute?
+    @Published var routes: [MKRoute] = []
+    @Published var selectedRouteIndex: Int = 0
     @Published var toll: [Vegobjekt] = []
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var originCoordinate: CLLocationCoordinate2D?
     @Published var destinationCoordinate: CLLocationCoordinate2D?
-    
+
     // Para la barrita + sheet
     @Published var hasResult: Bool = false
     @Published var totalPrice: Double = 0
     @Published var tollsOnRoute: [Vegobjekt] = []
+
+    var route: MKRoute? {
+        guard selectedRouteIndex < routes.count else { return nil }
+        return routes[selectedRouteIndex]
+    }
     
 
     
@@ -29,9 +35,16 @@ final class MapViewModel: ObservableObject {
         hasResult = false
         totalPrice = 0
         tollsOnRoute = []
-        route = nil
+        routes = []
         originCoordinate = nil
         destinationCoordinate = nil
+    }
+    
+    func selectRoute(index:Int) {
+        guard index < routes.count else { return }
+        selectedRouteIndex = index
+        guard let route else { return }
+        tollsOnRoute = tollsNearRoute(route: route, tolls: toll, maxDistanceMeters: 150)
     }
     
     func updateUserLocation() {
@@ -48,25 +61,31 @@ final class MapViewModel: ObservableObject {
         }
     }
     
+  
+    
     func getDirections(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) async {
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: .init(coordinate: from))
         request.destination = MKMapItem(placemark: .init(coordinate: to))
         request.transportType = .automobile
-        
+        request.requestsAlternateRoutes = true
+
         do {
-            let directions = try await MKDirections(request: request).calculate()
-            if let firstRoute = directions.routes.first {
-                #if DEBUG
-                print("Distance: \(firstRoute.distance) m")
-                print("Estimated duration: \(firstRoute.expectedTravelTime) seconds")
-                #endif
-                route = firstRoute
-            } else {
+            let result = try await MKDirections(request: request).calculate()
+            guard !result.routes.isEmpty else {
                 #if DEBUG
                 print("No route found.")
                 #endif
+                return
             }
+            selectedRouteIndex = 0
+            routes = result.routes
+            #if DEBUG
+            print("Routes found: \(routes.count)")
+            for (i, r) in routes.enumerated() {
+                print("  Route \(i): \(Int(r.distance/1000)) km — \(r.name)")
+            }
+            #endif
         } catch {
             #if DEBUG
             print("Error calculating directions: \(error)")

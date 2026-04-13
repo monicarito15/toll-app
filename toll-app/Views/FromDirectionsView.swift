@@ -29,13 +29,13 @@ struct FromDirectionsView: View {
                         yourLocationRow
                     }
                     
-                    if !viewModel.searchResults.isEmpty && !searchText.isEmpty {
+                    if !viewModel.completions.isEmpty && !searchText.isEmpty {
                         Section {
-                            ForEach(viewModel.searchResults, id: \.self) { item in
-                                searchResultRow(item)
+                            ForEach(viewModel.completions, id: \.self) { completion in
+                                completionRow(completion)
                             }
                         } header: {
-                            Text("RESULTS")
+                            Text("SUGGESTIONS")
                                 .font(.caption)
                                 .fontWeight(.semibold)
                         }
@@ -88,8 +88,8 @@ struct FromDirectionsView: View {
             TextField("Search starting point...", text: $searchText)
                 .focused($isSearchFocused)
                 .onSubmit {
-                    if let first = viewModel.searchResults.first {
-                        selectMapItem(first)
+                    if let first = viewModel.completions.first {
+                        selectCompletion(first)
                     }
                 }
                 .onChange(of: searchText) { _, newValue in
@@ -148,25 +148,27 @@ struct FromDirectionsView: View {
     }
     
     // MARK: - Rows
-    private func searchResultRow(_ item: MKMapItem) -> some View {
+    private func completionRow(_ completion: MKLocalSearchCompletion) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "mappin.circle.fill")
                 .foregroundStyle(.red)
                 .font(.title3)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.name ?? "Unknown")
+                Text(completion.title)
                     .font(.subheadline.weight(.medium))
-                Text(item.placemark.title ?? "No Address")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                if !completion.subtitle.isEmpty {
+                    Text(completion.subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
         }
         .contentShape(Rectangle())
         .onTapGesture {
             isSearchFocused = false
-            selectMapItem(item)
+            selectCompletion(completion)
         }
     }
     
@@ -193,7 +195,7 @@ struct FromDirectionsView: View {
             Task {
                 await viewModel.saveSearch(item.name, address: item.address, using: modelContext)
                 await MainActor.run {
-                    viewModel.searchResults = []
+                    viewModel.completions = []
                     dismiss()
                 }
             }
@@ -201,16 +203,17 @@ struct FromDirectionsView: View {
     }
     
     // MARK: - Actions
-    private func selectMapItem(_ item: MKMapItem) {
-        let name = item.name ?? searchText
-        let address = item.placemark.title ?? searchText
-        searchText = address
-        selectedCoordinate = item.placemark.coordinate
-
+    private func selectCompletion(_ completion: MKLocalSearchCompletion) {
         Task {
+            guard let item = await viewModel.resolveCompletion(completion) else { return }
+            let name = completion.title
+            let address = [completion.title, completion.subtitle]
+                .filter { !$0.isEmpty }.joined(separator: ", ")
+            searchText = address
+            selectedCoordinate = item.placemark.coordinate
             await viewModel.saveSearch(name, address: address, using: modelContext)
             await MainActor.run {
-                viewModel.searchResults = []
+                viewModel.completions = []
                 dismiss()
             }
         }

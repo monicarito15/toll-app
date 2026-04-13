@@ -13,6 +13,7 @@ Norwegian toll calculator iOS app. Shows toll stations on a map, calculates rout
 - **Services**: `Services/TollService.swift` (NVDB API), `Services/BompengerService.swift` (pricing API)
 - **ViewModels**: `ViewModel/MapViewModel.swift` (routes + toll detection), `ViewModel/FeeViewModel.swift` (pricing)
 - **Storage**: `ViewModel/TollStorageViewModel.swift`, `ViewModel/FeeStorageViewModel.swift`
+ - **Comments**: Never use `// MARK:` comments in code 
 
 ## View Hierarchy
 ```

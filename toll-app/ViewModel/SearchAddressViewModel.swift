@@ -1,5 +1,5 @@
 //
-//  ToDirectionsViewModel.swift
+//  SearchAddressViewModel.swift
 //  toll-app
 //
 //  Created by Carolina Mera  on 20/10/2025.
@@ -9,94 +9,81 @@ import SwiftUI
 import MapKit
 import SwiftData
 
+// NSObject es requerido para implementar MKLocalSearchCompleterDelegate
 @MainActor
-final class SearchAddressViewModel : ObservableObject {
-        
-    @Published var searchResults: [MKMapItem] = []
+final class SearchAddressViewModel: NSObject, ObservableObject {
+
+    // Sugerencias de autocompletado — se actualizan con cada letra
+    @Published var completions: [MKLocalSearchCompletion] = []
     @Published var recentSearches: [RecentSearch] = []
     @Published var searchQuery: String = ""
-    
-    private var locationManager = LocationManager()
-    private var searchTask: Task<Void, Never>?
-    
-    
+
+    private let completer = MKLocalSearchCompleter()
+
+    override init() {
+        super.init()
+        completer.delegate = self
+
+        // Región centrada en Noruega para priorizar resultados noruegos
+        completer.region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 64.5, longitude: 12.0),
+            span: MKCoordinateSpan(latitudeDelta: 20.0, longitudeDelta: 20.0)
+        )
+        completer.resultTypes = [.address, .pointOfInterest]
+    }
+
+    // Actualiza el fragmento del completer — MapKit devuelve sugerencias automáticamente
     func searchAddresses(query: String) {
         searchQuery = query
-        
-        // Cancel any previous debounced search
-        searchTask?.cancel()
-        
-        guard !query.isEmpty else {
-            searchResults = []
-            return
-        }
-        
-        // Debounce: wait 300ms before searching
-        searchTask = Task {
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            
-            // Check if cancelled (user typed another character)
-            guard !Task.isCancelled else { return }
-            
-            await performSearch(query: query)
+        if query.isEmpty {
+            completions = []
+            completer.cancel()
+        } else {
+            completer.queryFragment = query
         }
     }
-    
-    private func performSearch(query: String) async {
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = query
-        
-        // Región que cubre toda Noruega
-        let norwayCenter = CLLocationCoordinate2D(latitude: 64.5, longitude: 12.0)
-        let norwaySpan = MKCoordinateSpan(latitudeDelta: 20.0, longitudeDelta: 20.0)
-        request.region = MKCoordinateRegion(center: norwayCenter, span: norwaySpan)
-        
-        let search = MKLocalSearch(request: request)
-        
+
+    // Cuando el usuario elige una sugerencia, resuelve a MKMapItem para obtener coordenadas
+    func resolveCompletion(_ completion: MKLocalSearchCompletion) async -> MKMapItem? {
+        let request = MKLocalSearch.Request(completion: completion)
+        request.region = completer.region
         do {
-            let response = try await search.start()
-            
-            // Only update if this query is still the current one
-            guard !Task.isCancelled, searchQuery == query else { return }
-            
-            searchResults = response.mapItems.filter { item in
-                item.placemark.countryCode == "NO"
-            }
+            let response = try await MKLocalSearch(request: request).start()
+            // Prefiere resultados noruegos, pero acepta el primero si no hay
+            return response.mapItems.first(where: { $0.placemark.countryCode == "NO" })
+                ?? response.mapItems.first
         } catch {
-            guard !Task.isCancelled else { return }
-            searchResults = []
+            return nil
         }
     }
-    
+
     func saveSearch(_ name: String, address: String, using context: ModelContext) async {
         guard !name.isEmpty else { return }
-        
+
         let descriptor = FetchDescriptor<RecentSearch>()
         let allSearches = (try? context.fetch(descriptor)) ?? []
-        
+
         if let existing = allSearches.first(where: {
             $0.name.lowercased() == name.lowercased() &&
-            $0.address.lowercased() == address.lowercased() 
+            $0.address.lowercased() == address.lowercased()
         }) {
             context.delete(existing)
         }
-        
+
         let newSearch = RecentSearch(name: name, address: address)
         context.insert(newSearch)
-        
+
         do {
             try context.save()
-            
             await loadRecentSearch(using: context)
-            
+
             let allAfterSave = (try? context.fetch(FetchDescriptor<RecentSearch>(
                 sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
             ))) ?? []
-            
+
             if allAfterSave.count > 5 {
-                let toDelete = Array(allAfterSave.dropFirst(5))
-                for oldSearch in toDelete {
-                    context.delete(oldSearch)
+                for old in Array(allAfterSave.dropFirst(5)) {
+                    context.delete(old)
                 }
                 try context.save()
                 await loadRecentSearch(using: context)
@@ -107,26 +94,40 @@ final class SearchAddressViewModel : ObservableObject {
             #endif
         }
     }
-    
-    
+
     func loadRecentSearch(using context: ModelContext) async {
         do {
             let descriptor = FetchDescriptor<RecentSearch>(
                 sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
             )
-            
             let fetched = try context.fetch(descriptor)
-            
+
             var seen = Set<String>()
             recentSearches = fetched.filter { search in
                 let key = "\(search.name.lowercased())|\(search.address.lowercased())"
                 return seen.insert(key).inserted
             }.prefix(5).map { $0 }
-            
         } catch {
             #if DEBUG
             print("Error fetching recent searches: \(error)")
             #endif
+        }
+    }
+}
+
+// Delegate fuera del actor para evitar warnings de concurrencia
+extension SearchAddressViewModel: MKLocalSearchCompleterDelegate {
+
+    nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        let results = completer.results
+        Task { @MainActor in
+            self.completions = results
+        }
+    }
+
+    nonisolated func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        Task { @MainActor in
+            self.completions = []
         }
     }
 }

@@ -10,7 +10,7 @@ import CoreLocation
 import ArcGIS
 
 struct MapView: View {
-    
+
     let from: String
     let to: String
     let fromCoordinate: CLLocationCoordinate2D?
@@ -19,50 +19,41 @@ struct MapView: View {
     let fuelType: FuelType
     let dateTime: Date
     let hasAutopass: Bool
-    
-    
-    // ahora usamos el ViewModel, que contiene toda la lógica de ubicación, rutas y tolls
-    
-    @ObservedObject var mapVM : MapViewModel
+
+    // ViewModel compartido con TravelView — contiene rutas, tolls y lógica de ubicación
+    @ObservedObject var mapVM: MapViewModel
     @StateObject private var tollStorageVM = TollStorageViewModel()
     @Environment(\.modelContext) private var modelContext
 
-    
     @StateObject private var feeVM = FeeViewModel()
     @StateObject private var feeStorageVM = FeeStorageViewModel()
-    
+
     @State private var cameraPosition: MapCameraPosition = .automatic
-    
     @State private var showDetailsSheet = false
     @State private var selectedToll: TollCharge?
 
-   
     var body: some View {
         VStack {
             ZStack {
                 mapContent
-                
-                // UI overlays (Solo cuando hay resultado)
+
+                // UI overlays — solo visibles cuando hay resultado calculado
                 if mapVM.hasResult {
                     summaryOverlay
+
                     navigationButtonOverlay
                 }
-                
-                // Toll detail popup
+
+                // Popup de detalle al tocar un toll marker
                 if selectedToll != nil {
                     TollDetailPopup(selectedToll: $selectedToll)
                 }
             }
             .animation(.easeInOut, value: mapVM.hasResult)
         }
-            
-
-        
         .onAppear {
-            //Cuando la vista aparece, se actualiza la ubicación del usuario
+            // Actualiza ubicación del usuario y calcula ruta si hay direcciones
             mapVM.updateUserLocation()
-            
-            // Si hay direcciones válidas, calcula la ruta entre `from` y `to`
             Task { @MainActor in
                 await mapVM.getDirectionsFromAddresses(
                     fromAddress: from,
@@ -71,55 +62,46 @@ struct MapView: View {
                     toCoordinate: toCoordinate
                 )
             }
-               
             Task {
                 await tollStorageVM.loadTolls(using: modelContext)
             }
         }
         .task {
-            //Carga los tolls desde la API cuando aparece la vista
+            // Carga todos los tolls desde NVDB al aparecer la vista
             await mapVM.fetchTolls()
         }
-        
-        // este onChange: mueve cámara + buildResult "Solo se ejecuta cuando cambia la ruta"
-        .onChange(of: mapVM.route) { _, route in
+
+        // Cuando llegan rutas nuevas: mueve cámara para ver todas y construye resultado
+        .onChange(of: mapVM.routes) { _, newRoutes in
+            guard !newRoutes.isEmpty else { return }
             selectedToll = nil
 
-            guard let route else { return }
-
-            var rect = route.polyline.boundingMapRect// Calcula el rectángulo que contiene toda la ruta
-
-            //Añade padding para que la ruta no quede pegada a los bordes
-            rect = rect.insetBy(dx: -1200, dy: -1200)
-
-            //Evita zoom demasiado cerca en rutas cortas
+            // Calcula rect que engloba TODAS las rutas alternativas
+            let fullRect = newRoutes.reduce(MKMapRect.null) { $0.union($1.polyline.boundingMapRect) }
+            var rect = fullRect.insetBy(dx: -1200, dy: -1200)
             let minSide: Double = 3000
             if rect.size.width < minSide {
-                let expand = (minSide - rect.size.width) / 2
-                rect = rect.insetBy(dx: -expand, dy: -expand)
+                rect = rect.insetBy(dx: -(minSide - rect.size.width) / 2, dy: -(minSide - rect.size.width) / 2)
             }
+            withAnimation(.easeInOut) { cameraPosition = .rect(rect) }
 
-            withAnimation(.easeInOut) {
-                cameraPosition = .rect(rect)
-            }
-
-        }
-        // Se ejecuta cuando ya existe una ruta
-        .onChange(of: mapVM.route) { _, _ in
             mapVM.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
         }
-        
-      
-        
-        
-        // Este onChange: solo se ejecuta cuando ya existen tolls en ruta y Calcula/ carga fees - usa swiftdata 24H
-        .onChange(of: mapVM.tollsOnRoute) { _, tolls in
-            guard !tolls.isEmpty else { return }
-            
-            // Configure autopass before calling API
-            feeVM.hasAutoPassAgreement = hasAutopass
 
-            // FeeViewModel handles everything: cache, API call, fallback
+        // Cuando el usuario cambia de ruta: recalcula tolls y precio para la nueva ruta
+        .onChange(of: mapVM.selectedRouteIndex) { _, _ in
+            mapVM.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
+        }
+
+        // Seguridad: si los tolls de NVDB llegan después de la ruta, recalcula
+        .onChange(of: mapVM.toll.count) { _, count in
+            guard count > 0, mapVM.route != nil else { return }
+            mapVM.buildResultIfPossible(vehicle: vehicleType, fuel: fuelType, date: dateTime)
+        }
+
+        // Cuando cambian los tolls en ruta: calcula precios desde NVDB egenskaper
+        .onChange(of: mapVM.tollsOnRoute) { _, tolls in
+            feeVM.hasAutoPassAgreement = hasAutopass
             feeVM.loadOrCalculateFees(
                 tollsOnRoute: tolls,
                 from: from,
@@ -134,8 +116,6 @@ struct MapView: View {
             )
         }
 
-
-        
         .sheet(isPresented: $showDetailsSheet) {
             TollPassedListView(
                 tollCharges: feeVM.tollCharges,
@@ -144,60 +124,121 @@ struct MapView: View {
                 toAddress: to,
                 vehicleType: vehicleType
             )
-                .presentationDetents([.medium, .large])
+            .presentationDetents([.medium, .large])
         }
-
-
-
-
     }
-    
+
     // Map Content
+
     private var mapContent: some View {
-        Map(position: $cameraPosition) {
-            // user location
-            if let userLocation = mapVM.userLocation {
-                Marker("My location", coordinate: userLocation)
-            }
-            
-            ForEach(feeVM.tollCharges) { charge in
-                if let lat = charge.latitude, let lon = charge.longitude {
-                    Annotation("", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
-                        Button {
-                            selectedToll = charge
-                        } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.orange)
-                                    .frame(width: 32, height: 32)
-                                    .shadow(color: .black.opacity(0.3), radius: 3)
-                                
-                                Image(systemName: "norwegiankronesign")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundStyle(.white)
+        // MapReader convierte el punto de pantalla a coordenada geográfica para detectar tap en polyline
+        MapReader { proxy in
+            Map(position: $cameraPosition) {
+                if let userLocation = mapVM.userLocation {
+                    Marker("My location", coordinate: userLocation)
+                }
+
+                // Rutas no seleccionadas: borde cyan fosforescente + gris encima — visible en dark mode
+                ForEach(Array(mapVM.routes.enumerated()), id: \.offset) { index, route in
+                    if index != mapVM.selectedRouteIndex {
+                        MapPolyline(route)
+                            .stroke(Color.cyan.opacity(0.9), lineWidth: 8) // borde cyan visible en dark mode
+                        MapPolyline(route)
+                            .stroke(Color(white: 0.55), lineWidth: 5) // relleno gris encima
+                    }
+                }
+
+                // Ruta seleccionada: azul fuerte y más gruesa — encima de todo
+                if let selected = mapVM.route {
+                    MapPolyline(selected)
+                        .stroke(.blue, lineWidth: 6)
+                }
+
+                // Callout de tiempo sobre la ruta seleccionada — burbuja con triángulo apuntando a la línea
+                if let selected = mapVM.route,
+                   let midCoord = polylineMidpoint(selected.polyline) {
+                    Annotation("", coordinate: midCoord, anchor: .bottom) {
+                        VStack(spacing: 0) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "clock.fill")
+                                    .font(.caption2)
+                                Text(routeTimeText(selected))
+                                    .font(.caption.weight(.semibold))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.blue)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                            // Triángulo apuntando hacia abajo — "ganchito" que señala la línea
+                            Triangle()
+                                .fill(Color.blue)
+                                .frame(width: 10, height: 6)
+                        }
+                        .shadow(color: .black.opacity(0.2), radius: 3)
+                    }
+                }
+
+                // Markers naranjas de cada toll con precio
+                ForEach(feeVM.tollCharges) { charge in
+                    if let lat = charge.latitude, let lon = charge.longitude {
+                        Annotation("", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
+                            Button { selectedToll = charge } label: {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.orange)
+                                        .frame(width: 32, height: 32)
+                                        .shadow(color: .black.opacity(0.3), radius: 3)
+                                    Image(systemName: "norwegiankronesign")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundStyle(.white)
+                                }
                             }
                         }
                     }
                 }
             }
-            
-            // route line
-            if let route = mapVM.route {
-                MapPolyline(route)
-                    .stroke(.blue, lineWidth: 5)
+            .tint(.blue)
+            .mapControls {
+                MapUserLocationButton()
+                MapCompass()
+                MapPitchToggle()
+                MapScaleView()
+            }
+            .mapStyle(.standard(elevation: .realistic))
+            // Tap en el mapa: detecta si el usuario tocó una ruta no seleccionada
+            .onTapGesture { screenPoint in
+                guard mapVM.routes.count > 1,
+                      let coord = proxy.convert(screenPoint, from: .local) else { return }
+
+                let tapLocation = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
+                let tapThresholdMeters = 800.0 // margen para facilitar el tap
+
+                var closestIndex: Int? = nil
+                var closestDistance = Double.greatestFiniteMagnitude
+
+                // Busca la ruta no seleccionada más cercana al punto tocado
+                for (index, route) in mapVM.routes.enumerated() {
+                    guard index != mapVM.selectedRouteIndex else { continue }
+                    let dist = minimumDistance(from: tapLocation, to: route.polyline)
+                    if dist < tapThresholdMeters && dist < closestDistance {
+                        closestDistance = dist
+                        closestIndex = index
+                    }
+                }
+
+                if let index = closestIndex {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        mapVM.selectRoute(index: index)
+                    }
+                }
             }
         }
-        .tint(.blue)
-        .mapControls {
-            MapUserLocationButton()
-            MapCompass()
-            MapPitchToggle()
-            MapScaleView()
-        }
-        .mapStyle(.standard(elevation: .realistic))
     }
-    
-    //  Summary Overlay
+
+    // Summary Overlay
+
     private var summaryOverlay: some View {
         VStack {
             TollSummaryBar(
@@ -218,12 +259,13 @@ struct MapView: View {
             }
             .transition(.move(edge: .top).combined(with: .opacity))
             .padding(.top, 8)
-            
+
             Spacer()
         }
     }
-    
+
     // Navigation Button Overlay
+
     private var navigationButtonOverlay: some View {
         VStack {
             Spacer()
@@ -241,7 +283,50 @@ struct MapView: View {
         }
         .transition(.scale.combined(with: .opacity))
     }
-    
+
+    // Helpers
+
+    // Calcula la distancia mínima entre un punto y una polyline muestreando sus coordenadas
+    private func minimumDistance(from location: CLLocation, to polyline: MKPolyline) -> Double {
+        let count = polyline.pointCount
+        guard count > 0 else { return .greatestFiniteMagnitude }
+
+        var coords = Array(repeating: CLLocationCoordinate2D(), count: count)
+        polyline.getCoordinates(&coords, range: NSRange(location: 0, length: count))
+
+        return coords.min { a, b in
+            location.distance(from: CLLocation(latitude: a.latitude, longitude: a.longitude)) <
+            location.distance(from: CLLocation(latitude: b.latitude, longitude: b.longitude))
+        }.map {
+            location.distance(from: CLLocation(latitude: $0.latitude, longitude: $0.longitude))
+        } ?? .greatestFiniteMagnitude
+    }
+
+    private func routeTimeText(_ route: MKRoute) -> String {
+        let total = Int(route.expectedTravelTime)
+        let h = total / 3600
+        let m = (total % 3600) / 60
+        return h > 0 ? "\(h)h \(m)min" : "\(m) min"
+    }
+
+    // Devuelve la coordenada del punto medio de una polyline — donde colocar el callout
+    private func polylineMidpoint(_ polyline: MKPolyline) -> CLLocationCoordinate2D? {
+        let count = polyline.pointCount
+        guard count > 0 else { return nil }
+        var coords = Array(repeating: CLLocationCoordinate2D(), count: count)
+        polyline.getCoordinates(&coords, range: NSRange(location: 0, length: count))
+        return coords[count / 2]
+    }
 }
 
-
+// Triángulo apuntando hacia abajo — usado como "ganchito" del callout de ruta
+private struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.closeSubpath()
+        return path
+    }
+}
