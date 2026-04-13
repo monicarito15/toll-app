@@ -8,7 +8,6 @@ struct ToDirectionsView: View {
 
     @Binding var searchText: String
     @Binding var selectedCoordinate: CLLocationCoordinate2D?
-    @Binding var currentDetent: PresentationDetent
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
@@ -18,10 +17,10 @@ struct ToDirectionsView: View {
     @FocusState private var isSearchFocused: Bool
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 searchBar
-                
+
                 List {
                     if !viewModel.completions.isEmpty {
                         Section {
@@ -48,22 +47,17 @@ struct ToDirectionsView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
+                .scrollDismissesKeyboard(.immediately)
             }
             .background(Color(colorScheme == .dark ? .black : .systemGroupedBackground))
+            .navigationTitle("Destination")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Destination")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .presentationDetents([.medium, .large], selection: $currentDetent)
             .onAppear {
-                currentDetent = .large
                 searchText = ""
                 isSearchFocused = true
             }
@@ -73,7 +67,7 @@ struct ToDirectionsView: View {
         }
     }
     
-    // MARK: - Search Bar
+    // Search Bar
     private var searchBar: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
@@ -106,7 +100,7 @@ struct ToDirectionsView: View {
         .padding(.vertical, 8)
     }
     
-    // MARK: - Rows
+    //  Rows
     private func completionRow(_ completion: MKLocalSearchCompletion) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "mappin.circle.fill")
@@ -154,7 +148,6 @@ struct ToDirectionsView: View {
         }
     }
     
-    // MARK: - Actions
 
     // Resuelve la sugerencia a coordenadas reales antes de cerrar la vista
     private func selectCompletion(_ completion: MKLocalSearchCompletion) {

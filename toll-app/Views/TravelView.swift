@@ -18,7 +18,6 @@ struct TravelView: View {
     @State private var to = ""
     @State private var fromCoordinate: CLLocationCoordinate2D?
     @State private var toCoordinate: CLLocationCoordinate2D?
-    
     @AppStorage("defaultVehicle") private var defaultVehicle: String = VehicleType.car.rawValue
     @AppStorage("defaultFuel") private var defaultFuel: String = FuelType.gas.rawValue
     @AppStorage("defaultAutopass") private var defaultAutopass: Bool = false
@@ -78,7 +77,8 @@ struct TravelView: View {
             .onAppear {
                 currentDetent = .height(520)
             }
-        } // estos onchange muestran el userDefault - sin transcribir la ruta activa
+        }
+      
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environmentObject(purchaseManager)

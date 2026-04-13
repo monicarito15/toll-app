@@ -8,7 +8,7 @@ struct FromDirectionsView: View {
 
     @Binding var searchText: String
     @Binding var selectedCoordinate: CLLocationCoordinate2D?
-    @Binding var currentDetent: PresentationDetent
+    
     @Binding var isFromCurrentLocation: Bool
     
     @Environment(\.dismiss) private var dismiss
@@ -19,16 +19,15 @@ struct FromDirectionsView: View {
     @FocusState private var isSearchFocused: Bool
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 searchBar
-                
+
                 List {
-                    // Your location button
                     Section {
                         yourLocationRow
                     }
-                    
+
                     if !viewModel.completions.isEmpty && !searchText.isEmpty {
                         Section {
                             ForEach(viewModel.completions, id: \.self) { completion in
@@ -54,22 +53,17 @@ struct FromDirectionsView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
+                .scrollDismissesKeyboard(.immediately)
             }
             .background(Color(colorScheme == .dark ? .black : .systemGroupedBackground))
+            .navigationTitle("Starting Point")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Starting Point")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .presentationDetents([.medium, .large], selection: $currentDetent)
             .onAppear {
-                currentDetent = .large
                 searchText = ""
                 isSearchFocused = true
             }

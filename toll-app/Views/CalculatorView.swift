@@ -13,12 +13,12 @@ struct CalculatorView: View {
     @Binding var toCoordinate: CLLocationCoordinate2D?
     @State private var showMap = false
     
+    @State private var showFromDirections = false
     @State private var showToDirections = false
-    @State var showFromDirections = false
-    @State private var showHistory = false
-    @State private var shouldApplyLocationToFrom = true
     @State private var isFromCurrentLocation: Bool = false
     @State private var isToCurrentLocation: Bool = false
+    @State private var showHistory = false
+    @State private var shouldApplyLocationToFrom = true
     @Binding var autopassOn: Bool
     
     @Binding var currentDetent: PresentationDetent
@@ -74,9 +74,21 @@ struct CalculatorView: View {
                         .font(.headline)
                         .fontWeight(.semibold)
                 }
-                
-                
             }
+        }
+        .fullScreenCover(isPresented: $showFromDirections) {
+            FromDirectionsView(
+                searchText: $from,
+                selectedCoordinate: $fromCoordinate,
+                isFromCurrentLocation: $isFromCurrentLocation
+            )
+        }
+        .fullScreenCover(isPresented: $showToDirections) {
+            ToDirectionsView(
+                searchText: $to,
+                selectedCoordinate: $toCoordinate,
+                isFromCurrentLocation: $isToCurrentLocation
+            )
         }
         .onAppear {
             focus = .from
@@ -94,18 +106,6 @@ struct CalculatorView: View {
                 await mapVM.fetchTolls()
                 mapVM.updateUserLocation()
             }
-        }
-        .sheet(isPresented: $showToDirections) {
-            ToDirectionsView(
-                searchText: $to,
-                selectedCoordinate: $toCoordinate,
-                currentDetent: $currentDetent, 
-                isFromCurrentLocation: $isToCurrentLocation
-            )
-                .presentationDetents([.medium, .large], selection: $currentDetent)
-        }
-        .sheet(isPresented: $showFromDirections) {
-            FromDirectionsView(searchText: $from, selectedCoordinate: $fromCoordinate, currentDetent: $currentDetent, isFromCurrentLocation: $isFromCurrentLocation)
         }
         .onDisappear {
             shouldApplyLocationToFrom = false
@@ -198,11 +198,10 @@ struct CalculatorView: View {
                 .frame(width: 24)
             
             Button {
+                currentDetent = .large
                 showFromDirections = true
-                // Important: When user manually selects address, stop auto-location
                 shouldApplyLocationToFrom = false
                 isFromCurrentLocation = false
-                
             } label: {
                 HStack {
                     if isFromCurrentLocation {
@@ -213,14 +212,13 @@ struct CalculatorView: View {
                             .foregroundStyle(.blue)
                             .lineLimit(1)
                     } else {
-                        
                         Text(from.isEmpty ? "From" : from)
                             .foregroundStyle(from.isEmpty ? .tertiary : .primary)
                             .lineLimit(1)
                     }
-                    
                     Spacer()
                 }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             
@@ -244,6 +242,7 @@ struct CalculatorView: View {
                 .frame(width: 24)
             
             Button {
+                currentDetent = .large
                 showToDirections = true
             } label: {
                 HStack {
@@ -261,6 +260,7 @@ struct CalculatorView: View {
                     }
                     Spacer()
                 }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
