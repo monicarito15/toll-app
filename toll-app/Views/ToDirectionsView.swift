@@ -158,11 +158,9 @@ struct ToDirectionsView: View {
                 .filter { !$0.isEmpty }.joined(separator: ", ")
             searchText = address
             selectedCoordinate = item.placemark.coordinate
+            viewModel.completions = []
+            dismiss()
             await viewModel.saveSearch(name, address: address, using: modelContext)
-            await MainActor.run {
-                viewModel.completions = []
-                dismiss()
-            }
         }
     }
 }

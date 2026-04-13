@@ -40,11 +40,16 @@ final class MapViewModel: ObservableObject {
         destinationCoordinate = nil
     }
     
-    func selectRoute(index:Int) {
+    func selectRoute(index: Int) {
         guard index < routes.count else { return }
-        selectedRouteIndex = index
+        selectedRouteIndex = index  // UI responds instantly (route color changes)
         guard let route else { return }
-        tollsOnRoute = tollsNearRoute(route: route, tolls: toll, maxDistanceMeters: 150)
+        let capturedRoute = route
+        let capturedTolls = toll
+        Task {
+            await Task.yield()  // let the UI redraw the new selected route first
+            tollsOnRoute = tollsNearRoute(route: capturedRoute, tolls: capturedTolls, maxDistanceMeters: 150)
+        }
     }
     
     func updateUserLocation() {

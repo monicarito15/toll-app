@@ -428,6 +428,7 @@ struct CalculatorView: View {
             
             Toggle("", isOn: $autopassOn)
                 .labelsHidden()
+                .tint(.blue)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

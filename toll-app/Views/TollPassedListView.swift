@@ -131,14 +131,14 @@ struct TollPassedListView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "mappin.circle.fill")
                             .font(.system(size: 16))
-                            .foregroundStyle(.red)
-                        
+                            .foregroundStyle(.blue)
+
                         Text("Destination")
                             .font(.caption)
                             .fontWeight(.semibold)
                             .foregroundStyle(.secondary)
                     }
-                    
+
                     Text(displayTo)
                         .font(.body)
                         .foregroundStyle(.primary)
@@ -149,11 +149,11 @@ struct TollPassedListView: View {
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.red.opacity(0.08))
+                        .fill(Color.blue.opacity(0.08))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(Color.red.opacity(0.2), lineWidth: 1)
+                        .strokeBorder(Color.blue.opacity(0.2), lineWidth: 1)
                 )
             }
             .padding(16)

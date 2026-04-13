@@ -185,13 +185,10 @@ struct FromDirectionsView: View {
         .onTapGesture {
             isSearchFocused = false
             searchText = item.address
-
+            viewModel.completions = []
+            dismiss()
             Task {
                 await viewModel.saveSearch(item.name, address: item.address, using: modelContext)
-                await MainActor.run {
-                    viewModel.completions = []
-                    dismiss()
-                }
             }
         }
     }
@@ -205,11 +202,9 @@ struct FromDirectionsView: View {
                 .filter { !$0.isEmpty }.joined(separator: ", ")
             searchText = address
             selectedCoordinate = item.placemark.coordinate
+            viewModel.completions = []
+            dismiss()
             await viewModel.saveSearch(name, address: address, using: modelContext)
-            await MainActor.run {
-                viewModel.completions = []
-                dismiss()
-            }
         }
     }
 }
