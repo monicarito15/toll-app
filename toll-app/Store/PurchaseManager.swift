@@ -60,6 +60,21 @@ final class PurchaseManager: ObservableObject {
         guard !isPremium else { return }
         searchesUsed += 1
         UserDefaults.standard.set(searchesUsed, forKey: "searchesUsed")
+        requestReviewIfEligible()
+    }
+
+    @Published var reviewRequested = false
+
+    private func requestReviewIfEligible() {
+        let totalSearches = UserDefaults.standard.integer(forKey: "totalSearchesEver") + 1
+        UserDefaults.standard.set(totalSearches, forKey: "totalSearchesEver")
+
+        let lastReviewVersion = UserDefaults.standard.string(forKey: "lastReviewRequestedVersion") ?? ""
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+
+        guard totalSearches == 3, lastReviewVersion != currentVersion else { return }
+        UserDefaults.standard.set(currentVersion, forKey: "lastReviewRequestedVersion")
+        reviewRequested = true
     }
 
     func purchase() async throws {

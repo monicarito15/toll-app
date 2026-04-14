@@ -3,6 +3,7 @@
 import SwiftUI
 import MapKit
 import SwiftData
+import StoreKit
 
 struct TravelView: View {
 
@@ -14,6 +15,7 @@ struct TravelView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var vm = MapViewModel()
     @EnvironmentObject var purchaseManager: PurchaseManager
+    @Environment(\.requestReview) private var requestReview
     @State private var showPaywall = false
     
     @State private var from = ""
@@ -99,6 +101,12 @@ struct TravelView: View {
         .onChange(of: defaultAutopass) { _, newValue in
             if from.isEmpty && to.isEmpty {
                 hasAutopass = newValue
+            }
+        }
+        .onChange(of: purchaseManager.reviewRequested) { _, requested in
+            if requested {
+                requestReview()
+                purchaseManager.reviewRequested = false
             }
         }
         .onChange(of: vm.tollsOnRoute) { _, tolls in

@@ -54,14 +54,17 @@ struct ToDirectionsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .onAppear {
                 searchText = ""
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    isSearchFocused = true
-                }
             }
             .task {
                 await viewModel.loadRecentSearch(using: modelContext)
