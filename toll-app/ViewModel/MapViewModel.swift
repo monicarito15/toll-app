@@ -70,36 +70,17 @@ final class MapViewModel: ObservableObject {
   
     
     func getDirections(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) async {
-        // Use OSRM (OpenStreetMap routing) — returns up to 3 real alternative routes
-        // for any distance, including long Norwegian routes where MapKit only returns 1.
-        var osrmRoutes = await OSRMService.shared.getRoutes(from: from, to: to)
+        let osrmRoutes = await OSRMService.shared.getRoutes(from: from, to: to)
 
-        if !osrmRoutes.isEmpty {
-            selectedRouteIndex = 0
-            routes = osrmRoutes
-            #if DEBUG
-            print("OSRM routes: \(routes.count)")
-            for (i, r) in routes.enumerated() {
-                print("  Route \(i): \(Int(r.distance/1000)) km — \(r.name)")
-            }
-            #endif
-            return
-        }
-
-        // Fallback to MapKit if OSRM is unavailable
-        #if DEBUG
-        print("OSRM failed, falling back to MapKit")
-        #endif
+        // Always also request MapKit routes for alternatives
         let req = MKDirections.Request()
         req.source = MKMapItem(placemark: .init(coordinate: from))
         req.destination = MKMapItem(placemark: .init(coordinate: to))
         req.transportType = .automobile
         req.requestsAlternateRoutes = true
-        guard let result = try? await MKDirections(request: req).calculate(),
-              !result.routes.isEmpty else { return }
+        let mkRoutes = (try? await MKDirections(request: req).calculate())?.routes ?? []
 
-        selectedRouteIndex = 0
-        routes = result.routes.map { r in
+        let mkAppRoutes = mkRoutes.map { r -> AppRoute in
             let hasFerry = r.steps.contains {
                 let inst = $0.instructions.lowercased()
                 return inst.contains("ferry") || inst.contains("ferje") || inst.contains("ferge")
@@ -108,6 +89,27 @@ final class MapViewModel: ObservableObject {
                             expectedTravelTime: r.expectedTravelTime, name: r.name,
                             hasFerry: hasFerry)
         }
+
+        var combined = osrmRoutes
+        // Add MapKit routes that are significantly different (>300m distance difference)
+        for mkRoute in mkAppRoutes {
+            let isDuplicate = combined.contains { abs($0.distance - mkRoute.distance) < 300 }
+            if !isDuplicate {
+                combined.append(mkRoute)
+            }
+        }
+
+        guard !combined.isEmpty else { return }
+
+        selectedRouteIndex = 0
+        routes = combined
+
+        #if DEBUG
+        print("Routes: \(routes.count) (OSRM: \(osrmRoutes.count), MapKit: \(mkAppRoutes.count))")
+        for (i, r) in routes.enumerated() {
+            print("  Route \(i): \(Int(r.distance/1000)) km — \(r.name)")
+        }
+        #endif
     }
     
     func geocode(from: CLLocationCoordinate2D, toAddress: String) {

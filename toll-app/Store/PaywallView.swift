@@ -67,7 +67,7 @@ struct PaywallView: View {
                             ProgressView()
                                 .tint(.white)
                         } else {
-                            Text("Unlock for $2.99")
+                            Text("Unlock for 19 kr")
                                 .fontWeight(.semibold)
                         }
                     }

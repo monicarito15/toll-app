@@ -52,16 +52,7 @@ struct MapView: View {
             .animation(.easeInOut, value: mapVM.hasResult)
         }
         .onAppear {
-            // Actualiza ubicación del usuario y calcula ruta si hay direcciones
             mapVM.updateUserLocation()
-            Task { @MainActor in
-                await mapVM.getDirectionsFromAddresses(
-                    fromAddress: from,
-                    toAddress: to,
-                    fromCoordinate: fromCoordinate,
-                    toCoordinate: toCoordinate
-                )
-            }
             Task {
                 await tollStorageVM.loadTolls(using: modelContext)
             }

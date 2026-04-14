@@ -11,10 +11,10 @@ import StoreKit
 final class PurchaseManager: ObservableObject {
 
     static let productID = "no.carolina.toll-app.unlimited"
-    static let freeSearchLimit = 200
+    static let freeSearchLimit = 10
 
     @Published var isPremium: Bool = false
-    @Published var searchesUsed: Int = UserDefaults.standard.integer(forKey: "searchesUsed")
+    @Published var searchesUsed: Int = 0
 
     var searchesRemaining: Int {
         max(0, Self.freeSearchLimit - searchesUsed)
@@ -22,6 +22,19 @@ final class PurchaseManager: ObservableObject {
 
     var canSearch: Bool {
         isPremium || searchesUsed < Self.freeSearchLimit
+    }
+
+    private func resetIfNewMonth() {
+        let now = Date()
+        let calendar = Calendar.current
+        let lastReset = UserDefaults.standard.object(forKey: "searchesResetDate") as? Date ?? .distantPast
+        if !calendar.isDate(lastReset, equalTo: now, toGranularity: .month) {
+            searchesUsed = 0
+            UserDefaults.standard.set(0, forKey: "searchesUsed")
+            UserDefaults.standard.set(now, forKey: "searchesResetDate")
+        } else {
+            searchesUsed = UserDefaults.standard.integer(forKey: "searchesUsed")
+        }
     }
 
     private var updates: Task<Void, Never>?
@@ -35,6 +48,7 @@ final class PurchaseManager: ObservableObject {
                 }
             }
         }
+        resetIfNewMonth()
         Task { await checkPremiumStatus() }
     }
 

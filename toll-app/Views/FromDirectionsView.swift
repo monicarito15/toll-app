@@ -167,22 +167,7 @@ struct FromDirectionsView: View {
     }
     
     private func recentRow(_ item: RecentSearch) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "clock.fill")
-                .foregroundStyle(.secondary)
-                .font(.title3)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.name)
-                    .font(.subheadline.weight(.medium))
-                Text(item.address)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
+        Button {
             isSearchFocused = false
             searchText = item.address
             viewModel.completions = []
@@ -190,7 +175,25 @@ struct FromDirectionsView: View {
             Task {
                 await viewModel.saveSearch(item.name, address: item.address, using: modelContext)
             }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "clock.fill")
+                    .foregroundStyle(.secondary)
+                    .font(.title3)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.name)
+                        .font(.subheadline.weight(.medium))
+                    Text(item.address)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+            }
         }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Actions

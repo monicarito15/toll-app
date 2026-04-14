@@ -2,6 +2,7 @@
 // Este es el parent de calculatorView
 import SwiftUI
 import MapKit
+import SwiftData
 
 struct TravelView: View {
 
@@ -10,6 +11,7 @@ struct TravelView: View {
 
     @Binding var selectedHistoryItem: SearchHistoryItem?
 
+    @Environment(\.modelContext) private var modelContext
     @StateObject private var vm = MapViewModel()
     @EnvironmentObject var purchaseManager: PurchaseManager
     @State private var showPaywall = false
@@ -98,6 +100,15 @@ struct TravelView: View {
             if from.isEmpty && to.isEmpty {
                 hasAutopass = newValue
             }
+        }
+        .onChange(of: vm.tollsOnRoute) { _, tolls in
+            guard vm.hasResult else { return }
+            let existing = (try? modelContext.fetch(FetchDescriptor<SearchHistoryItem>(
+                sortBy: [SortDescriptor(\.searchDate, order: .reverse)]
+            ))) ?? []
+            guard let latest = existing.first else { return }
+            latest.tollCount = tolls.count
+            try? modelContext.save()
         }
         .onChange(of: selectedHistoryItem) { oldValue, newValue in
             // Cuando se selecciona un item del historial, rellenar los campos
