@@ -36,7 +36,7 @@ struct toll_appApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            SplashView()
                 .modelContainer(modelContainer)
                 .environmentObject(purchaseManager)
         }

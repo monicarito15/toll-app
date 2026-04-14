@@ -179,7 +179,7 @@ final class MapViewModel: ObservableObject {
             return
         }
         
-        // Resolve destination coordinate
+        
         let destination: CLLocationCoordinate2D
         if let toCoordinate {
             destination = toCoordinate
@@ -198,7 +198,7 @@ final class MapViewModel: ObservableObject {
         #endif
         destinationCoordinate = destination
         
-        // Resolve origin coordinate
+      
         let origin: CLLocationCoordinate2D
         if let fromCoordinate {
             origin = fromCoordinate
@@ -262,8 +262,7 @@ final class MapViewModel: ObservableObject {
         hasResult = true
     }
 
-    // Checks perpendicular distance from each toll to every polyline segment.
-    // Much more precise than point sampling — avoids false positives on parallel roads.
+    
     private func tollsNearRoute(route: AppRoute, tolls: [Vegobjekt], maxDistanceMeters: Double = 50) -> [Vegobjekt] {
         let polyline = route.polyline
         let count = polyline.pointCount
@@ -272,7 +271,7 @@ final class MapViewModel: ObservableObject {
         var coords = Array(repeating: CLLocationCoordinate2D(latitude: 0, longitude: 0), count: count)
         polyline.getCoordinates(&coords, range: NSRange(location: 0, length: count))
 
-        var tollsWithPosition: [(toll: Vegobjekt, routeIndex: Int)] = []
+        var tollsWithPosition: [(toll: Vegobjekt, routeIndex: Int, distance: Double)] = []
 
         for toll in tolls {
             guard let c = toll.lokasjon?.coordinates else { continue }
@@ -280,7 +279,6 @@ final class MapViewModel: ObservableObject {
             var closestIndex = -1
             var closestDistance = Double.greatestFiniteMagnitude
 
-            // Check distance to every segment (A→B) for accurate hit detection
             for i in 0..<(count - 1) {
                 let d = distanceFromPoint(c, toSegmentFrom: coords[i], to: coords[i + 1])
                 if d < closestDistance {
@@ -290,18 +288,32 @@ final class MapViewModel: ObservableObject {
             }
 
             if closestDistance <= maxDistanceMeters {
-                // If toll name has a direction (nordgående/sørgående/etc), verify route travels that way
                 if let requiredBearing = directionalBearing(for: toll) {
                     let a = coords[max(0, closestIndex)]
                     let b = coords[min(count - 1, closestIndex + 1)]
                     let routeBearing = bearing(from: a, to: b)
                     if angleDifference(routeBearing, requiredBearing) > 90 { continue }
                 }
-                tollsWithPosition.append((toll: toll, routeIndex: closestIndex))
+                tollsWithPosition.append((toll: toll, routeIndex: closestIndex, distance: closestDistance))
             }
         }
 
-        return tollsWithPosition
+        
+        // When one name is a prefix of another and they're close on the route, keep only the closest.
+        let sorted = tollsWithPosition.sorted { $0.distance < $1.distance }
+        var deduped: [(toll: Vegobjekt, routeIndex: Int, distance: Double)] = []
+        for item in sorted {
+            let name = item.toll.displayName
+            let dominated = deduped.contains { existing in
+                let en = existing.toll.displayName
+                let sameGroup = name.hasPrefix(en) || en.hasPrefix(name)
+                let closeOnRoute = abs(existing.routeIndex - item.routeIndex) < 100
+                return sameGroup && closeOnRoute
+            }
+            if !dominated { deduped.append(item) }
+        }
+
+        return deduped
             .sorted { $0.routeIndex < $1.routeIndex }
             .map { $0.toll }
     }

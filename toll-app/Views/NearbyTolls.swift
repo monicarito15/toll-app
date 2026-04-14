@@ -38,11 +38,23 @@ struct NearbyTolls: View {
         }
         
         // Ordenar por distancia (más cercanos primero)
-        return nearby.sorted { toll1, toll2 in
+        let sorted = nearby.sorted { toll1, toll2 in
             guard let dist1 = toll1.distanceInMeters(from: userLocation),
                   let dist2 = toll2.distanceInMeters(from: userLocation) else { return false }
             return dist1 < dist2
         }
+
+        // Deduplicate ramp variants: keep only the closest when one name is a prefix of another
+        var deduped: [Vegobjekt] = []
+        for toll in sorted {
+            let name = toll.displayName
+            let isVariant = deduped.contains { existing in
+                let en = existing.displayName
+                return name.hasPrefix(en) || en.hasPrefix(name)
+            }
+            if !isVariant { deduped.append(toll) }
+        }
+        return deduped
     }
     
     
