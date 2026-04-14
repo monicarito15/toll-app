@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @EnvironmentObject var purchaseManager: PurchaseManager
     @State private var showSheet = false
     @State private var selectedTab = 0
     @State private var didAppearOnce = false // para saber si ya se abrio el sheet alguna vez
@@ -48,6 +49,7 @@ struct MainTabView: View {
                 selectedHistoryItem = historyItem
                 selectedTab = 0
             })
+            .environmentObject(purchaseManager)
             
                 .tabItem {
                     Label("History", systemImage: "car.fill")

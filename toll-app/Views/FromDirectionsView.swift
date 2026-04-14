@@ -53,7 +53,7 @@ struct FromDirectionsView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
-                .scrollDismissesKeyboard(.immediately)
+                .scrollDismissesKeyboard(.interactively)
             }
             .background(Color(colorScheme == .dark ? .black : .systemGroupedBackground))
             .navigationTitle("Starting Point")
@@ -65,7 +65,9 @@ struct FromDirectionsView: View {
             }
             .onAppear {
                 searchText = ""
-                isSearchFocused = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    isSearchFocused = true
+                }
             }
             .task {
                 await viewModel.loadRecentSearch(using: modelContext)

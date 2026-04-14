@@ -290,6 +290,13 @@ final class MapViewModel: ObservableObject {
             }
 
             if closestDistance <= maxDistanceMeters {
+                // If toll name has a direction (nordgående/sørgående/etc), verify route travels that way
+                if let requiredBearing = directionalBearing(for: toll) {
+                    let a = coords[max(0, closestIndex)]
+                    let b = coords[min(count - 1, closestIndex + 1)]
+                    let routeBearing = bearing(from: a, to: b)
+                    if angleDifference(routeBearing, requiredBearing) > 90 { continue }
+                }
                 tollsWithPosition.append((toll: toll, routeIndex: closestIndex))
             }
         }
@@ -297,6 +304,32 @@ final class MapViewModel: ObservableObject {
         return tollsWithPosition
             .sorted { $0.routeIndex < $1.routeIndex }
             .map { $0.toll }
+    }
+
+    // Returns the cardinal bearing a directional toll expects, nil if non-directional
+    private func directionalBearing(for toll: Vegobjekt) -> Double? {
+        let name = toll.displayName.lowercased()
+        if name.contains("nordgående") { return 0 }
+        if name.contains("sørgående")  { return 180 }
+        if name.contains("østgående")  { return 90 }
+        if name.contains("vestgående") { return 270 }
+        return nil
+    }
+
+    // Compass bearing in degrees (0=N, 90=E, 180=S, 270=W)
+    private func bearing(from a: CLLocationCoordinate2D, to b: CLLocationCoordinate2D) -> Double {
+        let lat1 = a.latitude  * .pi / 180
+        let lat2 = b.latitude  * .pi / 180
+        let dLon = (b.longitude - a.longitude) * .pi / 180
+        let y = sin(dLon) * cos(lat2)
+        let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
+        return (atan2(y, x) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
+    }
+
+    // Smallest angular difference between two bearings (0–180)
+    private func angleDifference(_ a: Double, _ b: Double) -> Double {
+        let diff = abs(a - b).truncatingRemainder(dividingBy: 360)
+        return min(diff, 360 - diff)
     }
 
     // Minimum distance from point P to segment A→B using projection

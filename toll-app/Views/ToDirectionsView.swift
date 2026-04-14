@@ -47,7 +47,7 @@ struct ToDirectionsView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
-                .scrollDismissesKeyboard(.immediately)
+                .scrollDismissesKeyboard(.interactively)
             }
             .background(Color(colorScheme == .dark ? .black : .systemGroupedBackground))
             .navigationTitle("Destination")
@@ -59,7 +59,9 @@ struct ToDirectionsView: View {
             }
             .onAppear {
                 searchText = ""
-                isSearchFocused = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    isSearchFocused = true
+                }
             }
             .task {
                 await viewModel.loadRecentSearch(using: modelContext)

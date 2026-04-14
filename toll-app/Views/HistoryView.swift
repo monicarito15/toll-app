@@ -2,19 +2,32 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
-    
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
-    
+    @EnvironmentObject var purchaseManager: PurchaseManager
+
+    @State private var showPaywall = false
+
     @Query(sort: \SearchHistoryItem.searchDate, order: .reverse)
     var searchHistory: [SearchHistoryItem]
     var onSelectSearch: (SearchHistoryItem) -> Void
-    
+
+    private static let freeLimit = 3
+
+    private var visibleHistory: [SearchHistoryItem] {
+        purchaseManager.isPremium ? searchHistory : Array(searchHistory.prefix(Self.freeLimit))
+    }
+
+    private var hiddenCount: Int {
+        purchaseManager.isPremium ? 0 : max(0, searchHistory.count - Self.freeLimit)
+    }
+
     private var cardBackground: Color {
         colorScheme == .dark ? Color(.systemGray6) : Color(.white)
     }
-    
+
     // Agrupar historial por período de tiempo
     private var groupedHistory: [(String, [SearchHistoryItem])] {
         let calendar = Calendar.current
@@ -22,7 +35,7 @@ struct HistoryView: View {
         
         var groups: [String: [SearchHistoryItem]] = [:]
         
-        for item in searchHistory {
+        for item in visibleHistory {
             let sectionTitle = getSectionTitle(for: item.searchDate, relativeTo: now, calendar: calendar)
             groups[sectionTitle, default: []].append(item)
         }
@@ -89,7 +102,7 @@ struct HistoryView: View {
                                     .foregroundStyle(.secondary)
                                     .padding(.horizontal, 20)
                                     .padding(.top, section.0 == groupedHistory.first?.0 ? 0 : 8)
-                                
+
                                 // Section items
                                 VStack(spacing: 0) {
                                     ForEach(Array(section.1.enumerated()), id: \.element.id) { index, historyItem in
@@ -99,7 +112,7 @@ struct HistoryView: View {
                                             historyItemRow(historyItem)
                                         }
                                         .buttonStyle(.plain)
-                                        
+
                                         if index < section.1.count - 1 {
                                             Divider()
                                                 .padding(.leading, 56)
@@ -114,6 +127,38 @@ struct HistoryView: View {
                                 )
                                 .padding(.horizontal, 16)
                             }
+                        }
+
+                        if hiddenCount > 0 {
+                            Button {
+                                showPaywall = true
+                            } label: {
+                                HStack(spacing: 14) {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(.orange)
+                                        .frame(width: 32)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("\(hiddenCount) more search\(hiddenCount == 1 ? "" : "es") locked")
+                                            .font(.subheadline.weight(.medium))
+                                        Text("Unlock full history for 19 kr")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                            .background(cardBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.4), lineWidth: 1))
+                            .padding(.horizontal, 16)
                         }
                     }
                     .padding(.vertical, 20)
@@ -133,6 +178,10 @@ struct HistoryView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+                    .environmentObject(purchaseManager)
             }
         }
     }

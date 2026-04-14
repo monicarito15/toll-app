@@ -116,6 +116,8 @@ struct MapView: View {
                 vehicleType: vehicleType
             )
             .presentationDetents([.medium, .large])
+            .presentationContentInteraction(.scrolls)
+            .presentationDragIndicator(.visible)
         }
     }
 
