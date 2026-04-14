@@ -54,20 +54,21 @@ struct TollPassedListView: View {
                 VStack(spacing: 20) {
                     // Route Section
                     routeSection
-                    
+
                     // Route Info (Distance & Time)
                     if route != nil {
                         routeInfoSection
                     }
-                    
+
                     // Toll Stations Section
                     tollStationsSection
-                    
+
                     // Total Section
                     totalSection
                 }
                 .padding(.vertical, 20)
             }
+            .scrollDisabled(true)
             .background(
                 Color(colorScheme == .dark ? .black : .systemGroupedBackground)
                     .ignoresSafeArea()
@@ -344,6 +345,15 @@ struct TollPassedListView: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .padding(.horizontal, 16)
+
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle")
+                    .font(.caption2)
+                Text("Prices are based on NVDB data and may not reflect the latest AutoPASS rates.")
+                    .font(.caption2)
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 20)
         }
     }
 }

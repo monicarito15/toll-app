@@ -27,8 +27,8 @@ final class FeeViewModel: ObservableObject {
         date: Date
     ) -> String {
         let rounded = roundTo15Min(date)
-        // v5: key includes toll IDs so different routes get separate cache entries
-        return "v5|\(tollIDs)|\(vehicle)|\(fuel)|\(rounded.timeIntervalSince1970)|autopass:\(hasAutoPassAgreement)"
+        // v6: removed autopass from key (NVDB prices already are AutoPASS prices)
+        return "v6|\(tollIDs)|\(vehicle)|\(fuel)|\(rounded.timeIntervalSince1970)"
     }
 
     func loadOrCalculateFees(
@@ -72,8 +72,22 @@ final class FeeViewModel: ObservableObject {
         var charges: [TollCharge] = []
         var hasAnyMissingPrice = false
 
-        for toll in tollsOnRoute {
-            guard var price = toll.price(vehicle: vehicle, fuel: fuel, date: date) else {
+        // Timesregel: pre-compute the most expensive toll per group for "Dyreste passering gjelder"
+        var dyrestePerGroup: [Int: Int] = [:]  // groupId -> index of most expensive toll
+        for (i, toll) in tollsOnRoute.enumerated() {
+            guard let gruppe = toll.timesregelGruppe,
+                  toll.timesregel == "Dyreste passering gjelder",
+                  let price = toll.price(vehicle: vehicle, fuel: fuel, date: date) else { continue }
+            if let bestIdx = dyrestePerGroup[gruppe],
+               let bestPrice = tollsOnRoute[bestIdx].price(vehicle: vehicle, fuel: fuel, date: date),
+               price <= bestPrice { continue }
+            dyrestePerGroup[gruppe] = i
+        }
+
+        var seenFirstGroups: Set<Int> = []
+
+        for (i, toll) in tollsOnRoute.enumerated() {
+            guard let price = toll.price(vehicle: vehicle, fuel: fuel, date: date) else {
                 hasAnyMissingPrice = true
                 #if DEBUG
                 print("FeeVM: No price data for '\(toll.stationName)' — skipped")
@@ -81,8 +95,14 @@ final class FeeViewModel: ObservableObject {
                 continue
             }
 
-            if hasAutoPassAgreement {
-                price *= 0.8 // standard 20% autopass discount
+            // Timesregel: skip tolls that are free under the hourly-rule
+            if let gruppe = toll.timesregelGruppe, let regel = toll.timesregel, regel != "Ikke timesregel" {
+                if regel == "Første passering gjelder" {
+                    if seenFirstGroups.contains(gruppe) { continue }
+                    seenFirstGroups.insert(gruppe)
+                } else if regel == "Dyreste passering gjelder" {
+                    if dyrestePerGroup[gruppe] != i { continue }
+                }
             }
 
             let coord = toll.lokasjon?.coordinates

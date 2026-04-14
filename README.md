@@ -9,12 +9,11 @@ Norwegian toll calculator for iOS. Enter an origin and destination, and the app 
 - Toll pricing from NVDB data
 - Multiple alternative routes (up to 3) via OSRM and MapKit
 - Directional toll filtering — only charges the correct direction (nordgående/sørgående)
-- Rush hour surcharge detection (weekdays 06:30–09:00 and 15:00–17:00)
+- Rush hour surcharge detection using per-station times from NVDB (falls back to 06:30–09:00 and 15:00–17:00)
+- Timesregel support — stations in the same group within 60 min: free (Første passering) or most expensive only (Dyreste passering)
 - Vehicle type support: car and motorcycle
-- Fuel type support: petrol, diesel, and electric (50% discount)
-- Autopass toggle
+- Fuel type support: petrol, diesel, and electric (50% discount applied to AutoPASS rate)
 - 24-hour price cache with offline fallback and estimated price indicator
-- Monthly automatic refresh of toll station data from NVDB
 - Search history stored locally on device
 - Recent address suggestions
 - Nearby toll stations browser
@@ -99,6 +98,8 @@ User submits route
     → Perpendicular distance check for each toll station (50m threshold)
     → Directional filter (nordgående/sørgående/østgående/vestgående)
     → Prices calculated from NVDB toll data (takst, rushtidstakst)
+    → Stations with Operatør_Id 100120 (Vegamot) or 100149 (Ranheim) multiplied by 1.12 to correct outdated NVDB data
+    → Timesregel applied per passeringsgruppe
     → Results cached for 24 hours
 ```
 
@@ -106,8 +107,16 @@ User submits route
 
 ## Known Limitations
 
-- Prices are based on NVDB data and may not reflect temporary rate changes.
+- NVDB prices are the AutoPASS rates (no additional AutoPASS discount is applied).
+- Trondheim (Vegamot AS, operator 100120) and Ranheim (operator 100149) use a hardcoded 1.12× price correction — NVDB not updated since Feb 2024. Remove when NVDB is updated.
+- Prices are based on NVDB data and may not reflect the latest AutoPASS rates. A disclaimer is shown in the route details sheet.
 - First launch requires internet to download the toll station database.
+
+---
+
+## Planned Features
+
+- **Timesregel notifications** — after passing a toll with an hourly-rule, send a push notification with a countdown timer: "Return before HH:MM and this toll is free." Requires CoreLocation geofencing + UserNotifications framework.
 
 ---
 
