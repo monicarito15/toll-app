@@ -141,16 +141,16 @@ struct MapView: View {
                 // Rutas no seleccionadas: borde cyan fosforescente + gris encima — visible en dark mode
                 ForEach(Array(mapVM.routes.enumerated()), id: \.offset) { index, route in
                     if index != mapVM.selectedRouteIndex {
-                        MapPolyline(route)
-                            .stroke(Color.cyan.opacity(0.9), lineWidth: 8) // borde cyan visible en dark mode
-                        MapPolyline(route)
-                            .stroke(Color(white: 0.55), lineWidth: 5) // relleno gris encima
+                        MapPolyline(route.polyline)
+                            .stroke(Color.cyan.opacity(0.9), lineWidth: 8)
+                        MapPolyline(route.polyline)
+                            .stroke(Color(white: 0.55), lineWidth: 5)
                     }
                 }
 
                 // Ruta seleccionada: azul fuerte y más gruesa — encima de todo
                 if let selected = mapVM.route {
-                    MapPolyline(selected)
+                    MapPolyline(selected.polyline)
                         .stroke(.blue, lineWidth: 6)
                 }
 
@@ -210,10 +210,13 @@ struct MapView: View {
             // Tap en el mapa: detecta si el usuario tocó una ruta no seleccionada
             .onTapGesture { screenPoint in
                 guard mapVM.routes.count > 1,
-                      let coord = proxy.convert(screenPoint, from: .local) else { return }
+                      let coord = proxy.convert(screenPoint, from: .local),
+                      let coordOffset = proxy.convert(CGPoint(x: screenPoint.x + 44, y: screenPoint.y), from: .local) else { return }
 
                 let tapLocation = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
-                let tapThresholdMeters = 800.0 // margen para facilitar el tap
+                // Threshold adapts to zoom: 44pt (finger width) in current map scale, min 200m
+                let fingerWidthMeters = tapLocation.distance(from: CLLocation(latitude: coordOffset.latitude, longitude: coordOffset.longitude))
+                let tapThresholdMeters = max(200.0, fingerWidthMeters)
 
                 var closestIndex: Int? = nil
                 var closestDistance = Double.greatestFiniteMagnitude
@@ -302,7 +305,7 @@ struct MapView: View {
         } ?? .greatestFiniteMagnitude
     }
 
-    private func routeTimeText(_ route: MKRoute) -> String {
+    private func routeTimeText(_ route: AppRoute) -> String {
         let total = Int(route.expectedTravelTime)
         let h = total / 3600
         let m = (total % 3600) / 60

@@ -4,7 +4,7 @@ import MapKit
 struct TollPassedListView: View {
     
     let tollCharges: [TollCharge]
-    let route: MKRoute?
+    let route: AppRoute?
     let fromAddress: String
     let toAddress: String
     let vehicleType: VehicleType

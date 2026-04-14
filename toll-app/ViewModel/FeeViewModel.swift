@@ -21,15 +21,14 @@ final class FeeViewModel: ObservableObject {
     }
 
     func feeCalculationKey(
-        from: String,
-        to: String,
+        tollIDs: String,
         vehicle: VehicleType,
         fuel: FuelType,
         date: Date
     ) -> String {
         let rounded = roundTo15Min(date)
-        // v4: NVDB-based pricing (no external API)
-        return "v4|\(from)|\(to)|\(vehicle)|\(fuel)|\(rounded.timeIntervalSince1970)|autopass:\(hasAutoPassAgreement)"
+        // v5: key includes toll IDs so different routes get separate cache entries
+        return "v5|\(tollIDs)|\(vehicle)|\(fuel)|\(rounded.timeIntervalSince1970)|autopass:\(hasAutoPassAgreement)"
     }
 
     func loadOrCalculateFees(
@@ -51,7 +50,8 @@ final class FeeViewModel: ObservableObject {
             return
         }
 
-        let key = feeCalculationKey(from: from, to: to, vehicle: vehicle, fuel: fuel, date: date)
+        let tollIDs = tollsOnRoute.map { "\($0.id)" }.sorted().joined(separator: ",")
+        let key = feeCalculationKey(tollIDs: tollIDs, vehicle: vehicle, fuel: fuel, date: date)
 
         // 1. Check cache
         storage.load(using: modelContext, key: key)

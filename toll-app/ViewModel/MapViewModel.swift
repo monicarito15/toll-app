@@ -10,7 +10,7 @@ import CoreLocation
 final class MapViewModel: ObservableObject {
     
     
-    @Published var routes: [MKRoute] = []
+    @Published var routes: [AppRoute] = []
     @Published var selectedRouteIndex: Int = 0
     @Published var toll: [Vegobjekt] = []
     @Published var userLocation: CLLocationCoordinate2D?
@@ -22,7 +22,7 @@ final class MapViewModel: ObservableObject {
     @Published var totalPrice: Double = 0
     @Published var tollsOnRoute: [Vegobjekt] = []
 
-    var route: MKRoute? {
+    var route: AppRoute? {
         guard selectedRouteIndex < routes.count else { return nil }
         return routes[selectedRouteIndex]
     }
@@ -38,6 +38,7 @@ final class MapViewModel: ObservableObject {
         routes = []
         originCoordinate = nil
         destinationCoordinate = nil
+        
     }
     
     func selectRoute(index: Int) {
@@ -48,7 +49,7 @@ final class MapViewModel: ObservableObject {
         let capturedTolls = toll
         Task {
             await Task.yield()  // let the UI redraw the new selected route first
-            tollsOnRoute = tollsNearRoute(route: capturedRoute, tolls: capturedTolls, maxDistanceMeters: 150)
+            tollsOnRoute = tollsNearRoute(route: capturedRoute, tolls: capturedTolls)
         }
     }
     
@@ -69,32 +70,43 @@ final class MapViewModel: ObservableObject {
   
     
     func getDirections(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) async {
-        let request = MKDirections.Request()
-        request.source = MKMapItem(placemark: .init(coordinate: from))
-        request.destination = MKMapItem(placemark: .init(coordinate: to))
-        request.transportType = .automobile
-        request.requestsAlternateRoutes = true
+        // Use OSRM (OpenStreetMap routing) — returns up to 3 real alternative routes
+        // for any distance, including long Norwegian routes where MapKit only returns 1.
+        var osrmRoutes = await OSRMService.shared.getRoutes(from: from, to: to)
 
-        do {
-            let result = try await MKDirections(request: request).calculate()
-            guard !result.routes.isEmpty else {
-                #if DEBUG
-                print("No route found.")
-                #endif
-                return
-            }
+        if !osrmRoutes.isEmpty {
             selectedRouteIndex = 0
-            routes = result.routes
+            routes = osrmRoutes
             #if DEBUG
-            print("Routes found: \(routes.count)")
+            print("OSRM routes: \(routes.count)")
             for (i, r) in routes.enumerated() {
                 print("  Route \(i): \(Int(r.distance/1000)) km — \(r.name)")
             }
             #endif
-        } catch {
-            #if DEBUG
-            print("Error calculating directions: \(error)")
-            #endif
+            return
+        }
+
+        // Fallback to MapKit if OSRM is unavailable
+        #if DEBUG
+        print("OSRM failed, falling back to MapKit")
+        #endif
+        let req = MKDirections.Request()
+        req.source = MKMapItem(placemark: .init(coordinate: from))
+        req.destination = MKMapItem(placemark: .init(coordinate: to))
+        req.transportType = .automobile
+        req.requestsAlternateRoutes = true
+        guard let result = try? await MKDirections(request: req).calculate(),
+              !result.routes.isEmpty else { return }
+
+        selectedRouteIndex = 0
+        routes = result.routes.map { r in
+            let hasFerry = r.steps.contains {
+                let inst = $0.instructions.lowercased()
+                return inst.contains("ferry") || inst.contains("ferje") || inst.contains("ferge")
+            }
+            return AppRoute(polyline: r.polyline, distance: r.distance,
+                            expectedTravelTime: r.expectedTravelTime, name: r.name,
+                            hasFerry: hasFerry)
         }
     }
     
@@ -238,59 +250,76 @@ final class MapViewModel: ObservableObject {
         guard let route else { return }
         guard !toll.isEmpty else { return }
 
-        tollsOnRoute = tollsNearRoute(route: route, tolls: toll, maxDistanceMeters: 150) // Reduci la distancia para tener puntos mas cercanos
+        let capturedRoute = route
+        let capturedTolls = toll
+        Task {
+            await Task.yield()
+            tollsOnRoute = tollsNearRoute(route: capturedRoute, tolls: capturedTolls)
+        }
         totalPrice = 0
         hasResult = true
     }
-    
-    private func tollsNearRoute(route: MKRoute, tolls: [Vegobjekt], maxDistanceMeters: Double) -> [Vegobjekt] {
+
+    // Checks perpendicular distance from each toll to every polyline segment.
+    // Much more precise than point sampling — avoids false positives on parallel roads.
+    private func tollsNearRoute(route: AppRoute, tolls: [Vegobjekt], maxDistanceMeters: Double = 50) -> [Vegobjekt] {
         let polyline = route.polyline
-        let routePoints = samplePolylinePoints(polyline, step: 10)
-
-        // Find tolls near route and track which route point index they're closest to
-        var tollsWithPosition: [(toll: Vegobjekt, routeIndex: Int)] = []
-        
-        for toll in tolls {
-            guard let c = toll.lokasjon?.coordinates else { continue }
-            let tollLoc = CLLocation(latitude: c.latitude, longitude: c.longitude)
-            
-            var closestIndex = -1
-            var closestDistance = Double.greatestFiniteMagnitude
-            
-            for (index, p) in routePoints.enumerated() {
-                let d = tollLoc.distance(from: CLLocation(latitude: p.latitude, longitude: p.longitude))
-                if d < closestDistance {
-                    closestDistance = d
-                    closestIndex = index
-                }
-            }
-            
-            if closestDistance <= maxDistanceMeters {
-                tollsWithPosition.append((toll: toll, routeIndex: closestIndex))
-            }
-        }
-        
-        // Sort by position along the route
-        return tollsWithPosition
-            .sorted { $0.routeIndex < $1.routeIndex }
-            .map { $0.toll }
-    }
-
-    private func samplePolylinePoints(_ polyline: MKPolyline, step: Int) -> [CLLocationCoordinate2D] {
         let count = polyline.pointCount
         guard count > 0 else { return [] }
 
         var coords = Array(repeating: CLLocationCoordinate2D(latitude: 0, longitude: 0), count: count)
         polyline.getCoordinates(&coords, range: NSRange(location: 0, length: count))
 
-        guard step > 1 else { return coords }
+        var tollsWithPosition: [(toll: Vegobjekt, routeIndex: Int)] = []
 
-        var sampled: [CLLocationCoordinate2D] = []
-        for i in stride(from: 0, to: count, by: step) {
-            sampled.append(coords[i])
+        for toll in tolls {
+            guard let c = toll.lokasjon?.coordinates else { continue }
+
+            var closestIndex = -1
+            var closestDistance = Double.greatestFiniteMagnitude
+
+            // Check distance to every segment (A→B) for accurate hit detection
+            for i in 0..<(count - 1) {
+                let d = distanceFromPoint(c, toSegmentFrom: coords[i], to: coords[i + 1])
+                if d < closestDistance {
+                    closestDistance = d
+                    closestIndex = i
+                }
+            }
+
+            if closestDistance <= maxDistanceMeters {
+                tollsWithPosition.append((toll: toll, routeIndex: closestIndex))
+            }
         }
-        if let last = coords.last { sampled.append(last) }
-        return sampled
+
+        return tollsWithPosition
+            .sorted { $0.routeIndex < $1.routeIndex }
+            .map { $0.toll }
+    }
+
+    // Minimum distance from point P to segment A→B using projection
+    private func distanceFromPoint(
+        _ p: CLLocationCoordinate2D,
+        toSegmentFrom a: CLLocationCoordinate2D,
+        to b: CLLocationCoordinate2D
+    ) -> Double {
+        let ax = a.longitude, ay = a.latitude
+        let bx = b.longitude, by = b.latitude
+        let px = p.longitude, py = p.latitude
+
+        let dx = bx - ax, dy = by - ay
+        let lenSq = dx * dx + dy * dy
+
+        let closest: CLLocationCoordinate2D
+        if lenSq == 0 {
+            closest = a
+        } else {
+            let t = max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq))
+            closest = CLLocationCoordinate2D(latitude: ay + t * dy, longitude: ax + t * dx)
+        }
+
+        return CLLocation(latitude: p.latitude, longitude: p.longitude)
+            .distance(from: CLLocation(latitude: closest.latitude, longitude: closest.longitude))
     }
         
 }

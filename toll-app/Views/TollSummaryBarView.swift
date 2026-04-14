@@ -13,7 +13,7 @@ struct TollSummaryBar: View {
     let destinationCoordinate: CLLocationCoordinate2D?
     let fromAddress: String
     let toAddress: String
-    let route: MKRoute?
+    let route: AppRoute?
     let onTap: () -> Void
     
     private var distanceText: String {
@@ -34,11 +34,7 @@ struct TollSummaryBar: View {
     }
 
     private var hasFerry: Bool {
-        guard let route else { return false }
-        return route.steps.contains { step in
-            let inst = step.instructions.lowercased()
-            return inst.contains("ferry") || inst.contains("ferje") || inst.contains("ferge")
-        }
+        route?.hasFerry ?? false
     }
 
     var body: some View {

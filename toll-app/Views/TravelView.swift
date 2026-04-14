@@ -61,6 +61,7 @@ struct TravelView: View {
                             return
                         }
                         purchaseManager.recordSearch()
+                        vm.resetResult()
                         Task { @MainActor in
                             await vm.getDirectionsFromAddresses(
                                 fromAddress: from,

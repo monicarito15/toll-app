@@ -24,10 +24,10 @@ final class SearchAddressViewModel: NSObject, ObservableObject {
         super.init()
         completer.delegate = self
 
-        // Región centrada en Noruega para priorizar resultados noruegos
+        // Bounding box de Noruega: lat 57.5–71.5, lon 4–32
         completer.region = MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 64.5, longitude: 12.0),
-            span: MKCoordinateSpan(latitudeDelta: 20.0, longitudeDelta: 20.0)
+            center: CLLocationCoordinate2D(latitude: 64.5, longitude: 17.0),
+            span: MKCoordinateSpan(latitudeDelta: 14.0, longitudeDelta: 28.0)
         )
         completer.resultTypes = [.address, .pointOfInterest]
     }
@@ -119,7 +119,11 @@ final class SearchAddressViewModel: NSObject, ObservableObject {
 extension SearchAddressViewModel: MKLocalSearchCompleterDelegate {
 
     nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
-        let results = completer.results
+        // Keep only Norwegian results — subtitle for NO addresses includes "Norway" or "Norge"
+        let results = completer.results.filter {
+            let sub = $0.subtitle.lowercased()
+            return sub.contains("norway") || sub.contains("norge") || sub.isEmpty
+        }
         Task { @MainActor in
             self.completions = results
         }
