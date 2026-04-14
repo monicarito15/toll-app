@@ -5,9 +5,5 @@ xcuserdata/
 # Claude Code
 CLAUDE.md
 
-# API Keys
-Secrets.xcconfig
-*.xcconfig
-
 # macOS
 .DS_Store
