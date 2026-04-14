@@ -6,7 +6,7 @@ Norwegian toll calculator for iOS. Enter an origin and destination, and the app 
 
 ## Features
 
-- Real-time toll pricing from the Bompenger API
+- Toll pricing from NVDB data
 - Multiple alternative routes (up to 3) via OSRM and MapKit
 - Directional toll filtering — only charges the correct direction (nordgående/sørgående)
 - Rush hour surcharge detection (weekdays 06:30–09:00 and 15:00–17:00)
