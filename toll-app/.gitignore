@@ -65,6 +65,9 @@ fastlane/test_output
 # Code Injection
 iOSInjectionProject/
 
+# Claude Code
+CLAUDE.md
+
 # API Keys
 *.xcconfig
 Secrets.xcconfig
