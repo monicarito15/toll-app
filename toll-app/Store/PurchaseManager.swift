@@ -11,7 +11,7 @@ import StoreKit
 final class PurchaseManager: ObservableObject {
 
     static let productID = "no.carolina.toll-app.unlimited"
-    static let freeSearchLimit = 100
+    static let freeSearchLimit = 10
 
     @Published var isPremium: Bool = false
     @Published var searchesUsed: Int = 0
