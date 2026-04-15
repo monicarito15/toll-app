@@ -1,6 +1,6 @@
 # Privacy Policy — TollTrack
 
-**Last updated: April 5, 2026**
+**Last updated: April 15, 2026**
 
 TollTrack ("the App") is a Norwegian toll calculator for iOS, developed by Carolina Mera. This Privacy Policy explains what information the App collects, how it is used, and your rights regarding that information.
 
@@ -39,8 +39,8 @@ The App communicates with the following external services to function:
 
 | Service | Purpose | Data sent |
 |---|---|---|
-| **NVDB** (Norwegian Public Roads Administration) | Fetch toll station locations | None — public API, read-only |
-| **Bompenger API** (Statens vegvesen) | Fetch real-time toll prices | Vehicle type and fuel type (no personal data) |
+| **NVDB** (Norwegian Public Roads Administration) | Fetch toll station locations and prices | None — public API, read-only |
+| **OSRM** (Open Source Routing Machine) | Calculate alternative routes | Origin/destination coordinates |
 | **Apple MapKit** | Display maps and calculate routes | Origin/destination coordinates |
 
 These services are operated by Norwegian government entities or Apple. Please refer to their respective privacy policies for more information.
