@@ -68,6 +68,9 @@ iOSInjectionProject/
 # Claude Code
 CLAUDE.md
 
+# Secrets
+Secrets.xcconfig
+
 # macOS
 .DS_Store
 

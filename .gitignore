@@ -4,6 +4,10 @@ xcuserdata/
 
 # Claude Code
 CLAUDE.md
+.claudeignore
+
+# Secrets
+Secrets.xcconfig
 
 # macOS
 .DS_Store
