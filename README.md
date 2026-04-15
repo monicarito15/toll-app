@@ -12,7 +12,7 @@ Norwegian toll calculator for iOS. Enter an origin and destination, and the app 
 - Rush hour surcharge detection using per-station times from NVDB (falls back to 06:30–09:00 and 15:00–17:00)
 - Timesregel support — stations in the same group within 60 min: free (Første passering) or most expensive only (Dyreste passering)
 - Vehicle type support: car and motorcycle
-- Fuel type support: petrol, diesel, and electric (50% discount applied to AutoPASS rate)
+- Fuel type support: petrol, diesel, and electric — electric vehicles receive a 50% discount on the AutoPASS rate (Norwegian law minimum); petrol and diesel pay the standard AutoPASS rate
 - 24-hour price cache with offline fallback and estimated price indicator
 - Search history stored locally on device
 - Recent address suggestions
