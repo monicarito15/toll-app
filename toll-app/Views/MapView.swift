@@ -30,6 +30,7 @@ struct MapView: View {
 
     @State private var cameraPosition: MapCameraPosition = .automatic
     @State private var showDetailsSheet = false
+    @State private var sheetDetent: PresentationDetent = .medium
     @State private var selectedToll: TollCharge?
 
     var body: some View {
@@ -113,9 +114,10 @@ struct MapView: View {
                 route: mapVM.route,
                 fromAddress: from,
                 toAddress: to,
-                vehicleType: vehicleType
+                vehicleType: vehicleType,
+                selectedDetent: sheetDetent
             )
-            .presentationDetents([.medium, .large])
+            .presentationDetents([.medium, .large], selection: $sheetDetent)
             .presentationContentInteraction(.resizes)
             .presentationDragIndicator(.visible)
         }

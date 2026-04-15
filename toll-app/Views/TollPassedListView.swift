@@ -9,6 +9,7 @@ struct TollPassedListView: View {
     let toAddress: String
     let vehicleType: VehicleType
     let isEstimatedPrice: Bool = false // Default value for backward compatibility
+    var selectedDetent: PresentationDetent = .medium
     
     @Environment(\.colorScheme) private var colorScheme
     var onSelectSearch: (SearchHistoryItem) -> Void = { _ in }
@@ -68,7 +69,7 @@ struct TollPassedListView: View {
                 }
                 .padding(.vertical, 20)
             }
-            .scrollDisabled(true)
+            .scrollDisabled(selectedDetent != .large)
             .background(
                 Color(colorScheme == .dark ? .black : .systemGroupedBackground)
                     .ignoresSafeArea()
