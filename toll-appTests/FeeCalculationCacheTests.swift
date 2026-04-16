@@ -10,7 +10,7 @@ import Foundation
 
 struct FeeCalculationCacheTests {
 
-    // FeeCalculation validity (isValid logic mirrors FeeStorageViewModel.isValid)
+    // FeeCalculation validity
 
     @Test func validCache_notExpired() {
         let calc = FeeCalculation(
@@ -36,40 +36,32 @@ struct FeeCalculationCacheTests {
 
     @Test func cacheTTL_is24Hours() {
         let now = Date()
-        let ttlHours = 24
-        let validUntil = now.addingTimeInterval(TimeInterval(ttlHours) * 3600)
+        let validUntil = now.addingTimeInterval(24 * 3600)
         let diff = validUntil.timeIntervalSince(now)
         #expect(diff == 24 * 3600)
     }
 
-    //  FeeViewModel cache key
+    // FeeViewModel cache key (uses tollIDs, not from/to strings)
 
-    @MainActor @Test func cacheKey_includesFromAndTo() {
+    @MainActor @Test func cacheKey_includesTollIDs() {
         let vm = FeeViewModel()
-        let key = vm.feeCalculationKey(
-            from: "Oslo",
-            to: "Bergen",
-            vehicle: .car,
-            fuel: .gas,
-            date: Date()
-        )
-        #expect(key.contains("Oslo"))
-        #expect(key.contains("Bergen"))
+        let key = vm.feeCalculationKey(tollIDs: "123,456", vehicle: .car, fuel: .gas, date: Date())
+        #expect(key.contains("123,456"))
     }
 
     @MainActor @Test func cacheKey_differsByFuel() {
         let vm = FeeViewModel()
         let date = Date()
-        let gasKey = vm.feeCalculationKey(from: "A", to: "B", vehicle: .car, fuel: .gas, date: date)
-        let evKey  = vm.feeCalculationKey(from: "A", to: "B", vehicle: .car, fuel: .electric, date: date)
+        let gasKey = vm.feeCalculationKey(tollIDs: "123", vehicle: .car, fuel: .gas, date: date)
+        let evKey  = vm.feeCalculationKey(tollIDs: "123", vehicle: .car, fuel: .electric, date: date)
         #expect(gasKey != evKey)
     }
 
     @MainActor @Test func cacheKey_differsByVehicle() {
         let vm = FeeViewModel()
         let date = Date()
-        let carKey  = vm.feeCalculationKey(from: "A", to: "B", vehicle: .car, fuel: .gas, date: date)
-        let motoKey = vm.feeCalculationKey(from: "A", to: "B", vehicle: .motorcycle, fuel: .gas, date: date)
+        let carKey  = vm.feeCalculationKey(tollIDs: "123", vehicle: .car, fuel: .gas, date: date)
+        let motoKey = vm.feeCalculationKey(tollIDs: "123", vehicle: .motorcycle, fuel: .gas, date: date)
         #expect(carKey != motoKey)
     }
 
@@ -82,17 +74,14 @@ struct FeeCalculationCacheTests {
         comps.minute = 14
         let t2 = Calendar.current.date(from: comps)!
         // Both 08:03 and 08:14 round to the same 15-min bucket (08:00)
-        let key1 = vm.feeCalculationKey(from: "A", to: "B", vehicle: .car, fuel: .gas, date: t1)
-        let key2 = vm.feeCalculationKey(from: "A", to: "B", vehicle: .car, fuel: .gas, date: t2)
+        let key1 = vm.feeCalculationKey(tollIDs: "123", vehicle: .car, fuel: .gas, date: t1)
+        let key2 = vm.feeCalculationKey(tollIDs: "123", vehicle: .car, fuel: .gas, date: t2)
         #expect(key1 == key2)
     }
 
-    @MainActor @Test func cacheKey_differsByAutopass() {
+    @MainActor @Test func cacheKey_includesVersionPrefix() {
         let vm = FeeViewModel()
-        vm.hasAutoPassAgreement = false
-        let noAutopass = vm.feeCalculationKey(from: "A", to: "B", vehicle: .car, fuel: .gas, date: Date())
-        vm.hasAutoPassAgreement = true
-        let withAutopass = vm.feeCalculationKey(from: "A", to: "B", vehicle: .car, fuel: .gas, date: Date())
-        #expect(noAutopass != withAutopass)
+        let key = vm.feeCalculationKey(tollIDs: "123", vehicle: .car, fuel: .gas, date: Date())
+        #expect(key.hasPrefix("v6|"))
     }
 }
