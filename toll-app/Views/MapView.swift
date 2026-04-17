@@ -20,7 +20,7 @@ struct MapView: View {
     let dateTime: Date
     let hasAutopass: Bool
 
-    // ViewModel compartido con TravelView — contiene rutas, tolls y lógica de ubicación
+    // ViewModel compartido con TravelView, contiene rutas, tolls y lógica de ubicación
     @ObservedObject var mapVM: MapViewModel
     @StateObject private var tollStorageVM = TollStorageViewModel()
     @Environment(\.modelContext) private var modelContext
@@ -56,11 +56,9 @@ struct MapView: View {
             mapVM.updateUserLocation()
             Task {
                 await tollStorageVM.loadTolls(using: modelContext)
+                await tollStorageVM.updateTollsIfNeeded(using: modelContext)
+                mapVM.toll = tollStorageVM.tolls
             }
-        }
-        .task {
-            // Carga todos los tolls desde NVDB al aparecer la vista
-            await mapVM.fetchTolls()
         }
 
         // Cuando llegan rutas nuevas: mueve cámara para ver todas y construye resultado
